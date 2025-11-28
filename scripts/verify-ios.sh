@@ -19,7 +19,7 @@ log() {
     fi
 }
 
-echo "🍎 Verifying iOS build setup..."
+echo "🍎 GLTron Mobile - Verifying iOS build setup..."
 
 # 1) Check if running on macOS
 echo "1. Checking platform..."

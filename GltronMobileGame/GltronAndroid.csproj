@@ -11,7 +11,7 @@
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
     <AndroidTargetFrameworkVersion>v34.0</AndroidTargetFrameworkVersion>
     <OutputType>Exe</OutputType>
-    <ApplicationId>com.companyname.gltronmobilegame</ApplicationId>
+    <ApplicationId>com.companyname.gltronmobile</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     

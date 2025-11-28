@@ -1,14 +1,14 @@
-Android and iOS build instructions (MonoGame)
+GLTron Mobile - Android and iOS build instructions (MonoGame)
 
 Overview
-This guide explains how to build and package the MonoGame Android and iOS versions from this repository using .NET 8. The Android build works on Linux/Windows/macOS, while iOS build requires macOS with Xcode. It uses ready-to-run scripts placed under scripts/ for Android.
+This guide explains how to build and package GLTron Mobile for Android and iOS using MonoGame and .NET 8. The Android build works on Linux/Windows/macOS, while iOS build requires macOS with Xcode. It uses ready-to-run scripts placed under scripts/ for Android.
 
 What you will get
-- A MonoGame Android project (GltronMobileGame) generated on-demand
-- A MonoGame iOS project (GltronMobileGame.iOS) ready for macOS builds
-- APK (or AAB) built from the existing MonoGame codebase and content
-- IPA for iOS (when built on macOS)
-- HUD with basic FPS/score, background music and SFX place-holders
+- GLTron Mobile Android APK (or AAB) for Android devices
+- GLTron Mobile iOS IPA for iOS devices (when built on macOS)
+- MonoGame Android project (GltronMobileGame) with full source
+- MonoGame iOS project (GltronMobileGame.iOS) ready for macOS builds
+- HUD with FPS/score display, background music and sound effects
 - Shared codebase between Android and iOS platforms
 
 Prerequisites for Android

@@ -19,7 +19,7 @@ log() {
     fi
 }
 
-echo "🔍 Verifying Android build setup..."
+echo "🔍 GLTron Mobile - Verifying Android build setup..."
 
 # 1) Check .NET environment
 echo "1. Checking .NET environment..."

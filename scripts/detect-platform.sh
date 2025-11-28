@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-echo "🔍 Platform Detection and Build Options"
-echo "======================================"
+echo "🔍 GLTron Mobile - Platform Detection and Build Options"
+echo "======================================================="
 
 # Detect OS
 OS=$(uname)

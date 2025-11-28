@@ -8,7 +8,7 @@
     <!-- iOS app metadata -->
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
-    <ApplicationId>com.companyname.gltronmobilegame.ios</ApplicationId>
+    <ApplicationId>com.companyname.gltronmobile.ios</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     

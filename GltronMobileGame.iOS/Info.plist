@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>GLTRON</string>
+    <string>GLTron Mobile</string>
     <key>CFBundleIdentifier</key>
-    <string>com.companyname.gltronmobilegame.ios</string>
+    <string>com.companyname.gltronmobile.ios</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
