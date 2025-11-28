@@ -45,6 +45,7 @@ namespace GltronMobileGame
 
         bool boInitialState = true;
         private bool boLoading = true;
+        private bool boShowMenu = true;
 
         // sound index (Serão usados como identificadores no MonoGame)
         public static int CRASH_SOUND = 1;
@@ -98,6 +99,11 @@ namespace GltronMobileGame
             return Walls;
         }
 
+        public bool IsShowingMenu()
+        {
+            return boShowMenu;
+        }
+
         public void initialiseGame()
         {
             // Inicialização de sons, HUD, preferências e modelos será feita no Game1.LoadContent()
@@ -112,7 +118,8 @@ namespace GltronMobileGame
 
             for (int player = 0; player < mCurrentPlayers; player++)
             {
-                Players[player] = new Player(player, mCurrentGridSize); // Sem Model e HUD por enquanto
+                Players[player] = new Player(player, mCurrentGridSize);
+                Players[player].setSpeed(10.0f); // Set initial speed so players are active
             }
 
             // mRecognizer = new Recognizer(mCurrentGridSize); // Implementar depois
@@ -128,6 +135,15 @@ namespace GltronMobileGame
             ResetTime();
 
             boLoading = false;
+            boShowMenu = true;
+            
+            try 
+            { 
+                Android.Util.Log.Info("GLTRON", "Game initialized successfully"); 
+                Android.Util.Log.Info("GLTRON", $"Players created: {mCurrentPlayers}");
+                Android.Util.Log.Info("GLTRON", $"Grid size: {mCurrentGridSize}");
+            } 
+            catch { }
         }
 
         // Métodos de ciclo de vida (pauseGame, resumeGame) serão adaptados para o MonoGame
@@ -143,6 +159,15 @@ namespace GltronMobileGame
         {
             if (boLoading)
                 return;
+
+            // Handle menu state
+            if (boShowMenu)
+            {
+                boShowMenu = false;
+                tronHUD?.AddLineToConsole("Game Started!");
+                tronHUD?.DisplayInstr(true);
+                return;
+            }
 
             if (Players[OWN_PLAYER].getSpeed() > 0.0f)
             {
@@ -309,6 +334,13 @@ namespace GltronMobileGame
         // RenderGame será adaptado para o MonoGame Game1.Draw()
         public void RenderGame(GraphicsDevice graphicsDevice)
         {
+            // Show menu state
+            if (boShowMenu)
+            {
+                // Menu is handled by HUD
+                return;
+            }
+
             // Lógica de renderização 3D será implementada no Game1.Draw()
             // Por enquanto, apenas a lógica de checagem de vencedor
 

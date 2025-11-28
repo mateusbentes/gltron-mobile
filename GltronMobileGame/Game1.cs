@@ -26,9 +26,17 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
-        _glTronGame.initialiseGame();
-        TouchPanel.EnabledGestures = GestureType.Tap;
+        try
+        {
+            Android.Util.Log.Info("GLTRON", "Game1 Initialize start");
+            _glTronGame.initialiseGame();
+            TouchPanel.EnabledGestures = GestureType.Tap;
+            Android.Util.Log.Info("GLTRON", "Game1 Initialize complete");
+        }
+        catch (System.Exception ex)
+        {
+            try { Android.Util.Log.Error("GLTRON", $"Initialize error: {ex}"); } catch { }
+        }
 
         base.Initialize();
     }
@@ -107,53 +115,84 @@ public class Game1 : Game
         // Clear with dark background
         GraphicsDevice.Clear(Color.Black);
 
-        // Update camera to follow player
-        var playerPos = Vector3.Zero;
-        if (_glTronGame.GetOwnPlayer() != null)
+        // Check if we're in menu state
+        if (_glTronGame.IsShowingMenu())
         {
-            var player = _glTronGame.GetOwnPlayer();
-            playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
+            // Draw simple menu
+            _spriteBatch.Begin();
+            var centerX = GraphicsDevice.Viewport.Width / 2;
+            var centerY = GraphicsDevice.Viewport.Height / 2;
+            
+            var titleText = "GLTron Mobile";
+            var titleSize = _font.MeasureString(titleText);
+            _spriteBatch.DrawString(_font, titleText, new Vector2(centerX - titleSize.X/2, centerY - 100), Color.Cyan);
+            
+            var startText = "Tap anywhere to start";
+            var startSize = _font.MeasureString(startText);
+            _spriteBatch.DrawString(_font, startText, new Vector2(centerX - startSize.X/2, centerY - 50), Color.Yellow);
+            
+            var instructText = "Tap left/right to turn";
+            var instructSize = _font.MeasureString(instructText);
+            _spriteBatch.DrawString(_font, instructText, new Vector2(centerX - instructSize.X/2, centerY), Color.White);
+            
+            _spriteBatch.End();
         }
-        _camera.Update(playerPos, gameTime);
-
-        // Begin 3D rendering
-        _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
-
-        // Draw floor
-        _worldGraphics.DrawFloor();
-
-        // Draw walls
-        var walls = _glTronGame.GetWalls();
-        if (walls != null)
+        else
         {
-            _worldGraphics.DrawWalls(walls);
-        }
-
-        // Draw player trails
-        var players = _glTronGame.GetPlayers();
-        if (players != null)
-        {
-            for (int i = 0; i < players.Length; i++)
+            // Game is running - draw 3D world
+            try
             {
-                if (players[i] != null)
+                // Update camera to follow player
+                var playerPos = Vector3.Zero;
+                if (_glTronGame.GetOwnPlayer() != null)
                 {
-                    _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                    var player = _glTronGame.GetOwnPlayer();
+                    playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
                 }
-            }
-        }
+                _camera.Update(playerPos, gameTime);
 
-        // End 3D rendering
-        _worldGraphics.EndDraw();
+                // Begin 3D rendering
+                _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
+
+                // Draw floor
+                _worldGraphics.DrawFloor();
+
+                // Draw walls
+                var walls = _glTronGame.GetWalls();
+                if (walls != null)
+                {
+                    _worldGraphics.DrawWalls(walls);
+                }
+
+                // Draw player trails
+                var players = _glTronGame.GetPlayers();
+                if (players != null)
+                {
+                    for (int i = 0; i < players.Length; i++)
+                    {
+                        if (players[i] != null)
+                        {
+                            _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                        }
+                    }
+                }
+
+                // End 3D rendering
+                _worldGraphics.EndDraw();
+            }
+            catch (System.Exception ex)
+            {
+                try { Android.Util.Log.Error("GLTRON", $"3D rendering error: {ex}"); } catch { }
+            }
+
+            // Draw HUD with real score if available
+            int score = 0;
+            try { score = _glTronGame.GetOwnPlayerScore(); } catch { }
+            _hud?.Draw(gameTime, score);
+        }
 
         // Run game logic rendering (win/lose logic)
         _glTronGame.RenderGame(GraphicsDevice);
-
-        // Draw HUD with real score if available
-        int score = 0;
-        try { score = _glTronGame.GetOwnPlayerScore(); } catch { }
-        _hud?.Draw(gameTime, score);
-
-        try { Android.Util.Log.Debug("GLTRON", "Draw tick"); } catch { }
 
         base.Draw(gameTime);
     }
