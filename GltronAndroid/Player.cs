@@ -125,6 +125,16 @@ namespace GltronMonoGame
             float x = getXpos();
             float y = getYpos();
 
+            // Prevent array bounds exception
+            if (trailOffset >= Trails.Length - 1)
+            {
+                try { Android.Util.Log.Warn("GLTRON", "Trail array full, resetting player"); } catch { }
+                // Reset trail when array is full
+                trailOffset = 0;
+                Speed = 0.0f; // Stop player to prevent further issues
+                return;
+            }
+
             trailOffset++;
             Trails[trailOffset] = new Segment();
             Trails[trailOffset].vStart.v[0] = x;

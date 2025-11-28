@@ -1,6 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="GltronAndroid.GltronAndroid" android:versionCode="1" android:versionName="1.0">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.gltronandroid" android:versionCode="1" android:versionName="1.0">
   <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
   <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-  <application android:label="GltronAndroid"></application>
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <application 
+    android:label="GLTron Game" 
+    android:icon="@drawable/icon"
+    android:allowBackup="true"
+    android:hardwareAccelerated="true">
+  </application>
 </manifest>
