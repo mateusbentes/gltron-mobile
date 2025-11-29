@@ -1,24 +1,30 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using GltronMobileEngine.Video;
+using GltronMobileEngine.Sound;
 
 namespace GltronMobileEngine
 {
-    public class Player
+    /// <summary>
+    /// Multiplatform Player class for GLTron Mobile
+    /// Compatible with Android, iOS, and other MonoGame platforms
+    /// </summary>
+    public class Player : Interfaces.IPlayer
     {
-        // Constantes e variáveis do Java Player.java
-        private Model Cycle; // Substituir por um modelo MonoGame
+        // Constants and variables from Java Player.java - multiplatform compatible
+        private SimpleModel Cycle; // Will be replaced by MonoGame model system
         private int Player_num;
         private int Direction;
         private int LastDirection;
-        // Explosion placeholder
+        
+        // Explosion system - platform agnostic
         private bool _exploding = false;
         private float _explodeTimer = 0f;
 
         private int Score;
 
-        // GLTexture _ExplodeTex; // Será carregada no MonoGame
-
+        // Trail system - multiplatform compatible
         private Segment[] Trails = new Segment[1000];
 
         // private HUD tronHUD; // Substituir por um sistema de HUD MonoGame
@@ -128,7 +134,18 @@ namespace GltronMobileEngine
             // Prevent array bounds exception
             if (trailOffset >= Trails.Length - 1)
             {
-                try { Android.Util.Log.Warn("GLTRON", "Trail array full, resetting player"); } catch { }
+                // Multiplatform logging
+                System.Diagnostics.Debug.WriteLine("GLTRON: Trail array full, resetting player");
+                
+                // Platform-specific logging if available
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Warn("GLTRON", "Trail array full, resetting player");
+#endif
+                }
+                catch { /* Ignore platform-specific logging errors */ }
+                
                 // Reset trail when array is full
                 trailOffset = 0;
                 Speed = 0.0f; // Stop player to prevent further issues
@@ -147,7 +164,25 @@ namespace GltronMobileEngine
             TurnTime = current_time;
         }
 
-        public void doMovement(long dt, long current_time, Segment[] walls, Player[] players)
+        public void doMovement(long dt, long current_time, Interfaces.ISegment[] walls, Interfaces.IPlayer[] players)
+        {
+            // Convert interface arrays to concrete types for internal processing
+            Segment[] concreteWalls = new Segment[walls.Length];
+            for (int i = 0; i < walls.Length; i++)
+            {
+                concreteWalls[i] = walls[i] as Segment ?? new Segment();
+            }
+            
+            Player[] concretePlayers = new Player[players.Length];
+            for (int i = 0; i < players.Length; i++)
+            {
+                concretePlayers[i] = players[i] as Player ?? null;
+            }
+            
+            DoMovementInternal(dt, current_time, concreteWalls, concretePlayers);
+        }
+
+        private void DoMovementInternal(long dt, long current_time, Segment[] walls, Player[] players)
         {
             float fs;
             float t;
@@ -218,9 +253,39 @@ namespace GltronMobileEngine
             return Trails[offset];
         }
 
+        // Interface implementation - returns ISegment
+        Interfaces.ISegment Interfaces.IPlayer.getTrail(int index)
+        {
+            return getTrail(index);
+        }
+
         public int getDirection()
         {
             return Direction;
+        }
+
+        public int getLastDirection()
+        {
+            return LastDirection;
+        }
+
+        public bool getExplode()
+        {
+            return _exploding;
+        }
+
+        public void setExplodeTex(object texture)
+        {
+            // Platform-agnostic texture setting
+            // Implementation will depend on the rendering system used
+            // For now, just log that texture was set
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} explosion texture set");
+        }
+
+        public bool isVisible()
+        {
+            // Basic visibility check - player is visible if speed > 0 or still exploding
+            return Speed > 0.0f || _exploding || trailHeight > 0.0f;
         }
 
         public int getPlayerNum()
@@ -258,8 +323,17 @@ namespace GltronMobileEngine
                         Speed = 0.0f;
                         _exploding = true;
                         _explodeTimer = 0f;
-                        GltronMobileEngine.Sound.SoundManager.Instance.PlayCrash();
-                        GltronMobileEngine.Sound.SoundManager.Instance.StopEngine();
+                        
+                        // Multiplatform sound handling
+                        try
+                        {
+                            SoundManager.Instance.PlayCrash();
+                            SoundManager.Instance.StopEngine();
+                        }
+                        catch (System.Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
+                        }
 
                         break;
                     }
@@ -276,7 +350,7 @@ namespace GltronMobileEngine
 
             for (j = 0; j < players.Length; j++) // players.Length deve ser mCurrentPlayers
             {
-                if (players[j].getTrailHeight() < TRAIL_HEIGHT)
+                if (players[j] == null || players[j].getTrailHeight() < TRAIL_HEIGHT)
                     continue;
 
                 for (k = 0; k < players[j].getTrailOffset() + 1; k++)
@@ -302,8 +376,17 @@ namespace GltronMobileEngine
 
                             // Console message and SFX
                             players[j].addScore(10);
-                            GltronMobileEngine.Sound.SoundManager.Instance.PlayCrash();
-                            GltronMobileEngine.Sound.SoundManager.Instance.StopEngine();
+                            
+                            // Multiplatform sound handling
+                            try
+                            {
+                                SoundManager.Instance.PlayCrash();
+                                SoundManager.Instance.StopEngine();
+                            }
+                            catch (System.Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
+                            }
 
                             break;
                         }
@@ -312,15 +395,5 @@ namespace GltronMobileEngine
             }
         }
 
-        // Métodos de renderização (serão adaptados para MonoGame)
-        // public void drawCycle(GL10 gl, long curr_time, long time_dt, Lighting Lights, GLTexture ExplodeTex) { ... }
-        // public void drawTrails(Trails_Renderer render, Camera cam) { ... }
-
-        // Lógica de rotação (será adaptada para MonoGame)
-        // private void doCycleRotation(GL10 gl, long CurrentTime) { ... }
-        // private float getDirAngle(long time) { ... }
-
-        // Lógica de visibilidade (será adaptada para MonoGame)
-        // public boolean isVisible(Camera cam) { ... }
     }
 }

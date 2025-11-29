@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
+using GltronMobileEngine.Sound;
 
 namespace GltronMobileGame;
 
@@ -21,28 +22,60 @@ public class Game1 : Game
     {
         try
         {
-            Android.Util.Log.Info("GLTRON", "Game1 constructor start");
+            // Use platform-agnostic logging for multiplatform support
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor start");
             
-            // CRITICAL: Initialize GraphicsDeviceManager first
+            // CRITICAL: Initialize GraphicsDeviceManager first - this must succeed
             _graphics = new GraphicsDeviceManager(this);
+            if (_graphics == null)
+            {
+                throw new System.InvalidOperationException("Failed to create GraphicsDeviceManager");
+            }
             
             // CRITICAL: Set Content.RootDirectory before any content operations
             Content.RootDirectory = "Content";
             
-            // CRITICAL: Only create GLTronGame, don't initialize it yet
-            _glTronGame = new GLTronGame();
-            
-            // Set up graphics for mobile landscape
+            // Set up graphics for mobile landscape (multiplatform compatible)
             _graphics.IsFullScreen = true;
             _graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             
+            // Set reasonable default resolution for mobile devices
+            _graphics.PreferredBackBufferWidth = 1280;
+            _graphics.PreferredBackBufferHeight = 720;
+            
+            // CRITICAL: Only create GLTronGame after graphics setup, don't initialize it yet
+            _glTronGame = new GLTronGame();
+            if (_glTronGame == null)
+            {
+                throw new System.InvalidOperationException("Failed to create GLTronGame instance");
+            }
+            
             // CRITICAL: Don't access GraphicsDevice here - it doesn't exist yet!
             
-            Android.Util.Log.Info("GLTRON", "Game1 constructor complete");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor complete");
+            
+            // Platform-specific logging if available
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "Game1 constructor complete (Android)");
+#endif
+            }
+            catch { /* Ignore logging errors */ }
         }
         catch (System.Exception ex)
         {
-            try { Android.Util.Log.Error("GLTRON", $"Game1 constructor failed: {ex}"); } catch { }
+            // Platform-agnostic error logging
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Game1 constructor failed: {ex}");
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"Game1 constructor failed: {ex}");
+#endif
+            }
+            catch { /* Ignore logging errors */ }
+            
             throw;
         }
     }
@@ -51,49 +84,105 @@ public class Game1 : Game
     {
         try
         {
-            Android.Util.Log.Info("GLTRON", "Game1 Initialize start");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 Initialize start");
             
             // CRITICAL: Check graphics manager exists
             if (_graphics == null)
             {
-                Android.Util.Log.Error("GLTRON", "GraphicsDeviceManager is null in Initialize!");
-                return;
+                var error = "GraphicsDeviceManager is null in Initialize!";
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
+                throw new System.InvalidOperationException(error);
             }
             
-            // Apply graphics settings
-            _graphics.ApplyChanges();
+            // Apply graphics settings with retry logic for platform stability
+            int applyRetries = 3;
+            for (int i = 0; i < applyRetries; i++)
+            {
+                try
+                {
+                    _graphics.ApplyChanges();
+                    break;
+                }
+                catch (System.Exception ex) when (i < applyRetries - 1)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: ApplyChanges attempt {i + 1} failed: {ex.Message}");
+                    System.Threading.Thread.Sleep(100); // Brief delay before retry
+                }
+            }
             
             // CRITICAL: Check GraphicsDevice exists after ApplyChanges
             if (GraphicsDevice == null)
             {
-                Android.Util.Log.Error("GLTRON", "GraphicsDevice is null after ApplyChanges!");
-                return;
+                var error = "GraphicsDevice is null after ApplyChanges!";
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
+                throw new System.InvalidOperationException(error);
             }
             
-            // Log resolution info
+            // Log resolution info (multiplatform compatible)
             var viewport = GraphicsDevice.Viewport;
-            Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height}");
-            Android.Util.Log.Info("GLTRON", $"Preferred resolution: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
-            Android.Util.Log.Info("GLTRON", $"Aspect ratio: {(float)viewport.Width / viewport.Height}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Screen resolution: {viewport.Width}x{viewport.Height}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Preferred resolution: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Aspect ratio: {(float)viewport.Width / viewport.Height}");
             
-            // Initialize game with screen size - with null check
+            // Platform-specific logging if available
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height}");
+                Android.Util.Log.Info("GLTRON", $"Preferred resolution: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
+                Android.Util.Log.Info("GLTRON", $"Aspect ratio: {(float)viewport.Width / viewport.Height}");
+#endif
+            }
+            catch { /* Ignore platform-specific logging errors */ }
+            
+            // Initialize game with screen size - with comprehensive null checks
             if (_glTronGame != null)
             {
-                _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
-                _glTronGame.initialiseGame();
+                try
+                {
+                    _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
+                    _glTronGame.initialiseGame();
+                    System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame initialized successfully");
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame initialization failed: {ex}");
+                    throw new System.InvalidOperationException($"GLTronGame initialization failed: {ex.Message}", ex);
+                }
             }
             else
             {
-                Android.Util.Log.Error("GLTRON", "GLTronGame is null in Initialize!");
+                var error = "GLTronGame is null in Initialize!";
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ERROR - {error}");
+                throw new System.InvalidOperationException(error);
             }
             
             // REMOVED: TouchPanel.EnabledGestures = GestureType.Tap;
             // This conflicts with TouchPanel.GetState() on Android
-            Android.Util.Log.Info("GLTRON", "Game1 Initialize complete");
+            
+            System.Diagnostics.Debug.WriteLine("GLTRON: Game1 Initialize complete");
+            
+            // Platform-specific logging if available
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "Game1 Initialize complete");
+#endif
+            }
+            catch { /* Ignore platform-specific logging errors */ }
         }
         catch (System.Exception ex)
         {
-            try { Android.Util.Log.Error("GLTRON", $"Initialize error: {ex}"); } catch { }
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Initialize error: {ex}");
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"Initialize error: {ex}");
+#endif
+            }
+            catch { /* Ignore platform-specific logging errors */ }
+            
             throw; // Re-throw critical initialization errors
         }
 
@@ -166,8 +255,8 @@ public class Game1 : Game
             // Initialize sound (non-critical)
             try
             {
-                GltronMobileEngine.Sound.SoundManager.Instance.Initialize(Content);
-                GltronMobileEngine.Sound.SoundManager.Instance.PlayMusic(true, 0.5f);
+                SoundManager.Instance.Initialize(Content);
+                SoundManager.Instance.PlayMusic(true, 0.5f);
                 Android.Util.Log.Info("GLTRON", "Sound initialized and music started");
             }
             catch (System.Exception ex)

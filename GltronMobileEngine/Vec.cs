@@ -2,6 +2,10 @@ using System;
 
 namespace GltronMobileEngine;
 
+/// <summary>
+/// Multiplatform 3D Vector class for GLTron Mobile
+/// Compatible with Android, iOS, and other MonoGame platforms
+/// </summary>
 public class Vec
 {
     public float[] v = new float[3];

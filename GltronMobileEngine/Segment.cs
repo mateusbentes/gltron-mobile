@@ -2,10 +2,14 @@ using System;
 
 namespace GltronMobileEngine;
 
-public class Segment
+/// <summary>
+/// Multiplatform Segment class for GLTron Mobile
+/// Compatible with Android, iOS, and other MonoGame platforms
+/// </summary>
+public class Segment : Interfaces.ISegment
 {
-    public Vec vStart = new Vec();
-    public Vec vDirection = new Vec();
+    public Vec vStart { get; set; } = new Vec();
+    public Vec vDirection { get; set; } = new Vec();
     public float t1 = 0.0f;
     public float t2 = 0.0f;
 

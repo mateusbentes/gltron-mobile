@@ -16,7 +16,5 @@
     <!-- Exclude game-level classes from engine build -->
     <Compile Remove="Game1.cs" />
     <Compile Remove="GLTronGame.cs" />
-    <Compile Remove="Player.cs" />
-    <Compile Remove="Segment.cs" />
   </ItemGroup>
 </Project>
