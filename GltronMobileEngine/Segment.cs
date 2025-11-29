@@ -21,7 +21,7 @@ public class Segment : Interfaces.ISegment
         vDirection = direction;
     }
 
-    public Vec Intersect(Segment other)
+    public Vec? Intersect(Segment other)
     {
         if (other == null || other.vDirection == null || other.vStart == null ||
             vDirection == null || vStart == null)

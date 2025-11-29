@@ -13,7 +13,7 @@ namespace GltronMobileEngine
     public class Player : Interfaces.IPlayer
     {
         // Constants and variables from Java Player.java - multiplatform compatible
-        private SimpleModel Cycle; // Will be replaced by MonoGame model system
+        private SimpleModel? Cycle; // Will be replaced by MonoGame model system
         private int Player_num;
         private int Direction;
         private int LastDirection;
@@ -176,7 +176,7 @@ namespace GltronMobileEngine
             Player[] concretePlayers = new Player[players.Length];
             for (int i = 0; i < players.Length; i++)
             {
-                concretePlayers[i] = players[i] as Player ?? null;
+                concretePlayers[i] = (players[i] as Player)!;
             }
             
             DoMovementInternal(dt, current_time, concreteWalls, concretePlayers);
@@ -307,7 +307,7 @@ namespace GltronMobileEngine
         public void doCrashTestWalls(Segment[] Walls)
         {
             Segment Current = Trails[trailOffset];
-            Vec V;
+            Vec? V;
 
             for (int j = 0; j < 4; j++)
             {
@@ -346,7 +346,7 @@ namespace GltronMobileEngine
             int j, k;
             Segment Current = Trails[trailOffset];
             Segment Wall;
-            Vec V;
+            Vec? V;
 
             for (j = 0; j < players.Length; j++) // players.Length deve ser mCurrentPlayers
             {

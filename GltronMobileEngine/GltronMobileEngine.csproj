@@ -9,13 +9,17 @@
     
     <!-- Android-specific properties -->
     <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android'">24.0</SupportedOSPlatformVersion>
+    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android'">34.0</TargetPlatformVersion>
+    
+    <!-- MonoGame Platform Properties -->
+    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net8.0'">DesktopGL</MonoGamePlatform>
+    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net8.0-android'">Android</MonoGamePlatform>
   </PropertyGroup>
   <ItemGroup>
     <!-- Multiplatform MonoGame support -->
-    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.1.303" Condition="'$(TargetFramework)' == 'net8.0-android'" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" Condition="'$(TargetFramework)' == 'net8.0'" />
-    <!-- Support for cross-platform content building -->
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0-android'" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <!-- Note: Content building is handled by the game projects, not the engine -->
   </ItemGroup>
   <ItemGroup>
     <!-- Exclude game-level classes from engine build -->
