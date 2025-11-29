@@ -11,11 +11,12 @@ namespace GltronMobileGame
         AlwaysRetainTaskState = true,
         LaunchMode = LaunchMode.SingleInstance,
         ScreenOrientation = ScreenOrientation.SensorLandscape,
-        ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout
+        ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
+        Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
     public class Activity1 : Activity
     {
-        private Game1 _game;
+        private SimpleGame _game;
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -24,7 +25,11 @@ namespace GltronMobileGame
                 Android.Util.Log.Info("GLTRON", "Activity OnCreate start");
                 base.OnCreate(bundle);
 
-                _game = new Game1();
+                // Set fullscreen
+                Window?.SetFlags(Android.Views.WindowManagerFlags.Fullscreen, Android.Views.WindowManagerFlags.Fullscreen);
+                
+                // Create and run the simple game first
+                _game = new SimpleGame();
                 _game.Run();
                 
                 Android.Util.Log.Info("GLTRON", "Activity OnCreate complete");
