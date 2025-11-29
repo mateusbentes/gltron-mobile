@@ -234,14 +234,35 @@ public class Game1 : Game
             // Initialize sound (non-critical)
             try
             {
+                System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to initialize sound system...");
                 SoundManager.Instance.Initialize(Content);
+                System.Diagnostics.Debug.WriteLine("GLTRON: Sound system initialized, starting music...");
                 SoundManager.Instance.PlayMusic(true, 0.5f);
-                Android.Util.Log.Info("GLTRON", "Sound initialized and music started");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Sound initialized and music started successfully");
+                
+                // Platform-specific logging if available
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", "Sound initialized and music started");
+#endif
+                }
+                catch { /* Ignore platform-specific logging errors */ }
             }
             catch (System.Exception ex)
             {
-                try { Android.Util.Log.Error("GLTRON", $"Sound init failed: {ex}"); } catch { }
-                // Continue without sound
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Sound initialization failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Continuing without sound - game will still work");
+                
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Warn("GLTRON", $"Sound init failed: {ex.Message}");
+                    Android.Util.Log.Info("GLTRON", "Continuing without sound - game will still work");
+#endif
+                }
+                catch { /* Ignore platform-specific logging errors */ }
+                // Continue without sound - this is non-critical
             }
 
             Android.Util.Log.Info("GLTRON", "LoadContent completed successfully");

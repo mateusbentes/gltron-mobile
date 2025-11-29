@@ -28,10 +28,11 @@ public class SoundManager
             _crash = _content.Load<SoundEffect>("Assets/game_crash");
             // Sound content loaded successfully
         }
-        catch (System.Exception)
+        catch (System.Exception ex)
         {
             // Sound content load failed - continue without sound
-            throw;
+            System.Diagnostics.Debug.WriteLine($"Sound initialization failed: {ex.Message}");
+            // Don't throw - allow game to continue without sound
         }
     }
 

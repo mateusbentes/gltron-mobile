@@ -35,11 +35,24 @@ namespace gltron.org.gltronmobile
                 
                 // Create the game instance
                 _game = new Game1();
+                Android.Util.Log.Info("GLTRON", "Game1 instance created successfully");
                 
-                Android.Util.Log.Info("GLTRON", "Step 2: Setting up MonoGame view...");
+                Android.Util.Log.Info("GLTRON", "Step 2: Getting game view from services...");
+                var gameView = _game.Services.GetService(typeof(Android.Views.View));
+                if (gameView == null)
+                {
+                    Android.Util.Log.Error("GLTRON", "ERROR: Game view service is null!");
+                    throw new System.InvalidOperationException("Game view service not available");
+                }
+                Android.Util.Log.Info("GLTRON", "Game view service obtained successfully");
                 
-                // For MonoGame 3.8.2+, use SetContentView with game view
-                SetContentView((Android.Views.View)_game.Services.GetService(typeof(Android.Views.View)));
+                Android.Util.Log.Info("GLTRON", "Step 3: Setting content view...");
+                SetContentView((Android.Views.View)gameView);
+                Android.Util.Log.Info("GLTRON", "Content view set successfully");
+                
+                Android.Util.Log.Info("GLTRON", "Step 4: Starting game loop...");
+                _game.RunOneFrame();
+                Android.Util.Log.Info("GLTRON", "Game loop started");
                 
                 Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
