@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 
-namespace GltronMonoGame;
+namespace GltronMobileEngine;
 
 public class Game1 : Game
 {
@@ -11,7 +11,7 @@ public class Game1 : Game
     private GLTronGame _glTronGame;
     private SpriteBatch _spriteBatch;
     private SpriteFont _font;
-    private GltronMonoGame.Video.HUD _hud;
+    private GltronMobileEngine.Video.HUD _hud;
 
     public Game1()
     {
@@ -50,14 +50,14 @@ public class Game1 : Game
             throw;
         }
 
-        _hud = new GltronMonoGame.Video.HUD(_spriteBatch, _font);
+        _hud = new GltronMobileEngine.Video.HUD(_spriteBatch, _font);
         _glTronGame.tronHUD = _hud;
 
         // Initialize sound and start music
         try
         {
-            GltronMonoGame.Sound.SoundManager.Instance.Initialize(Content);
-            GltronMonoGame.Sound.SoundManager.Instance.PlayMusic(true, 0.5f);
+            GltronMobileEngine.Sound.SoundManager.Instance.Initialize(Content);
+            GltronMobileEngine.Sound.SoundManager.Instance.PlayMusic(true, 0.5f);
             Android.Util.Log.Info("GLTRON", "Sound initialized and music started");
         }
         catch (System.Exception ex)

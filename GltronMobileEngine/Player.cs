@@ -2,7 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace GltronMonoGame
+namespace GltronMobileEngine
 {
     public class Player
     {
@@ -258,8 +258,8 @@ namespace GltronMonoGame
                         Speed = 0.0f;
                         _exploding = true;
                         _explodeTimer = 0f;
-                        GltronMonoGame.Sound.SoundManager.Instance.PlayCrash();
-                        GltronMonoGame.Sound.SoundManager.Instance.StopEngine();
+                        GltronMobileEngine.Sound.SoundManager.Instance.PlayCrash();
+                        GltronMobileEngine.Sound.SoundManager.Instance.StopEngine();
 
                         break;
                     }
@@ -302,8 +302,8 @@ namespace GltronMonoGame
 
                             // Console message and SFX
                             players[j].addScore(10);
-                            GltronMonoGame.Sound.SoundManager.Instance.PlayCrash();
-                            GltronMonoGame.Sound.SoundManager.Instance.StopEngine();
+                            GltronMobileEngine.Sound.SoundManager.Instance.PlayCrash();
+                            GltronMobileEngine.Sound.SoundManager.Instance.StopEngine();
 
                             break;
                         }
