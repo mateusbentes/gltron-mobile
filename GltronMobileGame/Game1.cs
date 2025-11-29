@@ -73,6 +73,7 @@ public class Game1 : Game
             // Log resolution info
             var viewport = GraphicsDevice.Viewport;
             Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height}");
+            Android.Util.Log.Info("GLTRON", $"Preferred resolution: {_graphics.PreferredBackBufferWidth}x{_graphics.PreferredBackBufferHeight}");
             Android.Util.Log.Info("GLTRON", $"Aspect ratio: {(float)viewport.Width / viewport.Height}");
             
             // Initialize game with screen size - with null check
@@ -86,7 +87,8 @@ public class Game1 : Game
                 Android.Util.Log.Error("GLTRON", "GLTronGame is null in Initialize!");
             }
             
-            TouchPanel.EnabledGestures = GestureType.Tap;
+            // REMOVED: TouchPanel.EnabledGestures = GestureType.Tap;
+            // This conflicts with TouchPanel.GetState() on Android
             Android.Util.Log.Info("GLTRON", "Game1 Initialize complete");
         }
         catch (System.Exception ex)
@@ -243,24 +245,95 @@ public class Game1 : Game
                 return;
             }
 
-            // Clear with dark background
-            GraphicsDevice.Clear(Color.Black);
+            var viewport = GraphicsDevice.Viewport;
+            bool isInMenu = _glTronGame?.IsShowingMenu() == true;
 
-            // Always draw debug info
-            _spriteBatch.Begin();
-            
+            // STEP 1: DRAW 3D FIRST (correct rendering order)
+            if (!isInMenu && _worldGraphics != null && _camera != null)
+            {
+                try
+                {
+                    // Reset pipeline state for 3D rendering
+                    GraphicsDevice.BlendState = BlendState.Opaque;
+                    GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+                    GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
+                    // Clear includes depth buffer (CRITICAL for Android)
+                    GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+
+                    // Safe camera update
+                    var player = _glTronGame?.GetOwnPlayer();
+                    Vector3 playerPos = Vector3.Zero;
+                    if (player != null)
+                    {
+                        try
+                        {
+                            playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
+                        }
+                        catch
+                        {
+                            playerPos = Vector3.Zero; // Fallback if player coordinates not ready
+                        }
+                    }
+
+                    _camera.Update(playerPos, gameTime);
+
+                    // Begin 3D rendering
+                    _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
+
+                    // Draw floor
+                    _worldGraphics.DrawFloor();
+
+                    // Draw walls
+                    var walls = _glTronGame?.GetWalls();
+                    if (walls != null)
+                    {
+                        _worldGraphics.DrawWalls(walls);
+                    }
+
+                    // Draw player trails
+                    var players = _glTronGame?.GetPlayers();
+                    if (players != null && _trailsRenderer != null)
+                    {
+                        for (int i = 0; i < players.Length; i++)
+                        {
+                            if (players[i] != null)
+                            {
+                                _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                            }
+                        }
+                    }
+
+                    // End 3D rendering
+                    _worldGraphics.EndDraw();
+                }
+                catch (System.Exception ex)
+                {
+                    try { Android.Util.Log.Error("GLTRON", $"3D rendering error: {ex}"); } catch { }
+                    // Fallback: clear screen if 3D fails
+                    GraphicsDevice.Clear(Color.Black);
+                }
+            }
+            else
+            {
+                // Clear screen for menu or when 3D not available
+                GraphicsDevice.Clear(Color.Black);
+            }
+
+            // STEP 2: DRAW 2D UI/HUD ON TOP
             try
             {
-                var viewport = GraphicsDevice.Viewport;
+                _spriteBatch.Begin();
                 
                 if (_font != null)
                 {
+                    // Debug info
                     _spriteBatch.DrawString(_font, $"Resolution: {viewport.Width}x{viewport.Height}", new Vector2(10, 10), Color.White);
                     _spriteBatch.DrawString(_font, $"Orientation: {(viewport.Width > viewport.Height ? "Landscape" : "Portrait")}", new Vector2(10, 30), Color.White);
                     
-                    // Check if we're in menu state
-                    if (_glTronGame?.IsShowingMenu() == true)
+                    if (isInMenu)
                     {
+                        // Menu UI
                         var centerX = viewport.Width / 2;
                         var centerY = viewport.Height / 2;
                         
@@ -281,19 +354,24 @@ public class Game1 : Game
                     else
                     {
                         _spriteBatch.DrawString(_font, "Game State: Running", new Vector2(10, 50), Color.Green);
+                        
+                        // Draw HUD with real score if available
+                        int score = 0;
+                        try { score = _glTronGame?.GetOwnPlayerScore() ?? 0; } catch { }
+                        _hud?.Draw(gameTime, score);
                     }
                 }
                 else
                 {
-                    // Draw simple colored rectangles as fallback when font fails
-                    // Create a 1x1 white texture for drawing rectangles
-                    if (_whitePixel == null)
+                    // Fallback rendering when font fails
+                    _whitePixel ??= new Texture2D(GraphicsDevice, 1, 1);
+                    if (_whitePixel.IsDisposed || _whitePixel.GraphicsDevice == null)
                     {
                         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
                         _whitePixel.SetData(new[] { Color.White });
                     }
                     
-                    if (_glTronGame?.IsShowingMenu() == true)
+                    if (isInMenu)
                     {
                         // Draw menu indicator - cyan rectangle in center
                         _spriteBatch.Draw(_whitePixel, new Rectangle(viewport.Width/2 - 100, viewport.Height/2 - 50, 200, 100), Color.Cyan);
@@ -304,72 +382,22 @@ public class Game1 : Game
                         _spriteBatch.Draw(_whitePixel, new Rectangle(10, 10, 100, 50), Color.Green);
                     }
                 }
+                
+                _spriteBatch.End();
             }
             catch (System.Exception ex)
             {
-                try { Android.Util.Log.Error("GLTRON", $"SpriteBatch drawing error: {ex}"); } catch { }
-            }
-            
-            _spriteBatch.End();
-
-            // Draw 3D world only when not in menu and 3D components are available
-            if (_glTronGame?.IsShowingMenu() == false && _worldGraphics != null && _camera != null && _trailsRenderer != null)
-            {
-                try
-                {
-                    // Update camera to follow player
-                    var playerPos = Vector3.Zero;
-                    if (_glTronGame?.GetOwnPlayer() != null)
-                    {
-                        var player = _glTronGame?.GetOwnPlayer();
-                        playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
-                    }
-                    _camera.Update(playerPos, gameTime);
-
-                    // Begin 3D rendering
-                    _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
-
-                    // Draw floor
-                    _worldGraphics.DrawFloor();
-
-                    // Draw walls
-                    var walls = _glTronGame?.GetWalls();
-                    if (walls != null)
-                    {
-                        _worldGraphics.DrawWalls(walls);
-                    }
-
-                    // Draw player trails
-                    var players = _glTronGame?.GetPlayers();
-                    if (players != null)
-                    {
-                        for (int i = 0; i < players.Length; i++)
-                        {
-                            if (players[i] != null)
-                            {
-                                _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
-                            }
-                        }
-                    }
-
-                    // End 3D rendering
-                    _worldGraphics.EndDraw();
-
-                    // Draw HUD with real score if available
-                    int score = 0;
-                    try { score = _glTronGame?.GetOwnPlayerScore() ?? 0; } catch { }
-                    _hud?.Draw(gameTime, score);
-                }
-                catch (System.Exception ex)
-                {
-                    try { Android.Util.Log.Error("GLTRON", $"3D rendering error: {ex}"); } catch { }
-                }
+                try { Android.Util.Log.Error("GLTRON", $"2D UI rendering error: {ex}"); } catch { }
             }
 
-            // Run game logic rendering (win/lose logic) - with null check
-            if (GraphicsDevice != null)
+            // STEP 3: Run game logic rendering (win/lose logic)
+            try
             {
                 _glTronGame?.RenderGame(GraphicsDevice);
+            }
+            catch (System.Exception ex)
+            {
+                try { Android.Util.Log.Error("GLTRON", $"Game logic rendering error: {ex}"); } catch { }
             }
         }
         catch (System.Exception ex)
