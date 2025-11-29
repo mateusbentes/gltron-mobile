@@ -26,9 +26,6 @@ public class Game1 : Game
             System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor start");
             
             // CRITICAL: Initialize GraphicsDeviceManager first - this must succeed
-            // Add a small delay to ensure Android context is ready
-            System.Threading.Thread.Sleep(100);
-            
             _graphics = new GraphicsDeviceManager(this);
             if (_graphics == null)
             {
@@ -46,35 +43,21 @@ public class Game1 : Game
             _graphics.PreferredBackBufferWidth = 1280;
             _graphics.PreferredBackBufferHeight = 720;
             
-            // Delay GLTronGame creation until later to avoid initialization issues
-            _glTronGame = null; // Will be created in Initialize()
+            // CRITICAL: Create GLTronGame in constructor to avoid null reference issues
+            _glTronGame = new GLTronGame();
+            if (_glTronGame == null)
+            {
+                throw new System.InvalidOperationException("Failed to create GLTronGame instance");
+            }
             
             // CRITICAL: Don't access GraphicsDevice here - it doesn't exist yet!
             
             System.Diagnostics.Debug.WriteLine("GLTRON: Game1 constructor complete");
-            
-            // Platform-specific logging if available
-            try
-            {
-#if ANDROID
-                Android.Util.Log.Info("GLTRON", "Game1 constructor complete (Android)");
-#endif
-            }
-            catch { /* Ignore logging errors */ }
         }
         catch (System.Exception ex)
         {
             // Platform-agnostic error logging
             System.Diagnostics.Debug.WriteLine($"GLTRON: Game1 constructor failed: {ex}");
-            
-            try
-            {
-#if ANDROID
-                Android.Util.Log.Error("GLTRON", $"Game1 constructor failed: {ex}");
-#endif
-            }
-            catch { /* Ignore logging errors */ }
-            
             throw;
         }
     }
@@ -134,29 +117,15 @@ public class Game1 : Game
             }
             catch { /* Ignore platform-specific logging errors */ }
             
-            // Create GLTronGame now that graphics are initialized
+            // Initialize game with screen size - GLTronGame was created in constructor
             if (_glTronGame == null)
             {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine("GLTRON: Creating GLTronGame in Initialize");
-                    _glTronGame = new GLTronGame();
-                    if (_glTronGame == null)
-                    {
-                        throw new System.InvalidOperationException("Failed to create GLTronGame instance");
-                    }
-                    System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame created successfully");
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: GLTronGame creation failed: {ex}");
-                    throw new System.InvalidOperationException($"Failed to create GLTronGame: {ex.Message}", ex);
-                }
+                throw new System.InvalidOperationException("GLTronGame is null in Initialize - constructor failed");
             }
 
-            // Initialize game with screen size - with comprehensive null checks
             try
             {
+                System.Diagnostics.Debug.WriteLine("GLTRON: Initializing GLTronGame with screen size");
                 _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
                 _glTronGame.initialiseGame();
                 System.Diagnostics.Debug.WriteLine("GLTRON: GLTronGame initialized successfully");
@@ -203,23 +172,23 @@ public class Game1 : Game
     {
         try
         {
-            Android.Util.Log.Info("GLTRON", "LoadContent start");
+            System.Diagnostics.Debug.WriteLine("GLTRON: LoadContent start");
             
             // CRITICAL: Check GraphicsDevice exists before using it
             if (GraphicsDevice == null)
             {
-                Android.Util.Log.Error("GLTRON", "GraphicsDevice is null in LoadContent!");
-                return;
+                System.Diagnostics.Debug.WriteLine("GLTRON: ERROR - GraphicsDevice is null in LoadContent!");
+                throw new System.InvalidOperationException("GraphicsDevice is null in LoadContent!");
             }
 
             // CRITICAL: Initialize SpriteBatch first
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            Android.Util.Log.Info("GLTRON", "SpriteBatch created");
+            System.Diagnostics.Debug.WriteLine("GLTRON: SpriteBatch created");
 
             // CRITICAL: Create white pixel texture for fallback rendering
             _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
             _whitePixel.SetData(new[] { Color.White });
-            Android.Util.Log.Info("GLTRON", "White pixel texture created");
+            System.Diagnostics.Debug.WriteLine("GLTRON: White pixel texture created");
 
             // Try to load font (non-critical)
             try

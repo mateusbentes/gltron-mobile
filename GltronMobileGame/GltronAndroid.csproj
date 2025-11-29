@@ -7,7 +7,6 @@
     <TargetFramework>net8.0-android</TargetFramework>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
     <TargetAndroidVersion>34</TargetAndroidVersion>
-    <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
     <AndroidTargetFrameworkVersion>v34.0</AndroidTargetFrameworkVersion>
     <AndroidTargetSdkVersion>34</AndroidTargetSdkVersion>
@@ -23,7 +22,7 @@
     <!-- MonoGame Content Pipeline Configuration -->
     <MonoGamePlatform>Android</MonoGamePlatform>
     <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
-    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+    <AndroidLinkMode>None</AndroidLinkMode>
   </PropertyGroup>
   
   <ItemGroup>

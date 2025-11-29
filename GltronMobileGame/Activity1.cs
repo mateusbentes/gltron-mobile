@@ -17,7 +17,7 @@ namespace gltron.org.gltronmobile
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
-    public class Activity1 : Activity
+    public class Activity1 : AndroidGameActivity
     {
         private Game1 _game;
 
@@ -36,11 +36,10 @@ namespace gltron.org.gltronmobile
                 // Create the game instance
                 _game = new Game1();
                 
-                Android.Util.Log.Info("GLTRON", "Step 2: Setting game view...");
+                Android.Util.Log.Info("GLTRON", "Step 2: Setting up MonoGame view...");
                 
-                // For MonoGame 3.8.1.303, we need to run the game directly
-                // The framework will handle Android integration internally
-                _game.Run();
+                // For MonoGame 3.8.2+, use SetContentView with game view
+                SetContentView((Android.Views.View)_game.Services.GetService(typeof(Android.Views.View)));
                 
                 Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
