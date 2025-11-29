@@ -22,6 +22,14 @@ public class Game1 : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        
+        // Set up graphics for mobile landscape
+        _graphics.IsFullScreen = true;
+        _graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+        
+        // Let the system determine the best resolution
+        _graphics.PreferredBackBufferWidth = 0;  // Auto-detect
+        _graphics.PreferredBackBufferHeight = 0; // Auto-detect
     }
 
     protected override void Initialize()
@@ -29,7 +37,19 @@ public class Game1 : Game
         try
         {
             Android.Util.Log.Info("GLTRON", "Game1 Initialize start");
+            
+            // Apply graphics settings
+            _graphics.ApplyChanges();
+            
+            // Log resolution info
+            var viewport = GraphicsDevice.Viewport;
+            Android.Util.Log.Info("GLTRON", $"Screen resolution: {viewport.Width}x{viewport.Height}");
+            Android.Util.Log.Info("GLTRON", $"Aspect ratio: {(float)viewport.Width / viewport.Height}");
+            
+            // Initialize game with screen size
+            _glTronGame.updateScreenSize(viewport.Width, viewport.Height);
             _glTronGame.initialiseGame();
+            
             TouchPanel.EnabledGestures = GestureType.Tap;
             Android.Util.Log.Info("GLTRON", "Game1 Initialize complete");
         }
@@ -97,7 +117,12 @@ public class Game1 : Game
         {
             if (touch.State == TouchLocationState.Pressed)
             {
-                _glTronGame.addTouchEvent(touch.Position.X, touch.Position.Y, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+                try 
+                { 
+                    Android.Util.Log.Info("GLTRON", $"Touch detected at: {touch.Position.X}, {touch.Position.Y}"); 
+                    _glTronGame.addTouchEvent(touch.Position.X, touch.Position.Y, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+                } 
+                catch { }
             }
         }
 
@@ -115,13 +140,17 @@ public class Game1 : Game
         // Clear with dark background
         GraphicsDevice.Clear(Color.Black);
 
+        // Always draw debug info
+        _spriteBatch.Begin();
+        var viewport = GraphicsDevice.Viewport;
+        _spriteBatch.DrawString(_font, $"Resolution: {viewport.Width}x{viewport.Height}", new Vector2(10, 10), Color.White);
+        _spriteBatch.DrawString(_font, $"Orientation: {(viewport.Width > viewport.Height ? "Landscape" : "Portrait")}", new Vector2(10, 30), Color.White);
+        
         // Check if we're in menu state
         if (_glTronGame.IsShowingMenu())
         {
-            // Draw simple menu
-            _spriteBatch.Begin();
-            var centerX = GraphicsDevice.Viewport.Width / 2;
-            var centerY = GraphicsDevice.Viewport.Height / 2;
+            var centerX = viewport.Width / 2;
+            var centerY = viewport.Height / 2;
             
             var titleText = "GLTron Mobile";
             var titleSize = _font.MeasureString(titleText);
@@ -135,10 +164,12 @@ public class Game1 : Game
             var instructSize = _font.MeasureString(instructText);
             _spriteBatch.DrawString(_font, instructText, new Vector2(centerX - instructSize.X/2, centerY), Color.White);
             
-            _spriteBatch.End();
+            _spriteBatch.DrawString(_font, "Menu State: Active", new Vector2(10, 50), Color.Green);
         }
         else
         {
+            _spriteBatch.DrawString(_font, "Game State: Running", new Vector2(10, 50), Color.Green);
+            
             // Game is running - draw 3D world
             try
             {
@@ -190,6 +221,8 @@ public class Game1 : Game
             try { score = _glTronGame.GetOwnPlayerScore(); } catch { }
             _hud?.Draw(gameTime, score);
         }
+        
+        _spriteBatch.End();
 
         // Run game logic rendering (win/lose logic)
         _glTronGame.RenderGame(GraphicsDevice);

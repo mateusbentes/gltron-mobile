@@ -152,7 +152,20 @@ namespace GltronMobileGame
 
         public void updateScreenSize(int width, int height)
         {
-            // Lógica de atualização de viewport será adaptada para o MonoGame
+            try 
+            { 
+                Android.Util.Log.Info("GLTRON", $"Screen size updated: {width}x{height}");
+                
+                // Ensure we're in landscape mode
+                if (width < height)
+                {
+                    Android.Util.Log.Warn("GLTRON", "Screen appears to be in portrait mode!");
+                }
+                
+                // Update any screen-dependent calculations here
+                // For now, just log the info
+            } 
+            catch { }
         }
 
         public void addTouchEvent(float x, float y, int screenWidth, int screenHeight)
