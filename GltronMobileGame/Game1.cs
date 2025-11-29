@@ -217,17 +217,33 @@ public class Game1 : Game
             // Initialize 3D graphics components (non-critical)
             try
             {
-                Android.Util.Log.Info("GLTRON", "Initializing 3D graphics components");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Initializing 3D graphics components");
                 _worldGraphics = new GltronMobileEngine.Video.WorldGraphics(GraphicsDevice, Content);
                 _worldGraphics.LoadContent(Content);
                 _trailsRenderer = new GltronMobileEngine.Video.TrailsRenderer(GraphicsDevice);
                 _trailsRenderer.LoadContent(Content);
                 _camera = new GltronMobileEngine.Video.Camera(GraphicsDevice.Viewport);
-                Android.Util.Log.Info("GLTRON", "3D graphics components initialized successfully");
+                System.Diagnostics.Debug.WriteLine("GLTRON: 3D graphics components initialized successfully");
+                
+                // Platform-specific logging if available
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", "3D graphics components initialized successfully");
+#endif
+                }
+                catch { /* Ignore platform-specific logging errors */ }
             }
             catch (System.Exception ex)
             {
-                try { Android.Util.Log.Error("GLTRON", $"3D graphics initialization failed: {ex}"); } catch { }
+                System.Diagnostics.Debug.WriteLine($"GLTRON: 3D graphics initialization failed: {ex}");
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Error("GLTRON", $"3D graphics initialization failed: {ex}");
+#endif
+                }
+                catch { /* Ignore platform-specific logging errors */ }
                 // Continue without 3D graphics
             }
 
@@ -336,6 +352,8 @@ public class Game1 : Game
 
             var viewport = GraphicsDevice.Viewport;
             bool isInMenu = _glTronGame?.IsShowingMenu() == true;
+
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Draw - isInMenu: {isInMenu}, _worldGraphics: {_worldGraphics != null}, _camera: {_camera != null}");
 
             // STEP 1: DRAW 3D FIRST (correct rendering order)
             if (!isInMenu && _worldGraphics != null && _camera != null)
@@ -447,7 +465,19 @@ public class Game1 : Game
                         // Draw HUD with real score if available
                         int score = 0;
                         try { score = _glTronGame?.GetOwnPlayerScore() ?? 0; } catch { }
-                        _hud?.Draw(gameTime, score);
+                        
+                        // End current SpriteBatch before HUD draws (HUD manages its own SpriteBatch)
+                        _spriteBatch.End();
+                        try
+                        {
+                            _hud?.Draw(gameTime, score);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"GLTRON: HUD Draw error: {ex.Message}");
+                        }
+                        // Restart SpriteBatch for any remaining UI
+                        _spriteBatch.Begin();
                     }
                 }
                 else
