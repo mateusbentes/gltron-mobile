@@ -52,21 +52,61 @@ public class SoundManager
     public void PlayEngine(float volume = 0.3f, bool loop = true)
     {
         if (_engine == null) return;
-        _engineInstance ??= _engine.CreateInstance();
-        _engineInstance.Volume = volume;
-        _engineInstance.IsLooped = loop;
-        if (_engineInstance.State != SoundState.Playing)
-            _engineInstance.Play();
+        
+        try
+        {
+            _engineInstance ??= _engine.CreateInstance();
+            if (_engineInstance == null) return;
+            
+            _engineInstance.Volume = volume;
+            _engineInstance.IsLooped = loop;
+            if (_engineInstance.State != SoundState.Playing)
+                _engineInstance.Play();
+        }
+        catch (System.Exception ex)
+        {
+            // Log error but don't crash the game
+            try { Android.Util.Log.Error("GLTRON", $"PlayEngine error: {ex}"); } catch { }
+        }
     }
 
     public void StopEngine()
     {
-        if (_engineInstance != null && _engineInstance.State == SoundState.Playing)
-            _engineInstance.Stop();
+        try
+        {
+            if (_engineInstance != null && _engineInstance.State == SoundState.Playing)
+                _engineInstance.Stop();
+        }
+        catch (System.Exception ex)
+        {
+            // Log error but don't crash the game
+            try { Android.Util.Log.Error("GLTRON", $"StopEngine error: {ex}"); } catch { }
+        }
     }
 
     public void PlayCrash(float volume = 0.8f)
     {
-        _crash?.Play(volume, 0f, 0f);
+        try
+        {
+            _crash?.Play(volume, 0f, 0f);
+        }
+        catch (System.Exception ex)
+        {
+            // Log error but don't crash the game
+            try { Android.Util.Log.Error("GLTRON", $"PlayCrash error: {ex}"); } catch { }
+        }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _engineInstance?.Dispose();
+            _engineInstance = null;
+        }
+        catch (System.Exception ex)
+        {
+            try { Android.Util.Log.Error("GLTRON", $"SoundManager dispose error: {ex}"); } catch { }
+        }
     }
 }
