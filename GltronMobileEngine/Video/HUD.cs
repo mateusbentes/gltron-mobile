@@ -47,7 +47,7 @@ public class HUD
 
         // Instructions / win/lose
         if (_showInstr)
-            _sb.DrawString(_font, "Tap left/right to turn", new Vector2(10, 30), Color.Yellow);
+            _sb.DrawString(_font, "Swipe left/right to turn", new Vector2(10, 30), Color.Yellow);
         if (_showWin)
             _sb.DrawString(_font, "YOU WIN", new Vector2(10, 50), Color.Lime);
         if (_showLose)

@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,7 +17,7 @@ public class WorldGraphics
     private readonly Texture2D?[] _skyFaces = new Texture2D?[6];
     
     // CRITICAL FIX: Add motorcycle model support
-    private Model? _lightCycleModel;
+    private SimpleObjLoader.SimpleObjModel? _lightCycleObjModel;
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
     {
@@ -40,13 +41,21 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        // CRITICAL FIX: Try to load motorcycle model (like Java lightcyclehigh.obj)
+        // CRITICAL FIX: Load motorcycle model using custom OBJ loader
         try
         {
-            // Note: MonoGame doesn't support .obj directly, would need FBX or custom loader
-            // For now, we'll use the cube representation but this is where the model would load
-            // _lightCycleModel = content.Load<Model>("Assets/lightcycle");
-            System.Diagnostics.Debug.WriteLine("GLTRON: Motorcycle model loading not implemented yet - using cube representation");
+            // Try to load the OBJ file directly
+            string objPath = Path.Combine(content.RootDirectory, "Assets", "lightcyclehigh.obj");
+            _lightCycleObjModel = SimpleObjLoader.LoadFromFile(objPath);
+            
+            if (_lightCycleObjModel != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle OBJ model loaded successfully - {_lightCycleObjModel.Vertices.Length} vertices, {_lightCycleObjModel.TriangleCount} triangles");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load motorcycle OBJ model - using cube representation");
+            }
         }
         catch (System.Exception ex)
         {
@@ -228,11 +237,11 @@ public class WorldGraphics
             float y = p.getYpos();
             int direction = p.getDirection();
             
-            // CRITICAL FIX: Draw a more visible motorcycle representation
-            if (_lightCycleModel != null)
+            // CRITICAL FIX: Draw actual motorcycle model or fallback
+            if (_lightCycleObjModel != null)
             {
-                // Use actual 3D model if available
-                var world = Matrix.CreateScale(1f) *
+                // Use loaded OBJ model
+                var world = Matrix.CreateScale(0.5f) * // Scale down the model
                            Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
                            Matrix.CreateTranslation(x, 0f, y);
                 fx.World = world;
@@ -244,16 +253,16 @@ public class WorldGraphics
                     colorIndex = concretePlayer.getPlayerColorIndex();
                 }
                 fx.DiffuseColor = GetPlayerColor(colorIndex);
+                fx.Alpha = 1.0f;
                 
-                // Draw the actual model
-                foreach (var mesh in _lightCycleModel.Meshes)
-                {
-                    foreach (var part in mesh.MeshParts)
-                    {
-                        part.Effect = fx;
-                    }
-                    mesh.Draw();
-                }
+                // Set up effect for model rendering
+                fx.TextureEnabled = false;
+                fx.VertexColorEnabled = false;
+                fx.LightingEnabled = true;
+                fx.EnableDefaultLighting();
+                
+                // Draw the OBJ model
+                DrawObjModel(fx, _lightCycleObjModel);
             }
             else
             {
@@ -376,6 +385,33 @@ public class WorldGraphics
         catch { }
         
         return color;
+    }
+    
+    private void DrawObjModel(BasicEffect fx, SimpleObjLoader.SimpleObjModel model)
+    {
+        try
+        {
+            if (model.Vertices.Length == 0) return;
+            
+            foreach (var pass in fx.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                
+                using var vb = new VertexBuffer(_gd, typeof(VertexPositionNormalTexture), model.Vertices.Length, BufferUsage.WriteOnly);
+                using var ib = new IndexBuffer(_gd, IndexElementSize.ThirtyTwoBits, model.Indices.Length, BufferUsage.WriteOnly);
+                
+                vb.SetData(model.Vertices);
+                ib.SetData(model.Indices);
+                
+                _gd.SetVertexBuffer(vb);
+                _gd.Indices = ib;
+                _gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, model.TriangleCount);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawObjModel error: {ex.Message}");
+        }
     }
 
     public void SetGridSize(float gridSize)

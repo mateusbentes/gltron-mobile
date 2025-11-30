@@ -10,8 +10,9 @@ namespace GltronMobileGame
 {
     public class GLTronGame
     {
-        private Camera _camera;
-        private WorldGraphics _world;
+        // Note: Camera and WorldGraphics are handled by Game1.cs, not here
+        // private Camera _camera;  // Removed - unused
+        // private WorldGraphics _world;  // Removed - unused
 
 
         // Multiplatform logging helper

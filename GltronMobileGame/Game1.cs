@@ -18,6 +18,13 @@ public class Game1 : Game
     private GltronMobileEngine.Video.Camera _camera;
     private Texture2D _whitePixel;
     private Texture2D _menuBackground;
+    
+    // CRITICAL FIX: Swipe detection system
+    private Vector2? _swipeStartPosition = null;
+    private double _swipeStartTime = 0;
+    private bool _swipeInProgress = false;
+    private const float MIN_SWIPE_DISTANCE = 50f; // Minimum distance for a swipe
+    private const double MAX_SWIPE_TIME = 1000; // Maximum time for a swipe (milliseconds)
 
     public Game1()
     {
@@ -328,43 +335,8 @@ public class Game1 : Game
             return;
         }
 
-        // Processar entrada de toque
-        TouchCollection touchCollection = TouchPanel.GetState();
-        foreach (TouchLocation touch in touchCollection)
-        {
-            if (touch.State == TouchLocationState.Pressed)
-            {
-                try 
-                { 
-                    Android.Util.Log.Info("GLTRON", $"Touch detected at: {touch.Position.X}, {touch.Position.Y}"); 
-                    
-                    // Check for camera switch (top-right corner tap)
-                    var viewport = GraphicsDevice.Viewport;
-                    if (touch.Position.X > viewport.Width * 0.8f && touch.Position.Y < viewport.Height * 0.2f)
-                    {
-                        // Switch camera mode
-                        if (_camera != null)
-                        {
-                            var currentType = _camera.GetCameraType();
-                            var newType = currentType == GltronMobileEngine.Video.CameraType.Follow ? 
-                                         GltronMobileEngine.Video.CameraType.Bird : 
-                                         GltronMobileEngine.Video.CameraType.Follow;
-                            _camera.SetCameraType(newType);
-                            Android.Util.Log.Info("GLTRON", $"Camera switched to: {newType}");
-                        }
-                    }
-                    else
-                    {
-                        // Normal game input
-                        _glTronGame?.addTouchEvent(touch.Position.X, touch.Position.Y, viewport.Width, viewport.Height);
-                    }
-                } 
-                catch (System.Exception ex)
-                {
-                    try { Android.Util.Log.Error("GLTRON", $"Touch event error: {ex}"); } catch { }
-                }
-            }
-        }
+        // CRITICAL FIX: Process swipe gestures instead of simple taps
+        ProcessSwipeInput(gameTime);
 
         // Run game logic with null check
         try
@@ -821,7 +793,7 @@ public class Game1 : Game
                             new Vector2(centerX - startSize.X/2, centerY + 100), Color.White);
                         
                         // Secondary instruction
-                        var instructText = "Tap left/right to turn";
+                        var instructText = "Swipe left/right to turn";
                         var instructSize = _font.MeasureString(instructText);
                         _spriteBatch.DrawString(_font, instructText, 
                             new Vector2(centerX - instructSize.X/2, centerY + 150), Color.White);
@@ -845,12 +817,28 @@ public class Game1 : Game
                         // Restart SpriteBatch for additional UI elements
                         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
                         
-                        // Camera mode indicator (additional to HUD)
+                        // Camera mode indicator and swipe instructions
                         if (_camera != null)
                         {
                             var cameraMode = _camera.GetCameraType().ToString();
                             _spriteBatch.DrawString(_font, $"Camera: {cameraMode}", new Vector2(viewport.Width - 200, viewport.Height - 50), Color.Cyan);
                             _spriteBatch.DrawString(_font, "Tap top-right to switch camera", new Vector2(viewport.Width - 300, 10), Color.Gray);
+                        }
+                        
+                        // Swipe instructions
+                        _spriteBatch.DrawString(_font, "◄ Swipe Left", new Vector2(10, viewport.Height - 80), Color.Yellow);
+                        _spriteBatch.DrawString(_font, "Swipe Right ►", new Vector2(viewport.Width - 150, viewport.Height - 80), Color.Yellow);
+                        
+                        // Show swipe in progress
+                        if (_swipeInProgress && _swipeStartPosition.HasValue)
+                        {
+                            // Draw swipe start indicator
+                            var swipeColor = Color.Lime;
+                            var swipeRect = new Rectangle((int)_swipeStartPosition.Value.X - 10, (int)_swipeStartPosition.Value.Y - 10, 20, 20);
+                            _spriteBatch.Draw(_whitePixel, swipeRect, swipeColor);
+                            
+                            // Show swipe instruction
+                            _spriteBatch.DrawString(_font, "Swiping...", new Vector2(_swipeStartPosition.Value.X - 40, _swipeStartPosition.Value.Y - 40), swipeColor);
                         }
                         
 
@@ -909,5 +897,242 @@ public class Game1 : Game
 #endif
         }
         catch { }
+    }
+    
+    private void ProcessSwipeInput(GameTime gameTime)
+    {
+        try
+        {
+            TouchCollection touchCollection = TouchPanel.GetState();
+            var viewport = GraphicsDevice.Viewport;
+            
+            foreach (TouchLocation touch in touchCollection)
+            {
+                switch (touch.State)
+                {
+                    case TouchLocationState.Pressed:
+                        // Start tracking swipe
+                        _swipeStartPosition = touch.Position;
+                        _swipeStartTime = gameTime.TotalGameTime.TotalMilliseconds;
+                        _swipeInProgress = true;
+                        
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Debug("GLTRON", $"Swipe started at: {touch.Position.X:F1}, {touch.Position.Y:F1}");
+#endif
+                        }
+                        catch { }
+                        
+                        // Check for camera switch (top-right corner tap)
+                        if (touch.Position.X > viewport.Width * 0.8f && touch.Position.Y < viewport.Height * 0.2f)
+                        {
+                            if (_camera != null)
+                            {
+                                var currentType = _camera.GetCameraType();
+                                var newType = currentType == GltronMobileEngine.Video.CameraType.Follow ? 
+                                             GltronMobileEngine.Video.CameraType.Bird : 
+                                             GltronMobileEngine.Video.CameraType.Follow;
+                                _camera.SetCameraType(newType);
+                                
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Info("GLTRON", $"Camera switched to: {newType}");
+#endif
+                                }
+                                catch { }
+                            }
+                            _swipeInProgress = false; // Cancel swipe for camera switch
+                        }
+                        
+                        // Handle menu tap (if in menu)
+                        if (_glTronGame?.IsShowingMenu() == true)
+                        {
+                            _glTronGame?.addTouchEvent(touch.Position.X, touch.Position.Y, viewport.Width, viewport.Height);
+                            _swipeInProgress = false; // Cancel swipe for menu
+                        }
+                        break;
+                        
+                    case TouchLocationState.Released:
+                        if (_swipeInProgress && _swipeStartPosition.HasValue)
+                        {
+                            ProcessSwipeGesture(touch.Position, gameTime);
+                        }
+                        
+                        // Reset swipe tracking
+                        _swipeStartPosition = null;
+                        _swipeInProgress = false;
+                        break;
+                        
+                    case TouchLocationState.Moved:
+                        // Optional: Could show swipe preview here
+                        break;
+                }
+            }
+            
+            // Timeout check for swipes
+            if (_swipeInProgress && _swipeStartPosition.HasValue)
+            {
+                double elapsedTime = gameTime.TotalGameTime.TotalMilliseconds - _swipeStartTime;
+                if (elapsedTime > MAX_SWIPE_TIME)
+                {
+                    // Swipe took too long, cancel it
+                    _swipeStartPosition = null;
+                    _swipeInProgress = false;
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Debug("GLTRON", "Swipe timed out");
+#endif
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"ProcessSwipeInput error: {ex}");
+#endif
+#pragma warning disable CS0168 // Variable is used in conditional compilation
+            }
+            catch { }
+#pragma warning restore CS0168
+        }
+    }
+    
+    private void ProcessSwipeGesture(Vector2 endPosition, GameTime gameTime)
+    {
+        try
+        {
+            if (!_swipeStartPosition.HasValue) return;
+            
+            Vector2 swipeVector = endPosition - _swipeStartPosition.Value;
+            float swipeDistance = swipeVector.Length();
+            double swipeTime = gameTime.TotalGameTime.TotalMilliseconds - _swipeStartTime;
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Debug("GLTRON", $"Swipe: distance={swipeDistance:F1}, time={swipeTime:F0}ms, vector=({swipeVector.X:F1},{swipeVector.Y:F1})");
+#endif
+            }
+            catch { }
+            
+            // Check if swipe is long enough
+            if (swipeDistance < MIN_SWIPE_DISTANCE)
+            {
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Debug("GLTRON", "Swipe too short, treating as tap");
+#endif
+                }
+                catch { }
+                
+                // Treat as tap if not in menu
+                if (_glTronGame?.IsShowingMenu() == false)
+                {
+                    // For very short swipes, treat as tap to start game if in initial state
+                    var viewport = GraphicsDevice.Viewport;
+                    _glTronGame?.addTouchEvent(_swipeStartPosition.Value.X, _swipeStartPosition.Value.Y, viewport.Width, viewport.Height);
+                }
+                return;
+            }
+            
+            // Determine swipe direction
+            float horizontalComponent = System.Math.Abs(swipeVector.X);
+            float verticalComponent = System.Math.Abs(swipeVector.Y);
+            
+            // Only process horizontal swipes for turning
+            if (horizontalComponent > verticalComponent)
+            {
+                // Horizontal swipe
+                if (swipeVector.X > 0)
+                {
+                    // Swipe right
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Info("GLTRON", "SWIPE RIGHT - Turn Right");
+#endif
+                    }
+                    catch { }
+                }
+                else
+                {
+                    // Swipe left
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
+                    
+                    try
+                    {
+#if ANDROID
+                        Android.Util.Log.Info("GLTRON", "SWIPE LEFT - Turn Left");
+#endif
+                    }
+                    catch { }
+                }
+            }
+            else
+            {
+                // Vertical swipe - could be used for other actions in the future
+                try
+                {
+#if ANDROID
+                    Android.Util.Log.Debug("GLTRON", "Vertical swipe detected (not used for turning)");
+#endif
+                }
+                catch { }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"ProcessSwipeGesture error: {ex}");
+#endif
+#pragma warning disable CS0168 // Variable is used in conditional compilation
+            }
+            catch { }
+#pragma warning restore CS0168
+        }
+    }
+    
+    private void ProcessTurnInput(int turnDirection)
+    {
+        try
+        {
+            if (_glTronGame?.IsShowingMenu() == true) return;
+            
+            // Send turn command to game
+            var viewport = GraphicsDevice.Viewport;
+            
+            // Simulate the touch event that would cause a turn
+            // Use center position and let the game logic handle the turn direction
+            float centerX = turnDirection == GltronMobileEngine.Player.TURN_LEFT ? 
+                           viewport.Width * 0.25f : viewport.Width * 0.75f;
+            float centerY = viewport.Height * 0.5f;
+            
+            _glTronGame?.addTouchEvent(centerX, centerY, viewport.Width, viewport.Height);
+        }
+        catch (System.Exception ex)
+        {
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"ProcessTurnInput error: {ex}");
+#endif
+#pragma warning disable CS0168 // Variable is used in conditional compilation
+            }
+            catch { }
+#pragma warning restore CS0168
+        }
     }
 }
