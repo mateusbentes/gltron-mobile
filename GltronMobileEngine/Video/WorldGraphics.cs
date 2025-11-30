@@ -50,56 +50,11 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        // Try to load FBX models
-        try
-        {
-            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load FBX models...");
-            
-            _bikeModel = content.Load<Model>("Assets/lightcyclehigh");
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Lightcycle FBX loaded - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
-            
-            _recognizerModel = content.Load<Model>("Assets/recognizerhigh");
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer FBX loaded - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
-            
-            if (_bikeModel != null)
-            {
-                _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
-                _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
-                
-                // Debug model bounds
-                foreach (var mesh in _bikeModel.Meshes)
-                {
-                    var sphere = mesh.BoundingSphere;
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Bike mesh '{mesh.Name}' - Center: ({sphere.Center.X:F2}, {sphere.Center.Y:F2}, {sphere.Center.Z:F2}), Radius: {sphere.Radius:F2}");
-                }
-            }
-            
-            if (_recognizerModel != null)
-            {
-                _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
-                _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
-                
-                // Debug model bounds
-                foreach (var mesh in _recognizerModel.Meshes)
-                {
-                    var sphere = mesh.BoundingSphere;
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer mesh '{mesh.Name}' - Center: ({sphere.Center.X:F2}, {sphere.Center.Y:F2}, {sphere.Center.Z:F2}), Radius: {sphere.Radius:F2}");
-                }
-            }
-            
-            _useFbxModels = true;
-            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ FBX models loaded successfully!");
-        }
-        catch (Microsoft.Xna.Framework.Content.ContentLoadException ex)
-        {
-            _useFbxModels = false;
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Could not load FBX models, falling back to procedural geometry: {ex.Message}");
-        }
-        catch (System.Exception ex)
-        {
-            _useFbxModels = false;
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Unexpected error loading FBX models, falling back to procedural geometry: {ex.Message}");
-        }
+        // Run comprehensive diagnostics
+        ModelDiagnostics.DiagnoseModelLoading(content);
+        
+        // Try to load models in order of preference: FBX -> OBJ -> Procedural
+        _useFbxModels = TryLoadModels(content);
     }
     
     /// <summary>
@@ -1206,6 +1161,98 @@ public class WorldGraphics
         catch (System.Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"GLTRON: DrawRecognizerShadowWithFbx error: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Try to load models in order of preference: FBX -> OBJ -> Fallback to procedural
+    /// </summary>
+    private bool TryLoadModels(ContentManager content)
+    {
+        // Try FBX first
+        if (TryLoadFbxModels(content))
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Using FBX models");
+            return true;
+        }
+        
+        // Try OBJ as fallback
+        if (TryLoadObjModels(content))
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ Using OBJ models (FBX failed)");
+            return true;
+        }
+        
+        // Fall back to procedural
+        System.Diagnostics.Debug.WriteLine("GLTRON: ⚠️ Using procedural models (both FBX and OBJ failed)");
+        return false;
+    }
+    
+    private bool TryLoadFbxModels(ContentManager content)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load FBX models...");
+            
+            _bikeModel = content.Load<Model>("Assets/lightcyclehigh");
+            _recognizerModel = content.Load<Model>("Assets/recognizerhigh");
+            
+            if (_bikeModel != null && _recognizerModel != null)
+            {
+                _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
+                _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
+                
+                _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
+                _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: FBX Bike - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: FBX Recognizer - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+                
+                return true;
+            }
+            
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: FBX loading failed: {ex.Message}");
+            return false;
+        }
+    }
+    
+    private bool TryLoadObjModels(ContentManager content)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load OBJ models...");
+            
+            // Try loading OBJ files processed by content pipeline
+            var bikeModel = content.Load<Model>("Assets/lightcyclehigh.obj");
+            var recognizerModel = content.Load<Model>("Assets/recognizerhigh.obj");
+            
+            if (bikeModel != null && recognizerModel != null)
+            {
+                _bikeModel = bikeModel;
+                _recognizerModel = recognizerModel;
+                
+                _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
+                _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
+                
+                _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
+                _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ Bike - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ Recognizer - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+                
+                return true;
+            }
+            
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ loading failed: {ex.Message}");
+            return false;
         }
     }
 }
