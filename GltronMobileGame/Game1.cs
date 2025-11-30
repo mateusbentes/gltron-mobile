@@ -460,19 +460,46 @@ public class Game1 : Game
                         }
                     }
 
-                    // Safe camera update
+                    // Safe camera update - get real player position
                     var player = _glTronGame?.GetOwnPlayer();
                     Vector3 playerPos = Vector3.Zero;
                     if (player != null)
                     {
                         try
                         {
-                            playerPos = new Vector3(player.getXpos(), 0, player.getYpos());
+                            float x = player.getXpos();
+                            float y = player.getYpos();
+                            playerPos = new Vector3(x, 0, y); // X, Y=0, Z for GLTron coordinate system
+                            
+                            try
+                            {
+#if ANDROID
+                                Android.Util.Log.Info("GLTRON", $"Player position: X={x:F2}, Y={y:F2}");
+#endif
+                            }
+                            catch { }
                         }
-                        catch
+                        catch (System.Exception ex)
                         {
+                            try
+                            {
+#if ANDROID
+                                Android.Util.Log.Error("GLTRON", $"Failed to get player position: {ex.Message}");
+#endif
+                            }
+                            catch { }
                             playerPos = Vector3.Zero; // Fallback if player coordinates not ready
                         }
+                    }
+                    else
+                    {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Warn("GLTRON", "Player is null - using default camera position");
+#endif
+                        }
+                        catch { }
                     }
 
                     try
@@ -551,6 +578,21 @@ public class Game1 : Game
                     {
                         try
                         {
+                            // Debug wall positions
+                            try
+                            {
+#if ANDROID
+                                for (int i = 0; i < walls.Length && i < 4; i++)
+                                {
+                                    if (walls[i] != null)
+                                    {
+                                        Android.Util.Log.Info("GLTRON", $"Wall {i}: start=({walls[i].vStart.v[0]:F1},{walls[i].vStart.v[1]:F1}) dir=({walls[i].vDirection.v[0]:F1},{walls[i].vDirection.v[1]:F1})");
+                                    }
+                                }
+#endif
+                            }
+                            catch { }
+                            
                             _worldGraphics.DrawWalls(walls);
                             try
                             {
@@ -570,6 +612,16 @@ public class Game1 : Game
                             }
                             catch { }
                         }
+                    }
+                    else
+                    {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Warn("GLTRON", "Walls array is null!");
+#endif
+                        }
+                        catch { }
                     }
 
                     // Draw player trails

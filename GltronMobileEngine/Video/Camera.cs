@@ -82,7 +82,8 @@ public class Camera
 
     public void Update(Vector3 playerPos, GameTime gameTime)
     {
-        _target = new Vector3(playerPos.X, playerPos.Z, B_HEIGHT); // GLTron uses Y as up
+        // GLTron coordinate system: X=left/right, Y=forward/back, Z=up/down
+        _target = new Vector3(playerPos.X, playerPos.Z, B_HEIGHT);
         
         float dt = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
         
@@ -105,17 +106,29 @@ public class Camera
 
     private void UpdateCirclingCamera(float dt)
     {
-        // Circling camera rotates around the player
+        // Circling camera rotates around the player (like original GLTron)
         _phi += CAM_SPEED * dt;
         
-        float r = _movement[0];
-        float chi = _movement[1];
-        float phi = _phi + _movement[2] + _movement[3];
+        float r = _movement[0];     // Distance from player
+        float chi = _movement[1];   // Elevation angle
+        float phi = _phi + _movement[2] + _movement[3]; // Rotation angle
         
-        // Position camera in spherical coordinates around target
+        // Position camera in spherical coordinates around target (GLTron style)
         _camPos.X = _target.X + r * (float)System.Math.Cos(phi) * (float)System.Math.Sin(chi);
         _camPos.Y = _target.Y + r * (float)System.Math.Sin(phi) * (float)System.Math.Sin(chi);
-        _camPos.Z = r * (float)System.Math.Cos(chi);
+        _camPos.Z = _target.Z + r * (float)System.Math.Cos(chi);
+        
+        // Debug logging
+        try
+        {
+#if ANDROID
+            if (dt > 0) // Only log occasionally
+            {
+                Android.Util.Log.Debug("GLTRON", $"Camera: target=({_target.X:F1},{_target.Y:F1},{_target.Z:F1}) cam=({_camPos.X:F1},{_camPos.Y:F1},{_camPos.Z:F1}) phi={phi:F2}");
+            }
+#endif
+        }
+        catch { }
     }
 
     private void UpdateFollowCamera()
@@ -134,7 +147,24 @@ public class Camera
     {
         // GLTron uses Z as up axis, MonoGame uses Y as up
         Vector3 up = Vector3.UnitZ;
+        
+        // Ensure camera is not at the same position as target
+        if (Vector3.Distance(_camPos, _target) < 0.1f)
+        {
+            _camPos = _target + new Vector3(CAM_CIRCLE_DIST, 0, CAM_CIRCLE_Z);
+        }
+        
         View = Matrix.CreateLookAt(_camPos, _target, up);
+        
+        // Debug logging
+        try
+        {
+#if ANDROID
+            float distance = Vector3.Distance(_camPos, _target);
+            Android.Util.Log.Debug("GLTRON", $"Camera distance from target: {distance:F2}");
+#endif
+        }
+        catch { }
     }
 
     public void SetCameraType(CameraType type)

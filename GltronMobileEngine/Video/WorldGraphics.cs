@@ -68,21 +68,44 @@ public class WorldGraphics
     public void DrawWalls(ISegment[] walls)
     {
         if (walls == null || _texWall == null) return;
+        
+        // CRITICAL FIX: Reset world matrix to identity before drawing walls
+        // The floor drawing sets a scale transform that must be cleared
+        Effect.World = Matrix.Identity;
         Effect.Texture = _texWall;
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Debug("GLTRON", $"Drawing {walls.Length} wall segments with world matrix reset");
+#endif
+        }
+        catch { }
+        
         foreach (var seg in walls)
         {
             var start = new Vector3(seg.vStart.v[0], 0, seg.vStart.v[1]);
             var end = new Vector3(seg.vStart.v[0] + seg.vDirection.v[0], 0, seg.vStart.v[1] + seg.vDirection.v[1]);
+            
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Debug("GLTRON", $"Wall segment: start=({start.X:F1},{start.Y:F1},{start.Z:F1}) end=({end.X:F1},{end.Y:F1},{end.Z:F1})");
+#endif
+            }
+            catch { }
+            
             DrawWallSegment(start, end, 8f);
         }
     }
 
     private void DrawWallSegment(Vector3 a, Vector3 b, float height)
     {
-        // Simple immediate-mode style via a small local buffer
+        // Calculate wall segment geometry
         var dir = b - a;
         var len = dir.Length();
-        if (len <= 0.0001f) return;
+        if (len <= 0.0001f) return; // Skip degenerate segments
+        
         dir.Normalize();
         var up = Vector3.Up * height;
 
@@ -97,14 +120,13 @@ public class WorldGraphics
         verts[2] = new VertexPositionTexture(v2, new Vector2(len * 0.05f, 1));
         verts[3] = new VertexPositionTexture(v3, new Vector2(len * 0.05f, 0));
 
-        using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
-        vb.SetData(verts);
-
+        // PERFORMANCE FIX: Use DrawUserPrimitives instead of creating VB per frame
+        // Also ensure world matrix is identity for walls
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
+            Effect.World = Matrix.Identity; // Ensure no scale transform from floor
             pass.Apply();
-            _gd.SetVertexBuffer(vb);
-            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            _gd.DrawUserPrimitives(PrimitiveType.TriangleStrip, verts, 0, 2);
         }
     }
 
