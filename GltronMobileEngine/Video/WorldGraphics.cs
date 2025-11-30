@@ -17,7 +17,14 @@ public class WorldGraphics
     private Texture2D? _texWall;
     private readonly Texture2D?[] _skyFaces = new Texture2D?[6];
     
-    // Procedural geometry - no OBJ loading needed
+    // FBX Models
+    private Model? _bikeModel;
+    private Model? _recognizerModel;
+    private Matrix[]? _bikeBoneTransforms;
+    private Matrix[]? _recognizerBoneTransforms;
+    private bool _useFbxModels = false;
+    
+    // Fallback procedural geometry
     private const float RECOGNIZER_SIZE = 2.0f;
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
@@ -33,6 +40,7 @@ public class WorldGraphics
 
     public void LoadContent(ContentManager content)
     {
+        // Load textures
         _texFloor = content.Load<Texture2D>("Assets/gltron_floor");
         _texWall = content.Load<Texture2D>("Assets/gltron_wall_1");
         _skyFaces[0] = content.Load<Texture2D>("Assets/skybox0");
@@ -42,7 +50,56 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        System.Diagnostics.Debug.WriteLine("GLTRON: Using procedural geometry for motorcycles and recognizers - no OBJ loading needed");
+        // Try to load FBX models
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("GLTRON: Attempting to load FBX models...");
+            
+            _bikeModel = content.Load<Model>("Assets/lightcyclehigh");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Lightcycle FBX loaded - {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+            
+            _recognizerModel = content.Load<Model>("Assets/recognizerhigh");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer FBX loaded - {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+            
+            if (_bikeModel != null)
+            {
+                _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
+                _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
+                
+                // Debug model bounds
+                foreach (var mesh in _bikeModel.Meshes)
+                {
+                    var sphere = mesh.BoundingSphere;
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Bike mesh '{mesh.Name}' - Center: ({sphere.Center.X:F2}, {sphere.Center.Y:F2}, {sphere.Center.Z:F2}), Radius: {sphere.Radius:F2}");
+                }
+            }
+            
+            if (_recognizerModel != null)
+            {
+                _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
+                _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
+                
+                // Debug model bounds
+                foreach (var mesh in _recognizerModel.Meshes)
+                {
+                    var sphere = mesh.BoundingSphere;
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer mesh '{mesh.Name}' - Center: ({sphere.Center.X:F2}, {sphere.Center.Y:F2}, {sphere.Center.Z:F2}), Radius: {sphere.Radius:F2}");
+                }
+            }
+            
+            _useFbxModels = true;
+            System.Diagnostics.Debug.WriteLine("GLTRON: ✅ FBX models loaded successfully!");
+        }
+        catch (Microsoft.Xna.Framework.Content.ContentLoadException ex)
+        {
+            _useFbxModels = false;
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Could not load FBX models, falling back to procedural geometry: {ex.Message}");
+        }
+        catch (System.Exception ex)
+        {
+            _useFbxModels = false;
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Unexpected error loading FBX models, falling back to procedural geometry: {ex.Message}");
+        }
     }
     
     /// <summary>
@@ -313,22 +370,39 @@ public class WorldGraphics
             float y = p.getYpos();
             int direction = p.getDirection();
             
-            // Use procedural motorcycle geometry - always reliable
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing procedural motorcycle for player {p.getPlayerNum()}");
-            
-            const float BIKE_SCALE = 1.0f; // Increased from 0.5f to make motorcycles more visible
-            var world = Matrix.CreateScale(BIKE_SCALE) * // Scale appropriately
-                       Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
-                       Matrix.CreateTranslation(x, 0f, y);
-            fx.World = world;
-            
             // Get player color
             int colorIndex = p.getPlayerNum();
             if (p is GltronMobileEngine.Player concretePlayer)
             {
                 colorIndex = concretePlayer.getPlayerColorIndex();
             }
-            fx.DiffuseColor = GetPlayerColor(colorIndex);
+            Vector3 playerColor = GetPlayerColor(colorIndex);
+            
+            const float BIKE_SCALE = 1.0f;
+            var world = Matrix.CreateScale(BIKE_SCALE) *
+                       Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
+                       Matrix.CreateTranslation(x, 0f, y);
+            
+            // Try to draw FBX model first
+            if (_useFbxModels && _bikeModel != null && _bikeBoneTransforms != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing FBX lightcycle for player {p.getPlayerNum()} at ({x:F1}, {y:F1})");
+                
+                // CRITICAL FIX: Adjust scale and positioning for FBX models
+                const float FBX_BIKE_SCALE = 0.5f; // FBX models might be larger than expected
+                var fbxWorld = Matrix.CreateScale(FBX_BIKE_SCALE) *
+                              Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
+                              Matrix.CreateTranslation(x, 0f, y);
+                
+                DrawFbxModel(_bikeModel, _bikeBoneTransforms, fbxWorld, playerColor);
+                return;
+            }
+            
+            // Fallback to procedural motorcycle
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing procedural motorcycle for player {p.getPlayerNum()}");
+            
+            fx.World = world;
+            fx.DiffuseColor = playerColor;
             fx.Alpha = 1.0f;
             
             // Set up effect for model rendering
@@ -415,8 +489,6 @@ public class WorldGraphics
             return;
         }
         
-        System.Diagnostics.Debug.WriteLine("GLTRON: Drawing procedural recognizer");
-        
         try
         {
             // Set up recognizer rendering state
@@ -424,14 +496,42 @@ public class WorldGraphics
             _gd.DepthStencilState = DepthStencilState.Default;
             _gd.RasterizerState = RasterizerState.CullCounterClockwise;
             
-            // Get recognizer transformation (using constant size instead of model bounding box)
+            // Get recognizer color
+            Vector4 recognizerColor = recognizer.GetColor();
+            Vector3 color = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
+            
+            // Try to draw FBX model first
+            if (_useFbxModels && _recognizerModel != null && _recognizerBoneTransforms != null)
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: Drawing FBX recognizer");
+                
+                // CRITICAL FIX: Use a reasonable size for recognizer positioning
+                Vector3 modelSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
+                Vector3 position = recognizer.GetPosition(modelSize);
+                float angle = recognizer.GetAngle();
+                
+                // CRITICAL FIX: Proper scaling and positioning for FBX recognizer
+                const float FBX_RECOGNIZER_SCALE = 0.3f; // FBX models might be larger
+                Matrix fbxWorldMatrix = Matrix.CreateScale(FBX_RECOGNIZER_SCALE) *
+                                       Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
+                                       Matrix.CreateTranslation(position);
+                
+                // Draw the FBX recognizer
+                DrawFbxModel(_recognizerModel, _recognizerBoneTransforms, fbxWorldMatrix, color);
+                
+                // Draw shadow
+                DrawRecognizerShadowWithFbx(recognizer, modelSize);
+                return;
+            }
+            
+            // Fallback to procedural recognizer
+            System.Diagnostics.Debug.WriteLine("GLTRON: Drawing procedural recognizer");
+            
             Vector3 recognizerSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
             Matrix worldMatrix = recognizer.GetWorldMatrix(recognizerSize);
             fx.World = worldMatrix;
             
-            // Set recognizer color
-            Vector4 recognizerColor = recognizer.GetColor();
-            fx.DiffuseColor = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
+            fx.DiffuseColor = color;
             fx.Alpha = recognizerColor.W;
             
             // Set up effect for model rendering
@@ -442,7 +542,7 @@ public class WorldGraphics
             
             // Set special lighting for recognizer (like Java version)
             fx.EmissiveColor = new Vector3(0.1f, 0.05f, 0.05f); // Slight red glow
-            fx.SpecularColor = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
+            fx.SpecularColor = color;
             fx.SpecularPower = 16.0f;
             
             // Draw the procedural recognizer
@@ -575,23 +675,7 @@ public class WorldGraphics
     }
     
     
-    private Vector3 CalculateBoundingBoxSize(SimpleObjLoader.SimpleObjModel model)
-    {
-        if (model.Vertices.Length == 0)
-            return Vector3.One;
-        
-        Vector3 min = new Vector3(float.MaxValue);
-        Vector3 max = new Vector3(float.MinValue);
-        
-        foreach (var vertex in model.Vertices)
-        {
-            Vector3 pos = vertex.Position;
-            min = Vector3.Min(min, pos);
-            max = Vector3.Max(max, pos);
-        }
-        
-        return max - min;
-    }
+
 
     /// <summary>
     /// Create wheel-like geometry (thin cylinder)
@@ -973,6 +1057,155 @@ public class WorldGraphics
             _gd.SetVertexBuffer(vb);
             
             _gd.DrawPrimitives(PrimitiveType.TriangleList, 0, vertices.Count / 3);
+        }
+    }
+    
+    /// <summary>
+    /// Draw an FBX model with proper lighting and color
+    /// </summary>
+    private void DrawFbxModel(Model model, Matrix[] boneTransforms, Matrix world, Vector3 tint)
+    {
+        // CRITICAL FIX: Set proper render states for FBX models
+        var oldRasterizer = _gd.RasterizerState;
+        var oldDepthStencil = _gd.DepthStencilState;
+        var oldBlend = _gd.BlendState;
+        
+        _gd.RasterizerState = RasterizerState.CullCounterClockwise; // Proper culling
+        _gd.DepthStencilState = DepthStencilState.Default; // Enable depth testing
+        _gd.BlendState = BlendState.Opaque; // No blending for solid models
+        
+        Matrix view = Effect.View;
+        Matrix proj = Effect.Projection;
+        
+        foreach (var mesh in model.Meshes)
+        {
+            // CRITICAL FIX: Combine transforms properly
+            Matrix meshWorld = boneTransforms[mesh.ParentBone.Index] * world;
+            
+            foreach (var effect in mesh.Effects)
+            {
+                if (effect is BasicEffect basicEffect)
+                {
+                    // CRITICAL FIX: Set all required properties
+                    basicEffect.World = meshWorld;
+                    basicEffect.View = view;
+                    basicEffect.Projection = proj;
+                    
+                    // CRITICAL FIX: Proper lighting setup
+                    basicEffect.LightingEnabled = true;
+                    basicEffect.EnableDefaultLighting();
+                    
+                    // CRITICAL FIX: Color and material setup
+                    basicEffect.DiffuseColor = tint;
+                    basicEffect.SpecularColor = Vector3.One * 0.2f; // Slight specular
+                    basicEffect.SpecularPower = 16.0f;
+                    basicEffect.Alpha = 1.0f;
+                    
+                    // CRITICAL FIX: Texture handling
+                    if (basicEffect.Texture != null)
+                    {
+                        basicEffect.TextureEnabled = true;
+                    }
+                    else
+                    {
+                        basicEffect.TextureEnabled = false;
+                    }
+                    
+                    // CRITICAL FIX: Disable vertex colors to use our tint
+                    basicEffect.VertexColorEnabled = false;
+                }
+            }
+            
+            // CRITICAL FIX: Draw the mesh
+            mesh.Draw();
+        }
+        
+        // Restore render states
+        _gd.RasterizerState = oldRasterizer;
+        _gd.DepthStencilState = oldDepthStencil;
+        _gd.BlendState = oldBlend;
+    }
+    
+    /// <summary>
+    /// Compute approximate bounding box size from model mesh bounding spheres
+    /// </summary>
+    private Vector3 ComputeModelSize(Model model)
+    {
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
+        
+        foreach (var mesh in model.Meshes)
+        {
+            var sphere = mesh.BoundingSphere;
+            var center = sphere.Center;
+            var radius = sphere.Radius;
+            min = Vector3.Min(min, center - new Vector3(radius));
+            max = Vector3.Max(max, center + new Vector3(radius));
+        }
+        
+        return max - min;
+    }
+    
+    /// <summary>
+    /// Draw a flattened shadow of the FBX recognizer on the ground
+    /// </summary>
+    private void DrawRecognizerShadowWithFbx(Recognizer recognizer, Vector3 modelSize)
+    {
+        if (_recognizerModel == null || _recognizerBoneTransforms == null) return;
+        
+        try
+        {
+            // CRITICAL FIX: Save and set proper render states for shadow
+            var oldBlend = _gd.BlendState;
+            var oldDepth = _gd.DepthStencilState;
+            var oldRasterizer = _gd.RasterizerState;
+            
+            _gd.BlendState = BlendState.AlphaBlend;
+            _gd.DepthStencilState = DepthStencilState.DepthRead; // Don't write depth for shadows
+            _gd.RasterizerState = RasterizerState.CullNone; // Draw both sides of shadow
+            
+            // Get recognizer position and angle
+            Vector3 position = recognizer.GetPosition(modelSize);
+            float angle = recognizer.GetAngle();
+            
+            // CRITICAL FIX: Create proper shadow matrix
+            const float SHADOW_SCALE = 0.2f; // Smaller shadow
+            Matrix shadowWorld = Matrix.CreateScale(SHADOW_SCALE, 0.01f, SHADOW_SCALE) * // Very flat shadow
+                                Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
+                                Matrix.CreateTranslation(position.X, 0.1f, position.Z); // Slightly above ground
+            
+            var view = Effect.View;
+            var proj = Effect.Projection;
+            
+            foreach (var mesh in _recognizerModel.Meshes)
+            {
+                Matrix meshWorld = _recognizerBoneTransforms[mesh.ParentBone.Index] * shadowWorld;
+                
+                foreach (var effect in mesh.Effects)
+                {
+                    if (effect is BasicEffect basicEffect)
+                    {
+                        basicEffect.World = meshWorld;
+                        basicEffect.View = view;
+                        basicEffect.Projection = proj;
+                        basicEffect.LightingEnabled = false;
+                        basicEffect.DiffuseColor = Vector3.Zero; // Black shadow
+                        basicEffect.Alpha = 0.2f; // More transparent
+                        basicEffect.TextureEnabled = false;
+                        basicEffect.VertexColorEnabled = false;
+                    }
+                }
+                mesh.Draw();
+            }
+            
+            // CRITICAL FIX: Restore all render states
+            _gd.BlendState = oldBlend;
+            _gd.DepthStencilState = oldDepth;
+            _gd.RasterizerState = oldRasterizer;
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawRecognizerShadowWithFbx error: {ex.Message}");
         }
     }
 }

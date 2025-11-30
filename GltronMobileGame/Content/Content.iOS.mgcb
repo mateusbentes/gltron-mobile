@@ -42,4 +42,15 @@
 /processor:SoundEffectProcessor
 /build:Assets/game_recognizer.ogg
 
+# 3D Models
+#begin Assets/lightcyclehigh.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/build:Assets/lightcyclehigh.fbx
+
+#begin Assets/recognizerhigh.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/build:Assets/recognizerhigh.fbx
+
 

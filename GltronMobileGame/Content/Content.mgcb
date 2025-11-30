@@ -212,6 +212,17 @@
 /processorParam:TextureFormat=Color
 /build:Assets/gltron_bitmap.png
 
+# 3D Models
+#begin Assets/lightcyclehigh.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/build:Assets/lightcyclehigh.fbx
+
+#begin Assets/recognizerhigh.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/build:Assets/recognizerhigh.fbx
+
 
 
 
