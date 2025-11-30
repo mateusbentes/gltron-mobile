@@ -21,15 +21,15 @@ public class Camera
     public int ViewportWidth { get; }
     public int ViewportHeight { get; }
 
-    // GLTron camera constants (from original Java code)
-    private const float CAM_CIRCLE_DIST = 17.0f;
-    private const float CAM_FOLLOW_DIST = 18.0f;
-    private const float CAM_FOLLOW_FAR_DIST = 30.0f;
-    private const float CAM_FOLLOW_CLOSE_DIST = 0.0f;
-    private const float CAM_FOLLOW_BIRD_DIST = 200.0f;
-    private const float CAM_CIRCLE_Z = 8.0f;
+    // GLTron camera constants (adjusted for better arena view)
+    private const float CAM_CIRCLE_DIST = 35.0f;  // Increased to see full arena
+    private const float CAM_FOLLOW_DIST = 25.0f;
+    private const float CAM_FOLLOW_FAR_DIST = 45.0f;
+    private const float CAM_FOLLOW_CLOSE_DIST = 15.0f;
+    private const float CAM_FOLLOW_BIRD_DIST = 80.0f;  // Better bird's eye view
+    private const float CAM_CIRCLE_Z = 20.0f;  // Higher up to see arena
     private const float CAM_COCKPIT_Z = 4.0f;
-    private const float CAM_SPEED = 0.000698f;
+    private const float CAM_SPEED = 0.001f;  // Slightly faster rotation
     private const float B_HEIGHT = 0.0f;
 
     private CameraType _cameraType;
@@ -61,9 +61,9 @@ public class Camera
             1.0f,  // Closer near plane
             500f); // Reasonable far plane
         
-        // Initialize as circling camera (default in original)
-        _cameraType = CameraType.Circling;
-        InitializeCirclingCamera();
+        // Initialize as bird's eye view camera (better for seeing full arena)
+        _cameraType = CameraType.Bird;
+        InitializeBirdCamera();
         
         _target = Vector3.Zero;
         _camPos = new Vector3(CAM_CIRCLE_DIST, 0, CAM_CIRCLE_Z);
@@ -80,10 +80,30 @@ public class Camera
         _phi = 0.0f;
     }
 
+    private void InitializeBirdCamera()
+    {
+        _movement[0] = CamDefaults[4, 0]; // R - bird's eye distance
+        _movement[1] = CamDefaults[4, 1]; // CHI - bird's eye angle
+        _movement[2] = CamDefaults[4, 2]; // PHI
+        _movement[3] = 0.0f; // PHI_OFFSET
+        _phi = 0.0f;
+    }
+
     public void Update(Vector3 playerPos, GameTime gameTime)
     {
         // GLTron coordinate system: X=left/right, Y=forward/back, Z=up/down
-        _target = new Vector3(playerPos.X, playerPos.Z, B_HEIGHT);
+        // For GLTron, center the camera on the arena center, not just player
+        Vector3 arenaCenter = new Vector3(50f, 50f, 0f); // Arena is 100x100, so center is 50,50
+        
+        // If player position is valid, use it, otherwise use arena center
+        if (playerPos != Vector3.Zero)
+        {
+            _target = new Vector3(playerPos.X, playerPos.Z, B_HEIGHT);
+        }
+        else
+        {
+            _target = arenaCenter;
+        }
         
         float dt = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
         
@@ -96,8 +116,10 @@ public class Camera
             case CameraType.Follow:
             case CameraType.FollowFar:
             case CameraType.FollowClose:
-            case CameraType.Bird:
                 UpdateFollowCamera();
+                break;
+            case CameraType.Bird:
+                UpdateBirdCamera();
                 break;
         }
         
@@ -141,6 +163,19 @@ public class Camera
         _camPos.X = _target.X + r * (float)System.Math.Cos(phi) * (float)System.Math.Sin(chi);
         _camPos.Y = _target.Y + r * (float)System.Math.Sin(phi) * (float)System.Math.Sin(chi);
         _camPos.Z = r * (float)System.Math.Cos(chi);
+    }
+
+    private void UpdateBirdCamera()
+    {
+        // Bird's eye view - high above the arena center, looking down
+        Vector3 arenaCenter = new Vector3(50f, 50f, 0f);
+        _target = arenaCenter; // Always look at arena center
+        
+        float r = _movement[0]; // Distance from center
+        float height = CAM_FOLLOW_BIRD_DIST; // High above
+        
+        // Position camera high above arena center
+        _camPos = new Vector3(arenaCenter.X, arenaCenter.Y, height);
     }
 
     private void UpdateViewMatrix()

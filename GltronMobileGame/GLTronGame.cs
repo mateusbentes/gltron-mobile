@@ -44,7 +44,7 @@ namespace GltronMobileGame
 
         public const int MAX_PLAYERS = 6;
         public const int OWN_PLAYER = 0;
-        public int mCurrentPlayers = 2; // Valor padrão
+        public int mCurrentPlayers = 4; // Original GLTron has 4 players
 
         // Define game textures (serão carregadas no MonoGame Game1)
         // private GLTexture ExplodeTex;
@@ -279,7 +279,7 @@ namespace GltronMobileGame
                 }
 
                 // Initialize players with detailed logging
-                Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players");
+                Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players (like original GLTron)");
                 for (int player = 0; player < mCurrentPlayers; player++)
                 {
                     try
@@ -294,7 +294,12 @@ namespace GltronMobileGame
                         }
                         
                         Players[player].setSpeed(10.0f); // Set initial speed so players are active
-                        Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Player {player} created and speed set");
+                        
+                        // Log player starting position and direction
+                        float x = Players[player].getXpos();
+                        float y = Players[player].getYpos();
+                        int dir = Players[player].getDirection();
+                        Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Player {player} created at ({x:F1},{y:F1}) facing direction {dir}");
                     }
                     catch (System.Exception ex)
                     {

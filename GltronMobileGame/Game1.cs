@@ -624,16 +624,36 @@ public class Game1 : Game
                         catch { }
                     }
 
-                    // Draw player trails
+                    // Draw player trails for all 4 players
                     var players = _glTronGame?.GetPlayers();
                     if (players != null && _trailsRenderer != null)
                     {
-                        for (int i = 0; i < players.Length; i++)
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Debug("GLTRON", $"Drawing trails for {players.Length} players");
+#endif
+                        }
+                        catch { }
+                        
+                        for (int i = 0; i < players.Length && i < 4; i++) // Ensure we draw all 4 players
                         {
                             if (players[i] != null)
                             {
                                 try
                                 {
+                                    float x = players[i].getXpos();
+                                    float y = players[i].getYpos();
+                                    float speed = players[i].getSpeed();
+                                    
+                                    try
+                                    {
+#if ANDROID
+                                        Android.Util.Log.Debug("GLTRON", $"Player {i}: pos=({x:F1},{y:F1}) speed={speed:F1}");
+#endif
+                                    }
+                                    catch { }
+                                    
                                     _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
                                 }
                                 catch (System.Exception ex)
@@ -646,6 +666,16 @@ public class Game1 : Game
                                     }
                                     catch { }
                                 }
+                            }
+                            else
+                            {
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Warn("GLTRON", $"Player {i} is null - not drawing trail");
+#endif
+                                }
+                                catch { }
                             }
                         }
                     }

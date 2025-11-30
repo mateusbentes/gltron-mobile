@@ -56,7 +56,11 @@ public class WorldGraphics
         _gd.RasterizerState = RasterizerState.CullNone;
         _gd.DepthStencilState = DepthStencilState.Default;
         Effect.Texture = _texFloor;
-        Effect.World = Matrix.CreateScale(100f, 1f, 100f);
+        
+        // Scale floor to match GLTron arena size (100x100 units)
+        // But position it correctly at origin
+        Effect.World = Matrix.CreateScale(50f, 1f, 50f) * Matrix.CreateTranslation(50f, 0f, 50f);
+        
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();

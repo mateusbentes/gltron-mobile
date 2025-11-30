@@ -52,12 +52,12 @@ namespace GltronMobileEngine
         private float exp_radius;
 
         private readonly float[,] START_POS = {
-            { 0.5f, 0.25f },
-            { 0.75f, 0.5f },
-            { 0.5f, 0.4f },
-            { 0.25f, 0.5f },
-            { 0.25f, 0.25f },
-            { 0.65f, 0.35f }
+            { 0.25f, 0.25f },  // Player 0 - bottom left
+            { 0.75f, 0.25f },  // Player 1 - bottom right  
+            { 0.75f, 0.75f },  // Player 2 - top right
+            { 0.25f, 0.75f },  // Player 3 - top left
+            { 0.5f, 0.25f },   // Extra positions if needed
+            { 0.5f, 0.75f }
         };
 
         // Cores serão tratadas de forma diferente no MonoGame
@@ -75,8 +75,9 @@ namespace GltronMobileEngine
             int colour = 0;
             bool done = false;
 
-            Random rand = new Random();
-            Direction = rand.Next(4); // 0..3
+            // Set initial direction based on player position (face toward center)
+            int[] startDirections = { 0, 3, 2, 1 }; // up, left, down, right
+            Direction = startDirections[player_number % 4];
             LastDirection = Direction;
 
             Trails[0] = new Segment();
