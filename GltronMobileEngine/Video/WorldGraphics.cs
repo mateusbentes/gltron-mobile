@@ -45,116 +45,75 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        // CRITICAL FIX: Load motorcycle OBJ from the Content folder via TitleContainer
-        try
+        // CRITICAL FIX: Load motorcycle and recognizer models with robust multi-path loading
+        _lightCycleObjModel = TryLoadObjModel("lightcyclehigh.obj", content);
+        _recognizerObjModel = TryLoadObjModel("recognizerhigh.obj", content);
+        
+        if (_recognizerObjModel != null)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Content root directory: {content.RootDirectory}");
-            
-            // Try multiple path formats for cross-platform compatibility
-            // These paths work with the CopyToOutputDirectory approach
-            string[] possiblePaths = {
-                "Content/Assets/lightcyclehigh.obj",
-                "Assets/lightcyclehigh.obj",
-                Path.Combine(content.RootDirectory, "Assets", "lightcyclehigh.obj"),
-                "lightcyclehigh.obj",
-                "./Content/Assets/lightcyclehigh.obj",
-                "./Assets/lightcyclehigh.obj"
-            };
-            
-            foreach (string relativePath in possiblePaths)
-            {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load OBJ from: {relativePath}");
-                    
-                    using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(relativePath);
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Stream opened successfully, length: {stream.Length}");
-                    
-                    _lightCycleObjModel = SimpleObjLoader.LoadFromStream(stream);
-                    
-                    if (_lightCycleObjModel != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle OBJ model loaded successfully from {relativePath} - {_lightCycleObjModel.Vertices.Length} vertices, {_lightCycleObjModel.TriangleCount} triangles");
-                        break;
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Stream loaded but parsing failed for {relativePath}");
-                    }
-                }
-                catch (System.Exception pathEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load from {relativePath}: {pathEx.Message}");
-                }
-            }
-            
-            if (_lightCycleObjModel == null)
-            {
-                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load motorcycle OBJ from any path - using cube fallback");
-            }
+            _recognizerBoundingBoxSize = CalculateBoundingBoxSize(_recognizerObjModel);
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer bounding box size: {_recognizerBoundingBoxSize}");
         }
-        catch (System.Exception ex)
+    }
+    
+    /// <summary>
+    /// CRITICAL FIX: Robust OBJ model loading with multiple path fallbacks
+    /// Uses TitleContainer.OpenStream for cross-platform file access
+    /// </summary>
+    private SimpleObjLoader.SimpleObjModel? TryLoadObjModel(string filename, ContentManager content)
+    {
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load {filename}");
+        
+        // Try multiple path formats for cross-platform compatibility
+        // Note: Files should be set to "Copy to Output Directory = Copy if newer" in project
+        string[] possiblePaths = {
+            $"Content/Assets/{filename}",                           // Standard content path
+            $"Assets/{filename}",                                   // Direct assets path
+            filename,                                               // Direct filename
+            $"./Content/Assets/{filename}",                         // Relative content path
+            $"./Assets/{filename}",                                 // Relative assets path
+            $"./{filename}",                                        // Current directory
+            Path.Combine("Content", "Assets", filename),            // Platform-specific path
+            Path.Combine("Assets", filename)                        // Platform-specific assets path
+        };
+        
+        foreach (string relativePath in possiblePaths)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle model load failed: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine("GLTRON: Using cube fallback representation");
-            _lightCycleObjModel = null;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Trying TitleContainer path: {relativePath}");
+                
+                using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(relativePath);
+                if (stream == null || stream.Length == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Stream is null or empty for {relativePath}");
+                    continue;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Stream opened successfully, length: {stream.Length}");
+                
+                var model = SimpleObjLoader.LoadFromStream(stream);
+                
+                if (model != null && model.Vertices.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: {filename} loaded successfully from {relativePath}");
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Model stats - {model.Vertices.Length} vertices, {model.TriangleCount} triangles");
+                    return model;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Model parsing failed or empty for {relativePath}");
+                }
+            }
+            catch (System.Exception pathEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load from {relativePath}: {pathEx.Message}");
+            }
         }
         
-        // CRITICAL FIX: Load recognizer OBJ from the Content folder via TitleContainer
-        try
-        {
-            // Try multiple path formats for cross-platform compatibility
-            // These paths work with the CopyToOutputDirectory approach
-            string[] recognizerPaths = {
-                "Content/Assets/recognizerhigh.obj",
-                "Assets/recognizerhigh.obj",
-                Path.Combine(content.RootDirectory, "Assets", "recognizerhigh.obj"),
-                "recognizerhigh.obj",
-                "./Content/Assets/recognizerhigh.obj",
-                "./Assets/recognizerhigh.obj"
-            };
-            
-            foreach (string recognizerPath in recognizerPaths)
-            {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load Recognizer OBJ from: {recognizerPath}");
-                    
-                    using var recognizerStream = Microsoft.Xna.Framework.TitleContainer.OpenStream(recognizerPath);
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer stream opened successfully, length: {recognizerStream.Length}");
-                    
-                    _recognizerObjModel = SimpleObjLoader.LoadFromStream(recognizerStream);
-                    
-                    if (_recognizerObjModel != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer OBJ model loaded successfully from {recognizerPath} - {_recognizerObjModel.Vertices.Length} vertices, {_recognizerObjModel.TriangleCount} triangles");
-                        
-                        // Calculate bounding box size for recognizer positioning
-                        _recognizerBoundingBoxSize = CalculateBoundingBoxSize(_recognizerObjModel);
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer bounding box size: {_recognizerBoundingBoxSize}");
-                        break;
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer stream loaded but parsing failed for {recognizerPath}");
-                    }
-                }
-                catch (System.Exception pathEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load recognizer from {recognizerPath}: {pathEx.Message}");
-                }
-            }
-            
-            if (_recognizerObjModel == null)
-            {
-                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load recognizer OBJ from any path");
-            }
-        }
-        catch (System.Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer model load failed: {ex.Message}");
-            _recognizerObjModel = null;
-        }
+        System.Diagnostics.Debug.WriteLine($"GLTRON: ALL ATTEMPTS FAILED for {filename} - will use fallback cube rendering");
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Make sure {filename} is set to 'Copy to Output Directory = Copy if newer' in the project");
+        return null;
     }
 
     public void BeginDraw(Matrix view, Matrix proj)
@@ -179,29 +138,29 @@ public class WorldGraphics
         Effect.DiffuseColor = Vector3.One; // White/neutral color for floor
         Effect.Alpha = 1.0f;
 
-        // CRITICAL FIX: Match Java floor rendering exactly
-        int l = (int)(_gridSize / 4f);
-        if (l <= 0) l = 25;
-        float t = l / 12f;
+        // CRITICAL FIX: Match Java floor rendering constants exactly
+        float S = _gridSize;                    // Grid size (e.g., 100)
+        int tileSize = (int)(S / 4f);          // Java uses gridSize/4 for tile size
+        if (tileSize <= 0) tileSize = 25;      // Minimum tile size fallback
+        float uvScale = tileSize / 12f;        // Java uses 12.0f as texture scale denominator
+
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Floor rendering - GridSize: {S}, TileSize: {tileSize}, UVScale: {uvScale}");
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            for (int i = 0; i < (int)_gridSize; i += l)
+            for (int x = 0; x < (int)S; x += tileSize)
             {
-                for (int j = 0; j < (int)_gridSize; j += l)
+                for (int z = 0; z < (int)S; z += tileSize)
                 {
-                    // Match Java floor quad generation
+                    // Match Java floor quad generation exactly
                     var verts = new VertexPositionTexture[4];
-                    verts[0] = new VertexPositionTexture(new Vector3(i, 0, j), new Vector2(0f, 0f));
-                    verts[1] = new VertexPositionTexture(new Vector3(i + l, 0, j), new Vector2(t, 0f));
-                    verts[2] = new VertexPositionTexture(new Vector3(i, 0, j + l), new Vector2(0f, t));
-                    verts[3] = new VertexPositionTexture(new Vector3(i + l, 0, j + l), new Vector2(t, t));
+                    verts[0] = new VertexPositionTexture(new Vector3(x, 0, z), new Vector2(0f, 0f));
+                    verts[1] = new VertexPositionTexture(new Vector3(x + tileSize, 0, z), new Vector2(uvScale, 0f));
+                    verts[2] = new VertexPositionTexture(new Vector3(x, 0, z + tileSize), new Vector2(0f, uvScale));
+                    verts[3] = new VertexPositionTexture(new Vector3(x + tileSize, 0, z + tileSize), new Vector2(uvScale, uvScale));
 
-                    using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
-                    vb.SetData(verts);
-                    _gd.SetVertexBuffer(vb);
-                    _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+                    DrawQuad(verts);
                 }
             }
         }
@@ -223,27 +182,30 @@ public class WorldGraphics
         _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
 
-        // CRITICAL FIX: Match Java wall geometry exactly
-        float h = 48.0f; // Wall height from Java
-        float s = _gridSize;
+        // CRITICAL FIX: Match Java wall constants exactly
+        float S = _gridSize;                    // Grid size (e.g., 100)
+        float H = 48.0f;                       // Wall height from Java (exactly 48 units)
+        float uvScale = S / 240f;              // Java uses 240.0f as texture scale denominator
 
-        // Java wall vertices (converted to MonoGame coordinate system)
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Wall rendering - GridSize: {S}, Height: {H}, UVScale: {uvScale}");
+
+        // Java wall vertices (converted to MonoGame coordinate system) - match exactly
         var quads = new (Vector3 a, Vector3 b, Vector3 c, Vector3 d)[]
         {
-            // Wall 1: Bottom wall (Y=0)
-            (new Vector3(0, h, 0), new Vector3(s, h, 0), new Vector3(0, 0, 0), new Vector3(s, 0, 0)),
+            // Wall 1: Bottom wall (Z=0)
+            (new Vector3(0, H, 0), new Vector3(S, H, 0), new Vector3(0, 0, 0), new Vector3(S, 0, 0)),
             // Wall 2: Right wall (X=gridSize)  
-            (new Vector3(s, h, 0), new Vector3(s, h, s), new Vector3(s, 0, 0), new Vector3(s, 0, s)),
-            // Wall 3: Top wall (Y=gridSize)
-            (new Vector3(s, h, s), new Vector3(0, h, s), new Vector3(s, 0, s), new Vector3(0, 0, s)),
+            (new Vector3(S, H, 0), new Vector3(S, H, S), new Vector3(S, 0, 0), new Vector3(S, 0, S)),
+            // Wall 3: Top wall (Z=gridSize)
+            (new Vector3(S, H, S), new Vector3(0, H, S), new Vector3(S, 0, S), new Vector3(0, 0, S)),
             // Wall 4: Left wall (X=0)
-            (new Vector3(0, h, s), new Vector3(0, h, 0), new Vector3(0, 0, s), new Vector3(0, 0, 0)),
+            (new Vector3(0, H, S), new Vector3(0, H, 0), new Vector3(0, 0, S), new Vector3(0, 0, 0)),
         };
 
-        float t = _gridSize / 240f;
+        // Java UV coordinates - match exactly
         var uvs = new Vector2[]
         {
-            new Vector2(t, 1f), new Vector2(0f, 1f), new Vector2(t, 0f), new Vector2(0f, 0f)
+            new Vector2(uvScale, 1f), new Vector2(0f, 1f), new Vector2(uvScale, 0f), new Vector2(0f, 0f)
         };
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
@@ -257,10 +219,7 @@ public class WorldGraphics
                 verts[2] = new VertexPositionTexture(q.c, uvs[2]);
                 verts[3] = new VertexPositionTexture(q.d, uvs[3]);
 
-                using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
-                vb.SetData(verts);
-                _gd.SetVertexBuffer(vb);
-                _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+                DrawQuad(verts);
             }
         }
     }
@@ -616,6 +575,19 @@ public class WorldGraphics
     public void SetGridSize(float gridSize)
     {
         _gridSize = gridSize;
+    }
+
+    /// <summary>
+    /// Helper method to draw a quad from 4 vertices
+    /// </summary>
+    private void DrawQuad(VertexPositionTexture[] verts)
+    {
+        if (verts.Length != 4) return;
+        
+        using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
+        vb.SetData(verts);
+        _gd.SetVertexBuffer(vb);
+        _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
     }
 
     public void EndDraw() { }

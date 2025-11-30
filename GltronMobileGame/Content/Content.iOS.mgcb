@@ -36,3 +36,10 @@
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /build:Assets/game_crash.ogg
+
+#begin Assets/game_recognizer.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/build:Assets/game_recognizer.ogg
+
+
