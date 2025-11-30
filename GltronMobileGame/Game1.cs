@@ -380,27 +380,6 @@ public class Game1 : Game
             {
                 try
                 {
-#if ANDROID
-                    Android.Util.Log.Info("GLTRON", "Entering 3D rendering section");
-#endif
-                }
-                catch { }
-            }
-            else
-            {
-                try
-                {
-#if ANDROID
-                    Android.Util.Log.Info("GLTRON", $"Skipping 3D rendering - isInMenu: {isInMenu}, _worldGraphics: {_worldGraphics != null}, _camera: {_camera != null}");
-#endif
-                }
-                catch { }
-            }
-            
-            if (!isInMenu && _worldGraphics != null && _camera != null)
-            {
-                try
-                {
                     try
                     {
 #if ANDROID
@@ -528,6 +507,15 @@ public class Game1 : Game
                     // Begin 3D rendering
                     try
                     {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Info("GLTRON", $"Camera View matrix: {_camera.View}");
+                            Android.Util.Log.Info("GLTRON", $"Camera Projection matrix: {_camera.Projection}");
+#endif
+                        }
+                        catch { }
+                        
                         _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
                         try
                         {

@@ -54,19 +54,20 @@ public class Camera
         ViewportWidth = viewport.Width;
         ViewportHeight = viewport.Height;
         
-        // GLTron-style perspective (wider FOV, closer near plane)
+        // More conservative perspective settings
         Projection = Matrix.CreatePerspectiveFieldOfView(
-            MathHelper.PiOver2, // 90 degrees like original GLTron
+            MathHelper.PiOver4, // 45 degrees - more standard
             viewport.AspectRatio,
-            1.0f,  // Closer near plane
-            500f); // Reasonable far plane
+            0.1f,  // Very close near plane
+            1000f); // Far plane to see everything
         
-        // Initialize as bird's eye view camera (better for seeing full arena)
-        _cameraType = CameraType.Bird;
-        InitializeBirdCamera();
+        // Start with a simple follow camera that works
+        _cameraType = CameraType.Follow;
+        InitializeFollowCamera();
         
-        _target = Vector3.Zero;
-        _camPos = new Vector3(CAM_CIRCLE_DIST, 0, CAM_CIRCLE_Z);
+        // Set initial camera position to see arena
+        _target = new Vector3(50f, 50f, 0f); // Arena center
+        _camPos = new Vector3(50f, 20f, 30f); // Behind and above arena center
         
         UpdateViewMatrix();
     }
@@ -77,6 +78,15 @@ public class Camera
         _movement[1] = CamDefaults[0, 1]; // CHI
         _movement[2] = CamDefaults[0, 2]; // PHI
         _movement[3] = 0.0f; // PHI_OFFSET
+        _phi = 0.0f;
+    }
+
+    private void InitializeFollowCamera()
+    {
+        _movement[0] = 30.0f; // Distance from target
+        _movement[1] = MathHelper.PiOver4; // 45 degree elevation
+        _movement[2] = 0.0f; // No rotation
+        _movement[3] = 0.0f; // No offset
         _phi = 0.0f;
     }
 
@@ -91,37 +101,9 @@ public class Camera
 
     public void Update(Vector3 playerPos, GameTime gameTime)
     {
-        // GLTron coordinate system: X=left/right, Y=forward/back, Z=up/down
-        // For GLTron, center the camera on the arena center, not just player
-        Vector3 arenaCenter = new Vector3(50f, 50f, 0f); // Arena is 100x100, so center is 50,50
-        
-        // If player position is valid, use it, otherwise use arena center
-        if (playerPos != Vector3.Zero)
-        {
-            _target = new Vector3(playerPos.X, playerPos.Z, B_HEIGHT);
-        }
-        else
-        {
-            _target = arenaCenter;
-        }
-        
-        float dt = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-        
-        // Update camera based on type
-        switch (_cameraType)
-        {
-            case CameraType.Circling:
-                UpdateCirclingCamera(dt);
-                break;
-            case CameraType.Follow:
-            case CameraType.FollowFar:
-            case CameraType.FollowClose:
-                UpdateFollowCamera();
-                break;
-            case CameraType.Bird:
-                UpdateBirdCamera();
-                break;
-        }
+        // Simple camera setup - look at arena center from a good angle
+        _target = new Vector3(50f, 0f, 50f); // Center of 100x100 arena
+        _camPos = new Vector3(50f, 80f, 120f); // Behind and above center
         
         UpdateViewMatrix();
     }
@@ -180,26 +162,33 @@ public class Camera
 
     private void UpdateViewMatrix()
     {
-        // GLTron uses Z as up axis, MonoGame uses Y as up
-        Vector3 up = Vector3.UnitZ;
+        // Use standard Y-up for MonoGame
+        Vector3 up = Vector3.UnitY;
         
         // Ensure camera is not at the same position as target
         if (Vector3.Distance(_camPos, _target) < 0.1f)
         {
-            _camPos = _target + new Vector3(CAM_CIRCLE_DIST, 0, CAM_CIRCLE_Z);
+            _camPos = _target + new Vector3(0, -20f, 30f);
         }
         
-        View = Matrix.CreateLookAt(_camPos, _target, up);
-        
-        // Debug logging
         try
         {
+            View = Matrix.CreateLookAt(_camPos, _target, up);
+            
+            // Debug logging
 #if ANDROID
             float distance = Vector3.Distance(_camPos, _target);
-            Android.Util.Log.Debug("GLTRON", $"Camera distance from target: {distance:F2}");
+            Android.Util.Log.Debug("GLTRON", $"Camera distance: {distance:F2}, View matrix created successfully");
 #endif
         }
-        catch { }
+        catch (System.Exception ex)
+        {
+#if ANDROID
+            Android.Util.Log.Error("GLTRON", $"Failed to create view matrix: {ex.Message}");
+#endif
+            // Fallback view matrix
+            View = Matrix.Identity;
+        }
     }
 
     public void SetCameraType(CameraType type)

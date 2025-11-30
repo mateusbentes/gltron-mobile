@@ -56,11 +56,7 @@ public class WorldGraphics
         _gd.RasterizerState = RasterizerState.CullNone;
         _gd.DepthStencilState = DepthStencilState.Default;
         Effect.Texture = _texFloor;
-        
-        // Scale floor to match GLTron arena size (100x100 units)
-        // But position it correctly at origin
-        Effect.World = Matrix.CreateScale(50f, 1f, 50f) * Matrix.CreateTranslation(50f, 0f, 50f);
-        
+        Effect.World = Matrix.CreateScale(100f, 1f, 100f);
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
@@ -78,38 +74,20 @@ public class WorldGraphics
         Effect.World = Matrix.Identity;
         Effect.Texture = _texWall;
         
-        try
-        {
-#if ANDROID
-            Android.Util.Log.Debug("GLTRON", $"Drawing {walls.Length} wall segments with world matrix reset");
-#endif
-        }
-        catch { }
-        
         foreach (var seg in walls)
         {
             var start = new Vector3(seg.vStart.v[0], 0, seg.vStart.v[1]);
             var end = new Vector3(seg.vStart.v[0] + seg.vDirection.v[0], 0, seg.vStart.v[1] + seg.vDirection.v[1]);
-            
-            try
-            {
-#if ANDROID
-                Android.Util.Log.Debug("GLTRON", $"Wall segment: start=({start.X:F1},{start.Y:F1},{start.Z:F1}) end=({end.X:F1},{end.Y:F1},{end.Z:F1})");
-#endif
-            }
-            catch { }
-            
             DrawWallSegment(start, end, 8f);
         }
     }
 
     private void DrawWallSegment(Vector3 a, Vector3 b, float height)
     {
-        // Calculate wall segment geometry
+        // Simple immediate-mode style via a small local buffer
         var dir = b - a;
         var len = dir.Length();
-        if (len <= 0.0001f) return; // Skip degenerate segments
-        
+        if (len <= 0.0001f) return;
         dir.Normalize();
         var up = Vector3.Up * height;
 
@@ -124,13 +102,14 @@ public class WorldGraphics
         verts[2] = new VertexPositionTexture(v2, new Vector2(len * 0.05f, 1));
         verts[3] = new VertexPositionTexture(v3, new Vector2(len * 0.05f, 0));
 
-        // PERFORMANCE FIX: Use DrawUserPrimitives instead of creating VB per frame
-        // Also ensure world matrix is identity for walls
+        using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
+        vb.SetData(verts);
+
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
-            Effect.World = Matrix.Identity; // Ensure no scale transform from floor
             pass.Apply();
-            _gd.DrawUserPrimitives(PrimitiveType.TriangleStrip, verts, 0, 2);
+            _gd.SetVertexBuffer(vb);
+            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
         }
     }
 
