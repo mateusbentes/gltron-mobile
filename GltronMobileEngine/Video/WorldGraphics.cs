@@ -14,6 +14,9 @@ public class WorldGraphics
     private Texture2D? _texFloor;
     private Texture2D? _texWall;
     private readonly Texture2D?[] _skyFaces = new Texture2D?[6];
+    
+    // CRITICAL FIX: Add motorcycle model support
+    private Model? _lightCycleModel;
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
     {
@@ -36,6 +39,19 @@ public class WorldGraphics
         _skyFaces[3] = content.Load<Texture2D>("Assets/skybox3");
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
+        
+        // CRITICAL FIX: Try to load motorcycle model (like Java lightcyclehigh.obj)
+        try
+        {
+            // Note: MonoGame doesn't support .obj directly, would need FBX or custom loader
+            // For now, we'll use the cube representation but this is where the model would load
+            // _lightCycleModel = content.Load<Model>("Assets/lightcycle");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Motorcycle model loading not implemented yet - using cube representation");
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Could not load motorcycle model: {ex.Message}");
+        }
     }
 
     public void BeginDraw(Matrix view, Matrix proj)
@@ -55,6 +71,10 @@ public class WorldGraphics
         _gd.RasterizerState = RasterizerState.CullNone; // Match Java OpenGL behavior
         Effect.Texture = _texFloor;
         Effect.World = Matrix.Identity;
+        
+        // CRITICAL FIX: Floor should be neutral colored, not blue
+        Effect.DiffuseColor = Vector3.One; // White/neutral color for floor
+        Effect.Alpha = 1.0f;
 
         // CRITICAL FIX: Match Java floor rendering exactly
         int l = (int)(_gridSize / 4f);
@@ -90,6 +110,10 @@ public class WorldGraphics
 
         Effect.World = Matrix.Identity;
         Effect.Texture = _texWall;
+        
+        // CRITICAL FIX: Walls should be white/neutral colored, not player colored
+        Effect.DiffuseColor = Vector3.One; // White color for walls
+        Effect.Alpha = 1.0f;
 
         // CRITICAL FIX: Use CullNone to match Java OpenGL behavior
         _gd.RasterizerState = RasterizerState.CullNone;
@@ -148,6 +172,10 @@ public class WorldGraphics
         _gd.RasterizerState = RasterizerState.CullNone; // Draw both sides
         _gd.BlendState = BlendState.Opaque; // No blending for skybox
         Effect.World = Matrix.Identity;
+        
+        // CRITICAL FIX: Skybox should be neutral colored
+        Effect.DiffuseColor = Vector3.One; // White/neutral color
+        Effect.Alpha = 1.0f;
 
         // CRITICAL FIX: Skybox positioning like Java version
         float d = _gridSize * 3f;
@@ -200,32 +228,61 @@ public class WorldGraphics
             float y = p.getYpos();
             int direction = p.getDirection();
             
-            // CRITICAL FIX: Draw a simple but visible bike representation
-            // Make sure the bike is visible and properly positioned
-            var world = Matrix.CreateScale(3f, 2f, 6f) * // Bigger bike for visibility
-                       Matrix.CreateRotationY(direction * MathHelper.PiOver2) * // Rotate based on direction
-                       Matrix.CreateTranslation(x, 3f, y); // Higher above ground for visibility
-            fx.World = world;
-            
-            // Get player color
-            int colorIndex = p.getPlayerNum();
-            if (p is GltronMobileEngine.Player concretePlayer)
+            // CRITICAL FIX: Draw a more visible motorcycle representation
+            if (_lightCycleModel != null)
             {
-                colorIndex = concretePlayer.getPlayerColorIndex();
+                // Use actual 3D model if available
+                var world = Matrix.CreateScale(1f) *
+                           Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
+                           Matrix.CreateTranslation(x, 0f, y);
+                fx.World = world;
+                
+                // Get player color
+                int colorIndex = p.getPlayerNum();
+                if (p is GltronMobileEngine.Player concretePlayer)
+                {
+                    colorIndex = concretePlayer.getPlayerColorIndex();
+                }
+                fx.DiffuseColor = GetPlayerColor(colorIndex);
+                
+                // Draw the actual model
+                foreach (var mesh in _lightCycleModel.Meshes)
+                {
+                    foreach (var part in mesh.MeshParts)
+                    {
+                        part.Effect = fx;
+                    }
+                    mesh.Draw();
+                }
             }
-            fx.DiffuseColor = GetPlayerColor(colorIndex);
-            fx.Alpha = 1.0f; // Make sure it's fully opaque
-            
-            // Enable vertex colors for the bike
-            fx.VertexColorEnabled = true;
-            fx.LightingEnabled = false; // Disable lighting for simple rendering
-            
-            // Draw a simple cube geometry
-            DrawSimpleCube(fx);
-            
-            // Reset effect state
-            fx.VertexColorEnabled = false;
-            fx.LightingEnabled = false;
+            else
+            {
+                // Fallback: Draw a better-looking bike representation
+                var world = Matrix.CreateScale(4f, 3f, 8f) * // Even bigger for visibility
+                           Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
+                           Matrix.CreateTranslation(x, 2f, y); // Position on ground
+                fx.World = world;
+                
+                // Get player color
+                int colorIndex = p.getPlayerNum();
+                if (p is GltronMobileEngine.Player concretePlayer)
+                {
+                    colorIndex = concretePlayer.getPlayerColorIndex();
+                }
+                fx.DiffuseColor = GetPlayerColor(colorIndex);
+                fx.Alpha = 1.0f;
+                
+                // Disable texture for solid color rendering
+                fx.TextureEnabled = false;
+                fx.VertexColorEnabled = false;
+                fx.LightingEnabled = false;
+                
+                // Draw a simple but visible cube
+                DrawSimpleCube(fx);
+                
+                // Reset effect state
+                fx.TextureEnabled = true;
+            }
         }
         catch (System.Exception ex)
         {
@@ -235,25 +292,36 @@ public class WorldGraphics
     
     private void DrawSimpleCube(BasicEffect fx)
     {
-        // CRITICAL FIX: Draw a simple but visible cube for bike representation
-        // Use triangle strip for simpler rendering
-        var vertices = new VertexPositionColor[]
+        // CRITICAL FIX: Draw a visible cube using BasicEffect's DiffuseColor
+        // Use simple vertex positions without colors (let BasicEffect handle coloring)
+        var vertices = new VertexPositionTexture[]
         {
-            // Simple quad for bike representation (top face)
-            new VertexPositionColor(new Vector3(-0.5f, 0.5f, -0.5f), Color.White),
-            new VertexPositionColor(new Vector3(0.5f, 0.5f, -0.5f), Color.White),
-            new VertexPositionColor(new Vector3(-0.5f, 0.5f, 0.5f), Color.White),
-            new VertexPositionColor(new Vector3(0.5f, 0.5f, 0.5f), Color.White),
+            // Multiple faces for a more visible cube
+            // Top face
+            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, -0.5f), Vector2.Zero),
+            new VertexPositionTexture(new Vector3(0.5f, 0.5f, -0.5f), Vector2.UnitX),
+            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, 0.5f), Vector2.UnitY),
+            new VertexPositionTexture(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One),
+            
+            // Front face
+            new VertexPositionTexture(new Vector3(-0.5f, -0.5f, 0.5f), Vector2.Zero),
+            new VertexPositionTexture(new Vector3(0.5f, -0.5f, 0.5f), Vector2.UnitX),
+            new VertexPositionTexture(new Vector3(-0.5f, 0.5f, 0.5f), Vector2.UnitY),
+            new VertexPositionTexture(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One),
         };
         
         foreach (var pass in fx.CurrentTechnique.Passes)
         {
             pass.Apply();
             
-            using var vb = new VertexBuffer(_gd, typeof(VertexPositionColor), vertices.Length, BufferUsage.WriteOnly);
+            using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), vertices.Length, BufferUsage.WriteOnly);
             vb.SetData(vertices);
             _gd.SetVertexBuffer(vb);
+            
+            // Draw top face
             _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            // Draw front face  
+            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 4, 2);
         }
     }
 
@@ -297,7 +365,17 @@ public class WorldGraphics
             new Vector3(0.750f, 0.0f, 0.35f)      // Purple - Player 5 (AI)
         };
         
-        return colors[playerNum % colors.Length];
+        var color = colors[playerNum % colors.Length];
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Debug("GLTRON", $"Player {playerNum} color: R={color.X:F2} G={color.Y:F2} B={color.Z:F2}");
+#endif
+        }
+        catch { }
+        
+        return color;
     }
 
     public void SetGridSize(float gridSize)
