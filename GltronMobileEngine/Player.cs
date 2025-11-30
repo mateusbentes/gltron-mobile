@@ -359,46 +359,34 @@ namespace GltronMobileEngine
             Score += score;
         }
 
-        // Métodos de colisão
         public void doCrashTestWalls(Segment[] Walls)
         {
-            // CRITICAL FIX: Use EXACT same logic as trail collision (doCrashTestPlayer)
             if (Walls == null || Speed == 0.0f) return;
 
             Segment Current = Trails[trailOffset];
             Segment Wall;
             Vec? V;
 
-            // Use same loop structure as trail collision - check all walls, not just 4
             for (int j = 0; j < Walls.Length; j++)
             {
-                if (Walls[j] == null) continue; // Same null check as trail collision
+                if (Walls[j] == null) continue;
                 
-                Wall = Walls[j]; // Same variable naming as trail collision
+                Wall = Walls[j];
 
                 V = Current.Intersect(Wall);
 
                 if (V != null)
                 {
-                    // IDENTICAL collision detection criteria as trail collision
+                    // Use EXACT same collision criteria as trail collision
                     if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                     {
-                        // IDENTICAL collision response as trail collision
+                        // EXACT same collision response as trail collision
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                         Speed = 0.0f;
                         _exploding = true;
                         _explodeTimer = 0f;
                         
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Info("GLTRON", $"Player {Player_num} crashed into wall {j} at ({V.v[0]:F1},{V.v[1]:F1})");
-#endif
-                        }
-                        catch { }
-                        
-                        // Multiplatform sound handling
                         try
                         {
                             SoundManager.Instance.PlayCrash();
@@ -409,10 +397,8 @@ namespace GltronMobileEngine
                             System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
                         }
                         
-                        // Add console message (like Java version)
                         LogCrash($"Player {Player_num} CRASH wall {j}!");
-
-                        break; // Same break behavior as trail collision
+                        break;
                     }
                 }
             }
