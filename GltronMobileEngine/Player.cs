@@ -13,14 +13,18 @@ namespace GltronMobileEngine
     public class Player : Interfaces.IPlayer
     {
         // Constants and variables from Java Player.java - multiplatform compatible
+#pragma warning disable CS0169 // Field is never used - planned for future 3D model implementation
         private SimpleModel? Cycle; // Will be replaced by MonoGame model system
+#pragma warning restore CS0169
         private int Player_num;
         private int Direction;
         private int LastDirection;
         
         // Explosion system - platform agnostic
         private bool _exploding = false;
+#pragma warning disable CS0414 // Field is assigned but never used - planned for explosion animation
         private float _explodeTimer = 0f;
+#pragma warning restore CS0414
 
         private int Score;
 

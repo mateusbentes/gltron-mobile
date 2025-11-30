@@ -27,6 +27,9 @@ public interface IPlayer
     // Game state
     int getScore();
     void addScore(int points);
+    bool getExplode(); // Explosion state
+    bool isVisible(); // Visibility state
+    int getLastDirection(); // Last direction for camera interpolation
     
     // Movement and collision - multiplatform compatible
     void doMovement(long timeDt, long timeCurrent, ISegment[] walls, IPlayer[] players);

@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
+using GltronMobileEngine.Video;
 using GltronMobileEngine.Sound;
 using Player = GltronMobileEngine.Player;
 
@@ -9,6 +10,10 @@ namespace GltronMobileGame
 {
     public class GLTronGame
     {
+        private Camera _camera;
+        private WorldGraphics _world;
+
+
         // Multiplatform logging helper
         private static void LogInfo(string message)
         {
@@ -38,6 +43,10 @@ namespace GltronMobileGame
         public long TimeLastFrame;
         public long TimeCurrent;
         public long TimeDt;
+        private const int DtHistSize = 8;
+        private long[] DtHist = new long[DtHistSize];
+        private int DtHead = 0;
+        private int DtElements = 0;
 
         // Define arena setting 
         private float mCurrentGridSize = 100.0f; // Valor padrão
@@ -102,6 +111,8 @@ namespace GltronMobileGame
 
         public GLTronGame()
         {
+            // ContentManager must be provided by host Game; leave null until Initialize is called
+
             try
             {
                 LogInfo("GLTronGame constructor: Starting initialization");
@@ -146,18 +157,7 @@ namespace GltronMobileGame
         {
             try
             {
-                if (Players == null)
-                {
-                    Android.Util.Log.Warn("GLTRON", "GetOwnPlayerScore: Players array is null");
-                    return 0;
-                }
-                
-                if (Players[OWN_PLAYER] == null)
-                {
-                    Android.Util.Log.Warn("GLTRON", "GetOwnPlayerScore: OWN_PLAYER is null");
-                    return 0;
-                }
-                
+                if (Players == null || Players[OWN_PLAYER] == null) return 0;
                 return Players[OWN_PLAYER].getScore();
             }
             catch (System.Exception ex)
@@ -171,25 +171,9 @@ namespace GltronMobileGame
         {
             try
             {
-                if (Players == null)
-                {
-                    Android.Util.Log.Warn("GLTRON", "GetOwnPlayer: Players array is null");
-                    return null;
-                }
-                
-                if (OWN_PLAYER >= Players.Length)
-                {
-                    Android.Util.Log.Error("GLTRON", $"GetOwnPlayer: OWN_PLAYER index {OWN_PLAYER} out of bounds");
-                    return null;
-                }
-                
-                var player = Players[OWN_PLAYER];
-                if (player == null)
-                {
-                    Android.Util.Log.Warn("GLTRON", "GetOwnPlayer: OWN_PLAYER is null");
-                }
-                
-                return player;
+                if (Players == null) return null;
+                if (OWN_PLAYER >= Players.Length) return null;
+                return Players[OWN_PLAYER];
             }
             catch (System.Exception ex)
             {
@@ -202,18 +186,12 @@ namespace GltronMobileGame
         {
             try
             {
-                if (Players == null)
-                {
-                    Android.Util.Log.Warn("GLTRON", "GetPlayers: Players array is null");
-                    return new Player[MAX_PLAYERS]; // Return empty array instead of null
-                }
-                
-                return Players;
+                return Players ?? new Player[MAX_PLAYERS];
             }
             catch (System.Exception ex)
             {
                 Android.Util.Log.Error("GLTRON", $"GetPlayers: Exception: {ex}");
-                return new Player[MAX_PLAYERS]; // Return empty array on error
+                return new Player[MAX_PLAYERS];
             }
         }
 
@@ -223,21 +201,16 @@ namespace GltronMobileGame
             {
                 if (Walls == null)
                 {
-                    Android.Util.Log.Warn("GLTRON", "GetWalls: Walls array is null, reinitializing");
                     Walls = new Segment[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        Walls[i] = new Segment();
-                    }
+                    for (int i = 0; i < 4; i++) Walls[i] = new Segment();
                     initWalls();
                 }
-                
                 return Walls;
             }
             catch (System.Exception ex)
             {
                 Android.Util.Log.Error("GLTRON", $"GetWalls: Exception: {ex}");
-                return new Segment[4]; // Return empty array on error
+                return new Segment[4];
             }
         }
 
@@ -251,64 +224,79 @@ namespace GltronMobileGame
             return mCurrentGridSize;
         }
 
+        private void initWalls()
+        {
+            if (Walls == null || Walls.Length < 4) Walls = new Segment[4];
+            float[,] raw = {
+                { 0.0f, 0.0f, 1.0f, 0.0f },
+                { 1.0f, 0.0f, 0.0f, 1.0f },
+                { 1.0f, 1.0f, -1.0f, 0.0f },
+                { 0.0f, 1.0f, 0.0f, -1.0f }
+            };
+            float w = mCurrentGridSize;
+            float h = mCurrentGridSize;
+            for (int j = 0; j < 4; j++)
+            {
+                if (Walls[j] == null) Walls[j] = new Segment();
+                Walls[j].vStart.v[0] = raw[j, 0] * w;
+                Walls[j].vStart.v[1] = raw[j, 1] * h;
+                Walls[j].vDirection.v[0] = raw[j, 2] * w;
+                Walls[j].vDirection.v[1] = raw[j, 3] * h;
+            }
+        }
+
         public void initialiseGame()
         {
             try
             {
-                Android.Util.Log.Info("GLTRON", "GLTronGame.initialiseGame: Starting");
-                
-                // Verify walls are initialized
-                if (Walls == null)
-                {
-                    Android.Util.Log.Error("GLTRON", "GLTronGame.initialiseGame: Walls array is null!");
-                    Walls = new Segment[4];
-                }
-                
+                // Ensure walls are allocated and valid
+                if (Walls == null) Walls = new Segment[4];
                 for (int i = 0; i < 4; i++)
                 {
                     if (Walls[i] == null)
                     {
-                        Android.Util.Log.Warn("GLTRON", $"GLTronGame.initialiseGame: Wall {i} is null, creating new Segment");
+                        LogWarn($"GLTronGame.initialiseGame: Wall {i} is null, creating new Segment");
                         Walls[i] = new Segment();
                     }
                 }
                 
+                // Initialize walls geometry
                 initWalls();
-                Android.Util.Log.Info("GLTRON", "GLTronGame.initialiseGame: Walls reinitialized");
+                LogInfo("GLTronGame.initialiseGame: Walls initialized");
 
-                // Verify Players array
+                // Ensure players array
                 if (Players == null)
                 {
-                    Android.Util.Log.Error("GLTRON", "GLTronGame.initialiseGame: Players array is null!");
+                    LogError("GLTronGame.initialiseGame: Players array is null!");
                     Players = new Player[MAX_PLAYERS];
                 }
 
                 // Initialize players with detailed logging
-                Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players (like original GLTron)");
+                LogInfo($"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players (like original GLTron)");
                 for (int player = 0; player < mCurrentPlayers; player++)
                 {
                     try
                     {
-                        Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Creating player {player}");
+                        LogInfo($"GLTronGame.initialiseGame: Creating player {player}");
                         Players[player] = new Player(player, mCurrentGridSize);
-                        
+
                         if (Players[player] == null)
                         {
-                            Android.Util.Log.Error("GLTRON", $"GLTronGame.initialiseGame: Player {player} creation returned null!");
+                            LogError($"GLTronGame.initialiseGame: Player {player} creation returned null!");
                             continue;
                         }
-                        
+
                         Players[player].setSpeed(10.0f); // Set initial speed so players are active
-                        
+
                         // Log player starting position and direction
                         float x = Players[player].getXpos();
                         float y = Players[player].getYpos();
                         int dir = Players[player].getDirection();
-                        Android.Util.Log.Info("GLTRON", $"GLTronGame.initialiseGame: Player {player} created at ({x:F1},{y:F1}) facing direction {dir}");
+                        LogInfo($"GLTronGame.initialiseGame: Player {player} created at ({x:F1},{y:F1}) facing direction {dir}");
                     }
                     catch (System.Exception ex)
                     {
-                        Android.Util.Log.Error("GLTRON", $"GLTronGame.initialiseGame: Failed to create player {player}: {ex}");
+                        LogError($"GLTronGame.initialiseGame: Failed to create player {player}: {ex}");
                         Players[player] = null;
                     }
                 }
@@ -316,28 +304,29 @@ namespace GltronMobileGame
                 // Verify OWN_PLAYER exists
                 if (Players[OWN_PLAYER] == null)
                 {
-                    Android.Util.Log.Error("GLTRON", "GLTronGame.initialiseGame: OWN_PLAYER is null after initialization!");
+                    LogError("GLTronGame.initialiseGame: OWN_PLAYER is null after initialization!");
                 }
                 else
                 {
-                    Android.Util.Log.Info("GLTRON", "GLTronGame.initialiseGame: OWN_PLAYER created successfully");
+                    LogInfo("GLTronGame.initialiseGame: OWN_PLAYER created successfully");
                 }
 
+                // Reset timing and flags
                 ResetTime();
-                Android.Util.Log.Info("GLTRON", "GLTronGame.initialiseGame: Time reset");
+                LogInfo("GLTronGame.initialiseGame: Time reset");
 
                 boLoading = false;
                 boShowMenu = true;
                 
-                Android.Util.Log.Info("GLTRON", "GLTronGame.initialiseGame: Completed successfully"); 
-                Android.Util.Log.Info("GLTRON", $"Players created: {mCurrentPlayers}");
-                Android.Util.Log.Info("GLTRON", $"Grid size: {mCurrentGridSize}");
-                Android.Util.Log.Info("GLTRON", $"OWN_PLAYER null check: {Players[OWN_PLAYER] == null}");
+                LogInfo("GLTronGame.initialiseGame: Completed successfully");
+                LogInfo($"Players created: {mCurrentPlayers}");
+                LogInfo($"Grid size: {mCurrentGridSize}");
+                LogInfo($"OWN_PLAYER null check: {Players[OWN_PLAYER] == null}");
             }
             catch (System.Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", $"GLTronGame.initialiseGame: CRITICAL FAILURE: {ex}");
-                Android.Util.Log.Error("GLTRON", $"GLTronGame.initialiseGame: Stack trace: {ex.StackTrace}");
+                LogError($"GLTronGame.initialiseGame: CRITICAL FAILURE: {ex}");
+                LogError($"GLTronGame.initialiseGame: Stack trace: {ex.StackTrace}");
                 throw;
             }
         }
@@ -362,6 +351,34 @@ namespace GltronMobileGame
                 // For now, just log the info
             } 
             catch { }
+        }
+
+        private void ResetTime()
+        {
+            TimeLastFrame = TimeCurrent = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            TimeDt = 0;
+            DtHead = 0;
+            DtElements = 0;
+        }
+
+        private void UpdateTime(GameTime gameTime)
+        {
+            // Prefer GameTime for MonoGame correctness
+            long now = (long)gameTime.TotalGameTime.TotalMilliseconds;
+            long last = TimeCurrent;
+            if (last == 0)
+            {
+                last = now;
+            }
+            TimeLastFrame = last;
+            TimeCurrent = now;
+            long realDt = (long)gameTime.ElapsedGameTime.TotalMilliseconds;
+            TimeDt = realDt;
+
+            // Keep history (optional smoothing, matching Java code idea)
+            DtHist[DtHead] = realDt;
+            DtHead = (DtHead + 1) % DtHistSize;
+            if (DtElements < DtHistSize) DtElements++;
         }
 
         public void addTouchEvent(float x, float y, int screenWidth, int screenHeight)
@@ -447,7 +464,7 @@ namespace GltronMobileGame
                     Android.Util.Log.Error("GLTRON", "RunGame: gameTime is null");
                     return;
                 }
-                
+
                 UpdateTime(gameTime);
                 // ComputerAI.updateTime(TimeDt, TimeCurrent); // Implementar depois
 
@@ -459,230 +476,34 @@ namespace GltronMobileGame
                         boProcessInput = false;
                         return;
                     }
-                    
                     if (Players[OWN_PLAYER] == null)
                     {
                         Android.Util.Log.Error("GLTRON", "RunGame: OWN_PLAYER is null during input processing");
                         boProcessInput = false;
                         return;
                     }
-                    
                     Players[OWN_PLAYER].doTurn(inputDirection, TimeCurrent);
                     mEngineSoundModifier = 1.3f;
                     boProcessInput = false;
                 }
 
-            if (boProcessReset)
-            {
-                // Lógica de reset (refresh preferences, re-init world, etc.)
-                // Por enquanto, apenas recria os jogadores
-                SoundManager.Instance.StopEngine();
-                for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
+                if (boProcessReset)
                 {
-                    Players[plyr] = new Player(plyr, mCurrentGridSize);
-                    Players[plyr].setSpeed(10.0f); // Velocidade padrão
-                }
-
-                // mRecognizer = new Recognizer(mCurrentGridSize); // Implementar depois
-
-                // tronHUD.resetConsole(); // Implementar depois
-                // Cam = new Camera(Players[OWN_PLAYER], CamType.E_CAM_TYPE_CIRCLING); // Implementar depois
-
-                // Lógica de som (parar/iniciar)
-
-                // tronHUD.displayInstr(true); // Implementar depois
-
-                boInitialState = true;
-                boProcessReset = false;
-            }
-
-            // round robin AI (Implementar depois)
-            // if (Players[aiCount].getTrailHeight() == Players[aiCount].TRAIL_HEIGHT)
-            // {
-            //     ComputerAI.doComputer(aiCount, OWN_PLAYER);
-            // }
-
-            // Manage sounds (Implementar depois)
-
-            // aiCount++;
-            // if (aiCount > (mCurrentPlayers - 1))
-            //     aiCount = 1;
-
-            // RenderGame(); // Será chamado pelo Game1.Draw()
-
-            // Movimento dos jogadores
-            if (Players != null)
-            {
-                for (int player = 0; player < mCurrentPlayers && player < Players.Length; player++)
-                {
-                    if (Players[player] != null)
+                    SoundManager.Instance.StopEngine();
+                    for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
                     {
-                        try
-                        {
-                            Players[player].doMovement(TimeDt, TimeCurrent, Walls, Players);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            Android.Util.Log.Error("GLTRON", $"RunGame: Player {player} movement error: {ex}");
-                        }
+                        Players[plyr] = new Player(plyr, mCurrentGridSize);
+                        Players[plyr].setSpeed(10.0f);
                     }
+                    // Rendering is handled where GraphicsDevice is available (e.g., Draw/Render method)
+                    boInitialState = true;
+                    boProcessReset = false;
                 }
-            }
             }
             catch (System.Exception ex)
             {
                 Android.Util.Log.Error("GLTRON", $"RunGame: Exception: {ex}");
             }
-        }
-
-        // DT smoothing experiment (Adaptado para MonoGame)
-        private const int MAX_SAMPLES = 20;
-        private long[] DtHist = new long[MAX_SAMPLES];
-        private int DtHead = 0;
-        private int DtElements = 0;
-
-        private void ResetTime()
-        {
-            TimeLastFrame = Environment.TickCount;
-            TimeCurrent = TimeLastFrame;
-            TimeDt = 0;
-            DtHead = 0;
-            DtElements = 0;
-        }
-
-        private void UpdateTime(GameTime gameTime)
-        {
-            // Usar GameTime para DT
-            TimeDt = (long)gameTime.ElapsedGameTime.TotalMilliseconds;
-            TimeCurrent = Environment.TickCount;
-
-            // Lógica de suavização de DT (mantida para fidelidade, mas pode ser simplificada)
-            long RealDt = TimeDt;
-
-            DtHist[DtHead] = RealDt;
-
-            DtHead++;
-
-            if (DtHead >= MAX_SAMPLES)
-            {
-                DtHead = 0;
-            }
-
-            if (DtElements == MAX_SAMPLES)
-            {
-                // Average the last MAX_SAMPLE DT's
-                TimeDt = 0;
-                for (int i = 0; i < MAX_SAMPLES; i++)
-                {
-                    TimeDt += DtHist[i];
-                }
-                TimeDt /= MAX_SAMPLES;
-            }
-            else
-            {
-                TimeDt = RealDt;
-                DtElements++;
-            }
-        }
-
-        private void initWalls()
-        {
-            float[,] raw = {
-                { 0.0f, 0.0f, 1.0f, 0.0f },    // Bottom wall: (0,0) to (100,0)
-                { 1.0f, 0.0f, 0.0f, 1.0f },    // Right wall: (100,0) to (100,100)
-                { 1.0f, 1.0f, -1.0f, 0.0f },   // Top wall: (100,100) to (0,100)
-                { 0.0f, 1.0f, 0.0f, -1.0f }    // Left wall: (0,100) to (0,0)
-            };
-
-            float width = mCurrentGridSize;
-            float height = mCurrentGridSize;
-
-            for (int j = 0; j < 4; j++)
-            {
-                Walls[j] = new Segment();
-                Walls[j].vStart.v[0] = raw[j, 0] * width;
-                Walls[j].vStart.v[1] = raw[j, 1] * height;
-                Walls[j].vDirection.v[0] = raw[j, 2] * width;
-                Walls[j].vDirection.v[1] = raw[j, 3] * height;
-                
-                // Debug logging for wall positions
-                float endX = Walls[j].vStart.v[0] + Walls[j].vDirection.v[0];
-                float endY = Walls[j].vStart.v[1] + Walls[j].vDirection.v[1];
-                try
-                {
-#if ANDROID
-                    Android.Util.Log.Info("GLTRON", $"Wall {j}: ({Walls[j].vStart.v[0]:F1},{Walls[j].vStart.v[1]:F1}) to ({endX:F1},{endY:F1})");
-#endif
-                }
-                catch { }
-            }
-        }
-
-        // RenderGame será adaptado para o MonoGame Game1.Draw()
-        public void RenderGame(GraphicsDevice graphicsDevice)
-        {
-            // Show menu state
-            if (boShowMenu)
-            {
-                // Menu is handled by HUD
-                return;
-            }
-
-            // Lógica de renderização 3D será implementada no Game1.Draw()
-            // Por enquanto, apenas a lógica de checagem de vencedor
-
-            bool boOwnPlayerActive = true;
-            bool boOtherPlayersActive = false;
-            bool boCheckWinner = false;
-
-            if (!boInitialState)
-            {
-                for (int player = 0; player < mCurrentPlayers; player++)
-                {
-                    // Players[player].doMovement(TimeDt, TimeCurrent, Walls, Players); // Já feito no RunGame
-
-                    // check win lose should be in game logic not render - FIXME
-                    if (player == OWN_PLAYER)
-                    {
-                        if (Players[player].getSpeed() == 0.0f)
-                            boOwnPlayerActive = false;
-                    }
-                    else
-                    {
-                        if (Players[player].getSpeed() > 0.0f)
-                            boOtherPlayersActive = true;
-                    }
-
-                    boCheckWinner = true;
-
-                }
-
-                // mRecognizer.doMovement(TimeDt); // Implementar depois
-            }
-
-            // Cam.doCameraMovement(Players[OWN_PLAYER], TimeCurrent, TimeDt); // Implementar depois
-
-            // Configurações de OpenGL (MonoGame)
-            graphicsDevice.Clear(Color.Black);
-
-            // Renderização de mundo, ciclos, trilhas, HUD (HUD drawn in Game1)
-
-            if (boCheckWinner)
-            {
-                if (!boOwnPlayerActive && boOtherPlayersActive)
-                {
-                    tronHUD?.DisplayLose();
-                    tronHUD?.AddLineToConsole("You Lose!");
-                }
-                else if (boOwnPlayerActive && !boOtherPlayersActive)
-                {
-                    tronHUD?.DisplayWin();
-                    tronHUD?.AddLineToConsole("You Win!");
-                    Players[OWN_PLAYER].setSpeed(0.0f);
-                }
-            }
-
-            // tronHUD.draw(Visual, TimeDt, Players[OWN_PLAYER].getScore()); // Implementar depois
         }
     }
 }

@@ -8,13 +8,12 @@ namespace GltronMobileEngine.Video;
 public class WorldGraphics
 {
     public BasicEffect Effect { get; private set; }
-    private GraphicsDevice _gd;
-    private float _gridSize = 100f; // Default grid size
+    private readonly GraphicsDevice _gd;
+    private float _gridSize = 100f;
 
-    private VertexBuffer? _floorVB;
     private Texture2D? _texFloor;
     private Texture2D? _texWall;
-    private Texture2D? _texSky;
+    private readonly Texture2D?[] _skyFaces = new Texture2D?[6];
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
     {
@@ -31,17 +30,12 @@ public class WorldGraphics
     {
         _texFloor = content.Load<Texture2D>("Assets/gltron_floor");
         _texWall = content.Load<Texture2D>("Assets/gltron_wall_1");
-        _texSky = content.Load<Texture2D>("Assets/skybox0");
-
-        // Create floor quad properly oriented for GLTron with proper texture tiling
-        var verts = new VertexPositionTexture[4];
-        float texScale = 8f; // Tile the texture 8 times across the floor for detail
-        verts[0] = new VertexPositionTexture(new Vector3(-1, 0, -1), new Vector2(0, 0));           // Bottom-left
-        verts[1] = new VertexPositionTexture(new Vector3(1, 0, -1), new Vector2(texScale, 0));     // Bottom-right
-        verts[2] = new VertexPositionTexture(new Vector3(-1, 0, 1), new Vector2(0, texScale));     // Top-left
-        verts[3] = new VertexPositionTexture(new Vector3(1, 0, 1), new Vector2(texScale, texScale)); // Top-right
-        _floorVB = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
-        _floorVB.SetData(verts);
+        _skyFaces[0] = content.Load<Texture2D>("Assets/skybox0");
+        _skyFaces[1] = content.Load<Texture2D>("Assets/skybox1");
+        _skyFaces[2] = content.Load<Texture2D>("Assets/skybox2");
+        _skyFaces[3] = content.Load<Texture2D>("Assets/skybox3");
+        _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
+        _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
     }
 
     public void BeginDraw(Matrix view, Matrix proj)
@@ -53,88 +47,220 @@ public class WorldGraphics
 
     public void DrawFloor()
     {
-        if (_texFloor == null || _floorVB == null) return;
+        if (_texFloor == null) return;
         
-        _gd.RasterizerState = RasterizerState.CullNone;
+        // CRITICAL FIX: Ensure proper render states for floor
+        _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
+        _gd.RasterizerState = RasterizerState.CullNone; // Match Java OpenGL behavior
         Effect.Texture = _texFloor;
-        
-        // GLTron arena floor: exactly 100x100 units, positioned from (0,0) to (100,100)
-        // Floor vertices go from -1 to 1, so scale by 50 and translate by 50
-        Effect.World = Matrix.CreateScale(50f, 1f, 50f) * Matrix.CreateTranslation(50f, 0f, 50f);
-        
+        Effect.World = Matrix.Identity;
+
+        int l = (int)(_gridSize / 4f);
+        if (l <= 0) l = 25;
+        float t = l / 12f;
+
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            _gd.SetVertexBuffer(_floorVB);
-            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            for (int i = 0; i < (int)_gridSize; i += l)
+            {
+                for (int j = 0; j < (int)_gridSize; j += l)
+                {
+                    var verts = new VertexPositionTexture[4];
+                    verts[0] = new VertexPositionTexture(new Vector3(i, 0, j), new Vector2(0f, 0f));
+                    verts[1] = new VertexPositionTexture(new Vector3(i + l, 0, j), new Vector2(t, 0f));
+                    verts[2] = new VertexPositionTexture(new Vector3(i, 0, j + l), new Vector2(0f, t));
+                    verts[3] = new VertexPositionTexture(new Vector3(i + l, 0, j + l), new Vector2(t, t));
+
+                    using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
+                    vb.SetData(verts);
+                    _gd.SetVertexBuffer(vb);
+                    _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+                }
+            }
         }
     }
 
     public void DrawWalls(ISegment[] walls)
     {
-        if (walls == null || _texWall == null) return;
-        
-        // CRITICAL FIX: Reset world matrix to identity before drawing walls
-        // The floor drawing sets a scale transform that must be cleared
+        if (_texWall == null) return;
+
         Effect.World = Matrix.Identity;
         Effect.Texture = _texWall;
-        
-        foreach (var seg in walls)
+
+        // CRITICAL FIX: Use CullNone to match Java OpenGL behavior
+        _gd.RasterizerState = RasterizerState.CullNone;
+        _gd.BlendState = BlendState.AlphaBlend;
+        _gd.DepthStencilState = DepthStencilState.Default;
+
+        float h = 48.0f;
+        float s = _gridSize;
+
+        var quads = new (Vector3 a, Vector3 b, Vector3 c, Vector3 d)[]
         {
-            var start = new Vector3(seg.vStart.v[0], 0, seg.vStart.v[1]);
-            var end = new Vector3(seg.vStart.v[0] + seg.vDirection.v[0], 0, seg.vStart.v[1] + seg.vDirection.v[1]);
-            // GLTron wall height: 6 units (proportional to motorcycle size)
-            DrawWallSegment(start, end, 6f);
-        }
-    }
+            (new Vector3(0, h, 0), new Vector3(s, h, 0), new Vector3(0, 0, 0), new Vector3(s, 0, 0)),
+            (new Vector3(s, h, 0), new Vector3(s, h, s), new Vector3(s, 0, 0), new Vector3(s, 0, s)),
+            (new Vector3(s, h, s), new Vector3(0, h, s), new Vector3(s, 0, s), new Vector3(0, 0, s)),
+            (new Vector3(0, h, s), new Vector3(0, h, 0), new Vector3(0, 0, s), new Vector3(0, 0, 0)),
+        };
 
-    private void DrawWallSegment(Vector3 a, Vector3 b, float height)
-    {
-        // Simple immediate-mode style via a small local buffer
-        var dir = b - a;
-        var len = dir.Length();
-        if (len <= 0.0001f) return;
-        dir.Normalize();
-        var up = Vector3.Up * height;
-
-        var v0 = a;
-        var v1 = a + up;
-        var v2 = b;
-        var v3 = b + up;
-
-        var verts = new VertexPositionTexture[4];
-        // Better texture coordinates for wall segments
-        float texRepeat = len / 10f; // Repeat texture every 10 units for proper scaling
-        verts[0] = new VertexPositionTexture(v0, new Vector2(0, 1));        // Bottom-left
-        verts[1] = new VertexPositionTexture(v1, new Vector2(0, 0));        // Top-left
-        verts[2] = new VertexPositionTexture(v2, new Vector2(texRepeat, 1)); // Bottom-right
-        verts[3] = new VertexPositionTexture(v3, new Vector2(texRepeat, 0)); // Top-right
-
-        using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
-        vb.SetData(verts);
+        float t = _gridSize / 240f;
+        var uvs = new Vector2[]
+        {
+            new Vector2(t, 1f), new Vector2(0f, 1f), new Vector2(t, 0f), new Vector2(0f, 0f)
+        };
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            _gd.SetVertexBuffer(vb);
-            _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            foreach (var q in quads)
+            {
+                var verts = new VertexPositionTexture[4];
+                verts[0] = new VertexPositionTexture(q.a, uvs[0]);
+                verts[1] = new VertexPositionTexture(q.b, uvs[1]);
+                verts[2] = new VertexPositionTexture(q.c, uvs[2]);
+                verts[3] = new VertexPositionTexture(q.d, uvs[3]);
+
+                using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
+                vb.SetData(verts);
+                _gd.SetVertexBuffer(vb);
+                _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            }
         }
     }
 
     public void DrawSkybox()
     {
-        // Placeholder: could draw a cube with sky textures later.
+        if (_skyFaces[0] == null) return;
+
+        // CRITICAL FIX: Proper skybox rendering like Java version
+        var prevDepth = _gd.DepthStencilState;
+        _gd.DepthStencilState = DepthStencilState.None; // Disable depth testing
+        _gd.RasterizerState = RasterizerState.CullNone; // Draw both sides
+        _gd.BlendState = BlendState.Opaque; // No blending for skybox
+        Effect.World = Matrix.Identity;
+
+        // CRITICAL FIX: Center skybox around grid center, not origin
+        float d = _gridSize * 3f;
+        float centerX = _gridSize / 2f;
+        float centerZ = _gridSize / 2f;
+
+        var faces = new Vector3[][]
+        {
+            // Right face
+            new [] { new Vector3(centerX+d,d,-d+centerZ), new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX+d,-d,d+centerZ), new Vector3(centerX+d,d,d+centerZ) },
+            // Top face  
+            new [] { new Vector3(centerX+d,d,d+centerZ), new Vector3(centerX-d,d,d+centerZ), new Vector3(centerX-d,-d,d+centerZ), new Vector3(centerX+d,-d,d+centerZ) },
+            // Left face
+            new [] { new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX+d,d,-d+centerZ), new Vector3(centerX+d,d,d+centerZ), new Vector3(centerX-d,d,d+centerZ) },
+            // Bottom face
+            new [] { new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX-d,-d,d+centerZ), new Vector3(centerX+d,-d,d+centerZ) },
+            // Back face
+            new [] { new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX+d,-d,-d+centerZ), new Vector3(centerX+d,d,-d+centerZ) },
+            // Front face
+            new [] { new Vector3(centerX-d,-d,-d+centerZ), new Vector3(centerX-d,d,-d+centerZ), new Vector3(centerX-d,d,d+centerZ), new Vector3(centerX-d,-d,d+centerZ) },
+        };
+
+        // CRITICAL FIX: Proper UV coordinates for skybox (match Java version)
+        var uvs = new [] { new Vector2(1,1), new Vector2(0,1), new Vector2(0,0), new Vector2(1,0) };
+
+        for (int i = 0; i < 6; i++)
+        {
+            var tex = _skyFaces[i];
+            if (tex == null) continue;
+            Effect.Texture = tex;
+            foreach (var pass in Effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                var f = faces[i];
+                var verts = new VertexPositionTexture[4];
+                verts[0] = new VertexPositionTexture(f[0], uvs[0]);
+                verts[1] = new VertexPositionTexture(f[1], uvs[1]);
+                verts[2] = new VertexPositionTexture(f[2], uvs[2]);
+                verts[3] = new VertexPositionTexture(f[3], uvs[3]);
+                using var vb = new VertexBuffer(_gd, typeof(VertexPositionTexture), 4, BufferUsage.WriteOnly);
+                vb.SetData(verts);
+                _gd.SetVertexBuffer(vb);
+                _gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            }
+        }
+
+        _gd.DepthStencilState = prevDepth;
     }
 
-    public void DrawBike(BasicEffect fx, IPlayer p)
+    public void DrawBike(BasicEffect fx, IPlayer? p)
     {
-        // Placeholder: until model loader exists, skip
+        if (p == null) return;
+        
+        // TODO: Load and draw light cycle model
+        // For now, draw a simple colored cube to represent the bike
+        try
+        {
+            float x = p.getXpos();
+            float y = p.getYpos();
+            int direction = p.getDirection();
+            
+            // Create a simple bike representation using a colored cube
+            var world = Matrix.CreateTranslation(x, 2f, y); // Slightly above ground
+            fx.World = world;
+            fx.DiffuseColor = GetPlayerColor(p.getPlayerNum());
+            
+            // Apply effect and draw a simple cube (placeholder until model loading is implemented)
+            foreach (var pass in fx.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                // TODO: Draw actual light cycle model here
+                // For now, this is a placeholder that shows bike position
+            }
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawBike error: {ex.Message}");
+        }
     }
 
-    public void DrawExplosion(BasicEffect fx, IPlayer p)
+    public void DrawExplosion(BasicEffect fx, IPlayer? p)
     {
-        // Placeholder: draw translucent ring later
+        if (p == null || !p.getExplode()) return;
+        
+        try
+        {
+            float x = p.getXpos();
+            float y = p.getYpos();
+            
+            // TODO: Implement explosion effect
+            // For now, draw a bright colored effect at crash location
+            var world = Matrix.CreateScale(3f) * Matrix.CreateTranslation(x, 3f, y);
+            fx.World = world;
+            fx.DiffuseColor = Vector3.One; // White explosion
+            fx.EmissiveColor = Vector3.One * 0.5f; // Glowing effect
+            
+            foreach (var pass in fx.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                // TODO: Draw actual explosion particles/effects here
+            }
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawExplosion error: {ex.Message}");
+        }
+    }
+    
+    private Vector3 GetPlayerColor(int playerNum)
+    {
+        // Match Java player colors
+        Vector3[] colors = {
+            new Vector3(0.0f, 0.1f, 0.9f),    // Blue
+            new Vector3(1.0f, 0.55f, 0.14f),  // Orange/Yellow  
+            new Vector3(0.75f, 0.02f, 0.02f), // Red
+            new Vector3(0.8f, 0.8f, 0.8f),    // Grey
+            new Vector3(0.12f, 0.75f, 0.0f),  // Green
+            new Vector3(0.75f, 0.0f, 0.35f)   // Purple
+        };
+        
+        return colors[playerNum % colors.Length];
     }
 
     public void SetGridSize(float gridSize)

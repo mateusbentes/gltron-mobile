@@ -242,6 +242,14 @@ public class Game1 : Game
                 _trailsRenderer = new GltronMobileEngine.Video.TrailsRenderer(GraphicsDevice);
                 _trailsRenderer.LoadContent(Content);
                 _camera = new GltronMobileEngine.Video.Camera(GraphicsDevice.Viewport);
+                
+                // CRITICAL FIX: Set proper camera projection for grid size
+                if (_glTronGame != null)
+                {
+                    var viewport = GraphicsDevice.Viewport;
+                    _camera.SetProjection(_glTronGame.GetGridSize(), viewport.AspectRatio);
+                }
+                
                 System.Diagnostics.Debug.WriteLine("GLTRON: 3D graphics components initialized successfully");
                 
                 // Platform-specific logging if available
@@ -496,25 +504,39 @@ public class Game1 : Game
 
                     try
                     {
-                        // Get player direction for proper camera positioning
-                        int playerDirection = 0;
+                        // CRITICAL FIX: Use turn-interpolated camera like Java version
                         if (player != null)
                         {
                             try
                             {
-                                playerDirection = player.getDirection();
-                            }
-                            catch { }
-                        }
-                        
-                        _camera.UpdateWithPlayerDirection(playerPos, playerDirection, gameTime);
-                        try
-                        {
+                                int playerDirection = player.getDirection();
+                                int lastDirection = player.getLastDirection();
+                                long currentTime = (long)gameTime.TotalGameTime.TotalMilliseconds;
+                                long turnTime = player.TurnTime;
+                                
+                                // Use smooth turn interpolation like Java version
+                                _camera.UpdateWithTurn(playerPos, playerDirection, lastDirection, 
+                                                     currentTime, turnTime, GltronMobileEngine.Player.TURN_LENGTH);
+                                
+                                try
+                                {
 #if ANDROID
-                            Android.Util.Log.Debug("GLTRON", $"Camera updated - pos: {playerPos}, dir: {playerDirection}");
+                                    Android.Util.Log.Debug("GLTRON", $"Camera updated with turn interpolation - pos: {playerPos}, dir: {playerDirection}, lastDir: {lastDirection}");
 #endif
+                                }
+                                catch { }
+                            }
+                            catch (System.Exception ex)
+                            {
+                                // Fallback to simple camera update
+                                _camera.UpdateWithPlayerDirection(playerPos, player.getDirection(), gameTime);
+                            }
                         }
-                        catch { }
+                        else
+                        {
+                            // No player - use simple update
+                            _camera.Update(playerPos, gameTime);
+                        }
                     }
                     catch (System.Exception ex)
                     {
@@ -560,6 +582,36 @@ public class Game1 : Game
                         catch { }
                         return; // Skip 3D rendering if BeginDraw fails
                     }
+
+                    // CRITICAL FIX: Draw skybox first (like Java version)
+                    try
+                    {
+                        // Disable depth testing for skybox (like Java version)
+                        GraphicsDevice.DepthStencilState = DepthStencilState.None;
+                        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+                        _worldGraphics.DrawSkybox();
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Info("GLTRON", "Skybox drawn successfully");
+#endif
+                        }
+                        catch { }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        try
+                        {
+#if ANDROID
+                            Android.Util.Log.Error("GLTRON", $"DrawSkybox FAILED: {ex.Message}");
+#endif
+                        }
+                        catch { }
+                    }
+
+                    // Re-enable depth testing for world geometry
+                    GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+                    GraphicsDevice.RasterizerState = RasterizerState.CullNone; // Fix culling issues
 
                     // Draw floor
                     try
@@ -636,58 +688,42 @@ public class Game1 : Game
                         catch { }
                     }
 
-                    // Draw player trails for all 4 players
+                    // Draw player trails and bikes for all 4 players
                     var players = _glTronGame?.GetPlayers();
                     if (players != null && _trailsRenderer != null)
                     {
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Debug("GLTRON", $"Drawing trails for {players.Length} players");
-#endif
-                        }
-                        catch { }
-                        
                         for (int i = 0; i < players.Length && i < 4; i++) // Ensure we draw all 4 players
                         {
                             if (players[i] != null)
                             {
                                 try
                                 {
-                                    float x = players[i].getXpos();
-                                    float y = players[i].getYpos();
-                                    float speed = players[i].getSpeed();
-                                    
-                                    try
-                                    {
-#if ANDROID
-                                        Android.Util.Log.Debug("GLTRON", $"Player {i}: pos=({x:F1},{y:F1}) speed={speed:F1}");
-#endif
-                                    }
-                                    catch { }
-                                    
+                                    // Draw trail first (behind bike)
                                     _trailsRenderer.DrawTrail(_worldGraphics, players[i]);
+                                    
+                                    // Draw bike (like Java version)
+                                    if (players[i].getSpeed() > 0.0f || players[i].getExplode())
+                                    {
+                                        if (players[i].getExplode())
+                                        {
+                                            _worldGraphics.DrawExplosion(_worldGraphics.Effect, players[i]);
+                                        }
+                                        else
+                                        {
+                                            _worldGraphics.DrawBike(_worldGraphics.Effect, players[i]);
+                                        }
+                                    }
                                 }
                                 catch (System.Exception ex)
                                 {
                                     try
                                     {
 #if ANDROID
-                                        Android.Util.Log.Error("GLTRON", $"DrawTrail FAILED for player {i}: {ex.Message}");
+                                        Android.Util.Log.Error("GLTRON", $"Draw player {i} FAILED: {ex.Message}");
 #endif
                                     }
                                     catch { }
                                 }
-                            }
-                            else
-                            {
-                                try
-                                {
-#if ANDROID
-                                    Android.Util.Log.Warn("GLTRON", $"Player {i} is null - not drawing trail");
-#endif
-                                }
-                                catch { }
                             }
                         }
                     }
@@ -735,16 +771,9 @@ public class Game1 : Game
                 catch { }
             }
 
-            // STEP 2: TEST 2D UI ONLY (NO 3D)
+            // STEP 2: Draw 2D UI overlay
             try
             {
-                try
-                {
-#if ANDROID
-                    Android.Util.Log.Info("GLTRON", "TESTING 2D UI ONLY - NO 3D DRAWING");
-#endif
-                }
-                catch { }
                 
                 // Use proper blend mode for 2D over clear color
                 _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
@@ -777,13 +806,7 @@ public class Game1 : Game
                         _spriteBatch.DrawString(_font, instructText, 
                             new Vector2(centerX - instructSize.X/2, centerY + 150), Color.White);
                         
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Info("GLTRON", "Drawing menu with background image");
-#endif
-                        }
-                        catch { }
+
                     }
                     else
                     {
@@ -804,13 +827,7 @@ public class Game1 : Game
                             _spriteBatch.DrawString(_font, "Tap top-right to switch camera", new Vector2(viewport.Width - 300, 10), Color.Gray);
                         }
                         
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Info("GLTRON", "Drawing game HUD on red background");
-#endif
-                        }
-                        catch { }
+
                     }
                 }
                 else
@@ -842,16 +859,7 @@ public class Game1 : Game
                 try { Android.Util.Log.Error("GLTRON", $"2D UI rendering error: {ex}"); } catch { }
             }
 
-            // STEP 3: SKIP GAME LOGIC RENDERING FOR NOW
-            try
-            {
-#if ANDROID
-                Android.Util.Log.Info("GLTRON", "SKIPPING game logic rendering to test UI only");
-#endif
-            }
-            catch { }
-            
-            // SKIP: _glTronGame?.RenderGame(GraphicsDevice);
+
         }
         catch (System.Exception ex)
         {
