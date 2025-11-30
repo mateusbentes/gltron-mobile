@@ -47,7 +47,7 @@ namespace GltronMobileEngine
         public const int TURN_LEFT = 3;
         public const int TURN_RIGHT = 1;
         public const int TURN_LENGTH = 200;
-        public const float TRAIL_HEIGHT = 3.5f;
+        public const float TRAIL_HEIGHT = 1.5f; // Reduced from 3.5f to be proportional to larger motorcycles
         private const float EXP_RADIUS_MAX = 30.0f;
         private const float EXP_RADIUS_DELTA = 0.01f;
 
@@ -165,6 +165,14 @@ namespace GltronMobileEngine
                 return;
             }
 
+            // CRITICAL FIX: Finalize current trail segment before creating new one
+            if (trailOffset >= 0 && Trails[trailOffset] != null)
+            {
+                // Current segment ends at current position
+                float currentSegmentLength = Math.Abs(Trails[trailOffset].vDirection.v[0]) + Math.Abs(Trails[trailOffset].vDirection.v[1]);
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} finalizing segment {trailOffset} with length {currentSegmentLength:F2}");
+            }
+
             trailOffset++;
             Trails[trailOffset] = new Segment();
             Trails[trailOffset].vStart.v[0] = x;
@@ -175,6 +183,8 @@ namespace GltronMobileEngine
             LastDirection = Direction;
             Direction = (Direction + direction) % 4;
             TurnTime = current_time;
+            
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} turned from direction {LastDirection} to {Direction} at ({x:F1},{y:F1})");
             
             // Sound feedback for turns (like Java version)
             try
@@ -220,8 +230,19 @@ namespace GltronMobileEngine
 
                 t = dt / 100.0f * Speed * fs;
 
-                Trails[trailOffset].vDirection.v[0] += t * DIRS_X[Direction];
-                Trails[trailOffset].vDirection.v[1] += t * DIRS_Y[Direction];
+                // CRITICAL FIX: Ensure trail direction vectors are properly accumulated
+                float deltaX = t * DIRS_X[Direction];
+                float deltaY = t * DIRS_Y[Direction];
+                
+                Trails[trailOffset].vDirection.v[0] += deltaX;
+                Trails[trailOffset].vDirection.v[1] += deltaY;
+                
+                // Debug trail growth
+                if (trailOffset % 10 == 0) // Log every 10th update to avoid spam
+                {
+                    float segLength = Math.Abs(Trails[trailOffset].vDirection.v[0]) + Math.Abs(Trails[trailOffset].vDirection.v[1]);
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} segment {trailOffset} length: {segLength:F2}, delta: ({deltaX:F3},{deltaY:F3})");
+                }
 
                 // Debug: Check if player is going outside expected bounds (use actual grid size)
                 float currentX = getXpos();

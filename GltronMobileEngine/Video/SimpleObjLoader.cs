@@ -89,96 +89,122 @@ namespace GltronMobileEngine.Video
             }
         }
 
-        private static SimpleObjModel ParseObjContent(string objContent)
+        public static SimpleObjModel? ParseObjContent(string objContent)
         {
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
             var texCoords = new List<Vector2>();
             var faces = new List<(int v, int vt, int vn)>();
 
-            string[] lines = objContent.Split('\n');
+            string[] lines = objContent.Split(new char[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             System.Diagnostics.Debug.WriteLine($"GLTRON: Parsing OBJ with {lines.Length} lines");
+
+            int vertexCount = 0, normalCount = 0, texCoordCount = 0, faceCount = 0;
 
             foreach (string line in lines)
             {
                 string trimmedLine = line.Trim();
-                if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith("#"))
+                if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith("#") || trimmedLine.StartsWith("mtllib") || trimmedLine.StartsWith("g"))
                     continue;
 
-                string[] parts = trimmedLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                string[] parts = trimmedLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length == 0) continue;
 
-                switch (parts[0])
+                try
                 {
-                    case "v": // Vertex
-                        if (parts.Length >= 4)
-                        {
-                            if (float.TryParse(parts[1], out float x) &&
-                                float.TryParse(parts[2], out float y) &&
-                                float.TryParse(parts[3], out float z))
+                    switch (parts[0])
+                    {
+                        case "v": // Vertex
+                            if (parts.Length >= 4)
                             {
-                                vertices.Add(new Vector3(x, y, z));
-                            }
-                        }
-                        break;
-
-                    case "vn": // Normal
-                        if (parts.Length >= 4)
-                        {
-                            if (float.TryParse(parts[1], out float nx) &&
-                                float.TryParse(parts[2], out float ny) &&
-                                float.TryParse(parts[3], out float nz))
-                            {
-                                normals.Add(new Vector3(nx, ny, nz));
-                            }
-                        }
-                        break;
-
-                    case "vt": // Texture coordinate
-                        if (parts.Length >= 3)
-                        {
-                            if (float.TryParse(parts[1], out float u) &&
-                                float.TryParse(parts[2], out float v))
-                            {
-                                texCoords.Add(new Vector2(u, v));
-                            }
-                        }
-                        break;
-
-                    case "f": // Face
-                        if (parts.Length >= 4) // Triangle or quad
-                        {
-                            // Parse face indices (format: v/vt/vn or v//vn or v)
-                            var faceVertices = new List<(int v, int vt, int vn)>();
-                            
-                            for (int i = 1; i < parts.Length; i++)
-                            {
-                                var indices = ParseFaceVertex(parts[i]);
-                                if (indices.HasValue)
+                                if (float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x) &&
+                                    float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float y) &&
+                                    float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z))
                                 {
-                                    faceVertices.Add(indices.Value);
+                                    vertices.Add(new Vector3(x, y, z));
+                                    vertexCount++;
                                 }
                             }
+                            break;
 
-                            // Convert quad to triangles if needed
-                            if (faceVertices.Count == 3)
+                        case "vn": // Normal
+                            if (parts.Length >= 4)
                             {
-                                // Triangle
-                                faces.AddRange(faceVertices);
+                                if (float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float nx) &&
+                                    float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float ny) &&
+                                    float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float nz))
+                                {
+                                    normals.Add(new Vector3(nx, ny, nz));
+                                    normalCount++;
+                                }
                             }
-                            else if (faceVertices.Count == 4)
+                            break;
+
+                        case "vt": // Texture coordinate
+                            if (parts.Length >= 3)
                             {
-                                // Quad -> two triangles
-                                faces.Add(faceVertices[0]);
-                                faces.Add(faceVertices[1]);
-                                faces.Add(faceVertices[2]);
+                                if (float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float u) &&
+                                    float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float v))
+                                {
+                                    texCoords.Add(new Vector2(u, v));
+                                    texCoordCount++;
+                                }
+                            }
+                            break;
+
+                        case "f": // Face
+                            if (parts.Length >= 4) // Triangle or quad
+                            {
+                                // Parse face indices (format: v/vt/vn or v//vn or v)
+                                var faceVertices = new List<(int v, int vt, int vn)>();
                                 
-                                faces.Add(faceVertices[0]);
-                                faces.Add(faceVertices[2]);
-                                faces.Add(faceVertices[3]);
+                                for (int i = 1; i < parts.Length; i++)
+                                {
+                                    var indices = ParseFaceVertex(parts[i]);
+                                    if (indices.HasValue)
+                                    {
+                                        faceVertices.Add(indices.Value);
+                                    }
+                                }
+
+                                // Convert quad to triangles if needed
+                                if (faceVertices.Count == 3)
+                                {
+                                    // Triangle
+                                    faces.AddRange(faceVertices);
+                                    faceCount++;
+                                }
+                                else if (faceVertices.Count == 4)
+                                {
+                                    // Quad -> two triangles
+                                    faces.Add(faceVertices[0]);
+                                    faces.Add(faceVertices[1]);
+                                    faces.Add(faceVertices[2]);
+                                    
+                                    faces.Add(faceVertices[0]);
+                                    faces.Add(faceVertices[2]);
+                                    faces.Add(faceVertices[3]);
+                                    faceCount += 2;
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Error parsing line '{trimmedLine}': {ex.Message}");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Parsed OBJ - {vertexCount} vertices, {normalCount} normals, {texCoordCount} texCoords, {faceCount} faces");
+
+            // Generate normals if missing
+            if (normals.Count == 0 && vertices.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: No normals found, generating flat normals");
+                for (int i = 0; i < vertices.Count; i++)
+                {
+                    normals.Add(Vector3.Up); // Default normal
                 }
             }
 
@@ -191,14 +217,14 @@ namespace GltronMobileEngine.Video
                 var face = faces[i];
                 
                 Vector3 position = face.v > 0 && face.v <= vertices.Count ? vertices[face.v - 1] : Vector3.Zero;
-                Vector3 normal = face.vn > 0 && face.vn <= normals.Count ? normals[face.vn - 1] : Vector3.Up;
+                Vector3 normal = face.vn > 0 && face.vn <= normals.Count ? normals[face.vn - 1] : 
+                                (normals.Count > 0 ? normals[0] : Vector3.Up);
                 Vector2 texCoord = face.vt > 0 && face.vt <= texCoords.Count ? texCoords[face.vt - 1] : Vector2.Zero;
 
                 finalVertices.Add(new VertexPositionNormalTexture(position, normal, texCoord));
                 finalIndices.Add(i);
             }
 
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Parsed OBJ - {vertices.Count} vertices, {normals.Count} normals, {texCoords.Count} texCoords, {faces.Count} face vertices");
             System.Diagnostics.Debug.WriteLine($"GLTRON: Final model - {finalVertices.Count} final vertices, {finalIndices.Count} indices");
 
             if (finalVertices.Count == 0)

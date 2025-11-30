@@ -39,7 +39,7 @@ namespace GltronMobileEngine
         // Constants from Java version
         private readonly float[] _xv = { 0.5f, 0.3245f, 0.6f, 0.5f, 0.68f, -0.3f };
         private readonly float[] _yv = { 0.8f, 1.0f, 0.0f, 0.2f, 0.2f, 0.0f };
-        private readonly Vector4 _colour = new Vector4(0.6f, 0.16f, 0.2f, 0.50f); // Red-ish color
+        private readonly Vector4 _colour = new Vector4(0.2f, 0.8f, 1.0f, 0.85f); // Bright cyan/blue - very alien
         
         // Shadow matrix for shadow rendering
         private readonly Matrix _shadowMatrix = new Matrix(
@@ -49,8 +49,8 @@ namespace GltronMobileEngine
             0.0f, 0.0f, 0.0f, 4.0f
         );
         
-        private const float SCALE_FACTOR = 0.25f;
-        private const float HEIGHT = 40.0f;
+        private const float SCALE_FACTOR = 1.0f;  // Increased from 0.4f to make recognizer more visible
+        private const float HEIGHT = 25.0f;      // Lower but still floating
         
         public Recognizer(float gridSize)
         {

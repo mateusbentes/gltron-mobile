@@ -23,71 +23,120 @@ public class TrailsRenderer
 
     public void DrawTrail(WorldGraphics world, IPlayer p)
     {
-        if (p == null || p.getTrailHeight() <= 0.0f) return;
+        if (p == null) return;
         
-        // CRITICAL FIX: Draw trail walls like Java version, not just lines
+        int trailOffset = p.getTrailOffset();
+        float trailHeight = p.getTrailHeight();
+        
+        // CRITICAL FIX: Show trails even when height is low (fading trails)
+        if (trailOffset <= 0 || trailHeight <= 0.01f) return;
+        
+        // CRITICAL FIX: Draw trail walls correctly - each segment is a wall from start to start+direction
         var verts = new List<VertexPositionColor>();
         
         // Get player color (like Java version)
         Color trailColor = GetPlayerTrailColor(p);
-        float trailHeight = p.getTrailHeight();
         
-        for (int i = 0; i <= p.getTrailOffset(); i++)
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Drawing trail for player {p.getPlayerNum()}, offset: {trailOffset}, height: {trailHeight:F2}");
+        
+        // CRITICAL FIX: Build trail segments properly - each segment represents a wall
+        int validSegments = 0;
+        for (int i = 0; i <= trailOffset; i++)
         {
-            var s = p.getTrail(i);
-            if (s == null) continue;
+            var segment = p.getTrail(i);
+            if (segment == null) continue;
             
-            // Create trail segment as a wall (like Java TrailMesh)
-            var startPos = new Vector3(s.vStart.v[0], 0f, s.vStart.v[1]);
-            var endPos = startPos + new Vector3(s.vDirection.v[0], 0f, s.vDirection.v[1]);
+            // Each segment goes from vStart to vStart + vDirection
+            var segStart = new Vector3(segment.vStart.v[0], 0f, segment.vStart.v[1]);
+            var segEnd = new Vector3(segment.vStart.v[0] + segment.vDirection.v[0], 0f, 
+                                   segment.vStart.v[1] + segment.vDirection.v[1]);
             
-            // Skip zero-length segments
-            if (Vector3.Distance(startPos, endPos) < 0.1f) continue;
+            // CRITICAL FIX: Accept smaller segments but ensure they're not zero
+            float segLength = Vector3.Distance(segStart, segEnd);
+            if (segLength < 0.001f) continue;
             
-            // Create wall quad for this trail segment
-            var topStart = startPos + new Vector3(0, trailHeight, 0);
-            var topEnd = endPos + new Vector3(0, trailHeight, 0);
+            validSegments++;
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Trail segment {i}: ({segStart.X:F1},{segStart.Z:F1}) to ({segEnd.X:F1},{segEnd.Z:F1}), length: {segLength:F2}");
             
-            // Add quad vertices (two triangles)
-            // Triangle 1
-            verts.Add(new VertexPositionColor(startPos, trailColor));    // bottom start
-            verts.Add(new VertexPositionColor(topStart, trailColor));    // top start  
-            verts.Add(new VertexPositionColor(endPos, trailColor));      // bottom end
+            // CRITICAL FIX: Create simple trail wall (no duplication)
+            var bottomStart = segStart;
+            var bottomEnd = segEnd;
+            var topStart = segStart + new Vector3(0, trailHeight, 0);
+            var topEnd = segEnd + new Vector3(0, trailHeight, 0);
             
-            // Triangle 2
-            verts.Add(new VertexPositionColor(topStart, trailColor));    // top start
-            verts.Add(new VertexPositionColor(topEnd, trailColor));      // top end
-            verts.Add(new VertexPositionColor(endPos, trailColor));      // bottom end
+            // Create single trail wall quad (visible from both sides due to CullNone)
+            // Triangle 1: bottom-start, top-start, bottom-end
+            verts.Add(new VertexPositionColor(bottomStart, trailColor));
+            verts.Add(new VertexPositionColor(topStart, trailColor));
+            verts.Add(new VertexPositionColor(bottomEnd, trailColor));
+            
+            // Triangle 2: top-start, top-end, bottom-end  
+            verts.Add(new VertexPositionColor(topStart, trailColor));
+            verts.Add(new VertexPositionColor(topEnd, trailColor));
+            verts.Add(new VertexPositionColor(bottomEnd, trailColor));
         }
         
-        if (verts.Count == 0) return;
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Generated {validSegments} valid trail segments, {verts.Count} vertices for player {p.getPlayerNum()}");
+        
+        if (verts.Count == 0) 
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: No trail vertices generated for player {p.getPlayerNum()}");
+            return;
+        }
+        
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Generated {verts.Count} trail vertices for player {p.getPlayerNum()}");
         
         // Ensure buffer is large enough
         if (_vb.VertexCount < verts.Count)
         {
             _vb.Dispose();
-            _vb = new DynamicVertexBuffer(_gd, typeof(VertexPositionColor), verts.Count * 2, BufferUsage.WriteOnly);
+            _vb = new DynamicVertexBuffer(_gd, typeof(VertexPositionColor), Math.Max(verts.Count * 2, 8192), BufferUsage.WriteOnly);
         }
         
-        // Set up rendering state for trail walls
+        // CRITICAL FIX: Set up proper rendering state for trail walls
+        var prevBlend = _gd.BlendState;
+        var prevDepth = _gd.DepthStencilState;
+        var prevRaster = _gd.RasterizerState;
+        
+        // CRITICAL FIX: Use proper blend state for semi-transparent trails
+        _gd.BlendState = BlendState.AlphaBlend;
+        _gd.DepthStencilState = DepthStencilState.Default;
+        _gd.RasterizerState = RasterizerState.CullNone; // Draw both sides
+        
+        // CRITICAL FIX: Configure effect properly for vertex colors
         world.Effect.VertexColorEnabled = true;
         world.Effect.TextureEnabled = false;
         world.Effect.LightingEnabled = false;
         world.Effect.World = Matrix.Identity;
+        world.Effect.DiffuseColor = Vector3.One; // Ensure white diffuse for proper vertex colors
+        world.Effect.Alpha = 1.0f;
         
-        _vb.SetData(verts.ToArray());
-        _gd.SetVertexBuffer(_vb);
-        
-        foreach (var pass in world.Effect.CurrentTechnique.Passes)
+        try
         {
-            pass.Apply();
-            _gd.DrawPrimitives(PrimitiveType.TriangleList, 0, verts.Count / 3);
+            _vb.SetData(verts.ToArray());
+            _gd.SetVertexBuffer(_vb);
+            
+            foreach (var pass in world.Effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                _gd.DrawPrimitives(PrimitiveType.TriangleList, 0, verts.Count / 3);
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Successfully rendered {verts.Count / 3} trail triangles for player {p.getPlayerNum()}");
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Trail rendering error for player {p.getPlayerNum()}: {ex.Message}");
         }
         
         // Reset effect state
         world.Effect.VertexColorEnabled = false;
         world.Effect.TextureEnabled = true;
+        _gd.BlendState = prevBlend;
+        _gd.DepthStencilState = prevDepth;
+        _gd.RasterizerState = prevRaster;
     }
+
     
     private Color GetPlayerTrailColor(IPlayer p)
     {

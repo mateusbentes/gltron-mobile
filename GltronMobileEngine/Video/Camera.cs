@@ -367,7 +367,6 @@ public class Camera
         }
         catch (System.Exception ex)
         {
-#pragma warning disable CS0168 // Variable is used in conditional compilation
             try
             {
 #if ANDROID
@@ -375,7 +374,6 @@ public class Camera
 #endif
             }
             catch { /* Ignore logging errors */ }
-#pragma warning restore CS0168
             
             // Fallback view matrix
             View = Matrix.Identity;
