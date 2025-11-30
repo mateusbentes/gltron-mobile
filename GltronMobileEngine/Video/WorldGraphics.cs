@@ -130,35 +130,41 @@ public class WorldGraphics
         // CRITICAL FIX: Ensure proper render states for floor
         _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
-        _gd.RasterizerState = RasterizerState.CullNone; // Match Java OpenGL behavior
+        _gd.RasterizerState = RasterizerState.CullNone;
         Effect.Texture = _texFloor;
         Effect.World = Matrix.Identity;
         
-        // CRITICAL FIX: Floor should be neutral colored, not blue
-        Effect.DiffuseColor = Vector3.One; // White/neutral color for floor
+        // CRITICAL FIX: Floor should be neutral colored
+        Effect.DiffuseColor = Vector3.One;
         Effect.Alpha = 1.0f;
 
-        // CRITICAL FIX: Match Java floor rendering constants exactly
-        float S = _gridSize;                    // Grid size (e.g., 100)
-        int tileSize = (int)(S / 4f);          // Java uses gridSize/4 for tile size
-        if (tileSize <= 0) tileSize = 25;      // Minimum tile size fallback
-        float uvScale = tileSize / 12f;        // Java uses 12.0f as texture scale denominator
+        // CRITICAL FIX: Base arena size on actual player coordinate system
+        // Players use normalized coordinates (0.0-1.0) * gridSize
+        // So the arena should span from 0 to gridSize in both X and Z
+        float arenaSize = _gridSize;
+        
+        // Use reasonable tile size based on arena size for good texture detail
+        int tileSize = Math.Max(1, (int)(arenaSize / 8f)); // 8 tiles across the arena
+        float uvScale = 1.0f; // Simple 1:1 UV mapping per tile
 
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Floor rendering - GridSize: {S}, TileSize: {tileSize}, UVScale: {uvScale}");
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Floor rendering - ArenaSize: {arenaSize}, TileSize: {tileSize}, UVScale: {uvScale}");
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            for (int x = 0; x < (int)S; x += tileSize)
+            for (int x = 0; x < (int)arenaSize; x += tileSize)
             {
-                for (int z = 0; z < (int)S; z += tileSize)
+                for (int z = 0; z < (int)arenaSize; z += tileSize)
                 {
-                    // Match Java floor quad generation exactly
+                    // Ensure we don't go beyond arena bounds
+                    int actualTileX = Math.Min(tileSize, (int)arenaSize - x);
+                    int actualTileZ = Math.Min(tileSize, (int)arenaSize - z);
+                    
                     var verts = new VertexPositionTexture[4];
                     verts[0] = new VertexPositionTexture(new Vector3(x, 0, z), new Vector2(0f, 0f));
-                    verts[1] = new VertexPositionTexture(new Vector3(x + tileSize, 0, z), new Vector2(uvScale, 0f));
-                    verts[2] = new VertexPositionTexture(new Vector3(x, 0, z + tileSize), new Vector2(0f, uvScale));
-                    verts[3] = new VertexPositionTexture(new Vector3(x + tileSize, 0, z + tileSize), new Vector2(uvScale, uvScale));
+                    verts[1] = new VertexPositionTexture(new Vector3(x + actualTileX, 0, z), new Vector2(uvScale, 0f));
+                    verts[2] = new VertexPositionTexture(new Vector3(x, 0, z + actualTileZ), new Vector2(0f, uvScale));
+                    verts[3] = new VertexPositionTexture(new Vector3(x + actualTileX, 0, z + actualTileZ), new Vector2(uvScale, uvScale));
 
                     DrawQuad(verts);
                 }
@@ -173,36 +179,44 @@ public class WorldGraphics
         Effect.World = Matrix.Identity;
         Effect.Texture = _texWall;
         
-        // CRITICAL FIX: Walls should be white/neutral colored, not player colored
-        Effect.DiffuseColor = Vector3.One; // White color for walls
+        // CRITICAL FIX: Walls should be white/neutral colored
+        Effect.DiffuseColor = Vector3.One;
         Effect.Alpha = 1.0f;
 
-        // CRITICAL FIX: Use CullNone to match Java OpenGL behavior
+        // CRITICAL FIX: Use CullNone for proper wall visibility
         _gd.RasterizerState = RasterizerState.CullNone;
         _gd.BlendState = BlendState.AlphaBlend;
         _gd.DepthStencilState = DepthStencilState.Default;
 
-        // CRITICAL FIX: Match Java wall constants exactly
-        float S = _gridSize;                    // Grid size (e.g., 100)
-        float H = 48.0f;                       // Wall height from Java (exactly 48 units)
-        float uvScale = S / 240f;              // Java uses 240.0f as texture scale denominator
+        // CRITICAL FIX: Base wall dimensions on actual player coordinate system
+        // Players move in 0 to gridSize range, so walls should enclose this area
+        float arenaSize = _gridSize;
+        float wallHeight = arenaSize * 0.4f; // Wall height proportional to arena size
+        float uvScale = 1.0f; // Simple UV mapping
 
-        System.Diagnostics.Debug.WriteLine($"GLTRON: Wall rendering - GridSize: {S}, Height: {H}, UVScale: {uvScale}");
+        System.Diagnostics.Debug.WriteLine($"GLTRON: Wall rendering - ArenaSize: {arenaSize}, WallHeight: {wallHeight}, UVScale: {uvScale}");
 
-        // Java wall vertices (converted to MonoGame coordinate system) - match exactly
+        // Create walls that properly enclose the player movement area (0 to gridSize)
         var quads = new (Vector3 a, Vector3 b, Vector3 c, Vector3 d)[]
         {
-            // Wall 1: Bottom wall (Z=0)
-            (new Vector3(0, H, 0), new Vector3(S, H, 0), new Vector3(0, 0, 0), new Vector3(S, 0, 0)),
-            // Wall 2: Right wall (X=gridSize)  
-            (new Vector3(S, H, 0), new Vector3(S, H, S), new Vector3(S, 0, 0), new Vector3(S, 0, S)),
-            // Wall 3: Top wall (Z=gridSize)
-            (new Vector3(S, H, S), new Vector3(0, H, S), new Vector3(S, 0, S), new Vector3(0, 0, S)),
-            // Wall 4: Left wall (X=0)
-            (new Vector3(0, H, S), new Vector3(0, H, 0), new Vector3(0, 0, S), new Vector3(0, 0, 0)),
+            // Bottom wall (Z=0) - from X=0 to X=arenaSize
+            (new Vector3(0, wallHeight, 0), new Vector3(arenaSize, wallHeight, 0), 
+             new Vector3(0, 0, 0), new Vector3(arenaSize, 0, 0)),
+            
+            // Right wall (X=arenaSize) - from Z=0 to Z=arenaSize
+            (new Vector3(arenaSize, wallHeight, 0), new Vector3(arenaSize, wallHeight, arenaSize), 
+             new Vector3(arenaSize, 0, 0), new Vector3(arenaSize, 0, arenaSize)),
+            
+            // Top wall (Z=arenaSize) - from X=arenaSize to X=0
+            (new Vector3(arenaSize, wallHeight, arenaSize), new Vector3(0, wallHeight, arenaSize), 
+             new Vector3(arenaSize, 0, arenaSize), new Vector3(0, 0, arenaSize)),
+            
+            // Left wall (X=0) - from Z=arenaSize to Z=0
+            (new Vector3(0, wallHeight, arenaSize), new Vector3(0, wallHeight, 0), 
+             new Vector3(0, 0, arenaSize), new Vector3(0, 0, 0)),
         };
 
-        // Java UV coordinates - match exactly
+        // Simple UV coordinates for clean wall texturing
         var uvs = new Vector2[]
         {
             new Vector2(uvScale, 1f), new Vector2(0f, 1f), new Vector2(uvScale, 0f), new Vector2(0f, 0f)
