@@ -367,12 +367,12 @@ public class Camera
         }
         catch (System.Exception ex)
         {
+#pragma warning disable CS0168 // Variable is used in conditional compilation
             try
             {
 #if ANDROID
                 Android.Util.Log.Error("GLTRON", $"Failed to create view matrix: {ex.Message}");
 #endif
-#pragma warning disable CS0168 // Variable is used in conditional compilation
             }
             catch { /* Ignore logging errors */ }
 #pragma warning restore CS0168

@@ -18,6 +18,10 @@ public class WorldGraphics
     
     // CRITICAL FIX: Add motorcycle model support
     private SimpleObjLoader.SimpleObjModel? _lightCycleObjModel;
+    
+    // CRITICAL FIX: Add recognizer model support
+    private SimpleObjLoader.SimpleObjModel? _recognizerObjModel;
+    private Vector3 _recognizerBoundingBoxSize = Vector3.One;
 
     public WorldGraphics(GraphicsDevice gd, ContentManager cm)
     {
@@ -41,25 +45,115 @@ public class WorldGraphics
         _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
         _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
         
-        // CRITICAL FIX: Load motorcycle model using custom OBJ loader
+        // CRITICAL FIX: Load motorcycle OBJ from the Content folder via TitleContainer
         try
         {
-            // Try to load the OBJ file directly
-            string objPath = Path.Combine(content.RootDirectory, "Assets", "lightcyclehigh.obj");
-            _lightCycleObjModel = SimpleObjLoader.LoadFromFile(objPath);
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Content root directory: {content.RootDirectory}");
             
-            if (_lightCycleObjModel != null)
+            // Try multiple path formats for cross-platform compatibility
+            // These paths work with the CopyToOutputDirectory approach
+            string[] possiblePaths = {
+                "Content/Assets/lightcyclehigh.obj",
+                "Assets/lightcyclehigh.obj",
+                Path.Combine(content.RootDirectory, "Assets", "lightcyclehigh.obj"),
+                "lightcyclehigh.obj",
+                "./Content/Assets/lightcyclehigh.obj",
+                "./Assets/lightcyclehigh.obj"
+            };
+            
+            foreach (string relativePath in possiblePaths)
             {
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle OBJ model loaded successfully - {_lightCycleObjModel.Vertices.Length} vertices, {_lightCycleObjModel.TriangleCount} triangles");
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load OBJ from: {relativePath}");
+                    
+                    using var stream = Microsoft.Xna.Framework.TitleContainer.OpenStream(relativePath);
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Stream opened successfully, length: {stream.Length}");
+                    
+                    _lightCycleObjModel = SimpleObjLoader.LoadFromStream(stream);
+                    
+                    if (_lightCycleObjModel != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle OBJ model loaded successfully from {relativePath} - {_lightCycleObjModel.Vertices.Length} vertices, {_lightCycleObjModel.TriangleCount} triangles");
+                        break;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Stream loaded but parsing failed for {relativePath}");
+                    }
+                }
+                catch (System.Exception pathEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load from {relativePath}: {pathEx.Message}");
+                }
             }
-            else
+            
+            if (_lightCycleObjModel == null)
             {
-                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load motorcycle OBJ model - using cube representation");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load motorcycle OBJ from any path - using cube fallback");
             }
         }
         catch (System.Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Could not load motorcycle model: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Motorcycle model load failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine("GLTRON: Using cube fallback representation");
+            _lightCycleObjModel = null;
+        }
+        
+        // CRITICAL FIX: Load recognizer OBJ from the Content folder via TitleContainer
+        try
+        {
+            // Try multiple path formats for cross-platform compatibility
+            // These paths work with the CopyToOutputDirectory approach
+            string[] recognizerPaths = {
+                "Content/Assets/recognizerhigh.obj",
+                "Assets/recognizerhigh.obj",
+                Path.Combine(content.RootDirectory, "Assets", "recognizerhigh.obj"),
+                "recognizerhigh.obj",
+                "./Content/Assets/recognizerhigh.obj",
+                "./Assets/recognizerhigh.obj"
+            };
+            
+            foreach (string recognizerPath in recognizerPaths)
+            {
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Attempting to load Recognizer OBJ from: {recognizerPath}");
+                    
+                    using var recognizerStream = Microsoft.Xna.Framework.TitleContainer.OpenStream(recognizerPath);
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer stream opened successfully, length: {recognizerStream.Length}");
+                    
+                    _recognizerObjModel = SimpleObjLoader.LoadFromStream(recognizerStream);
+                    
+                    if (_recognizerObjModel != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer OBJ model loaded successfully from {recognizerPath} - {_recognizerObjModel.Vertices.Length} vertices, {_recognizerObjModel.TriangleCount} triangles");
+                        
+                        // Calculate bounding box size for recognizer positioning
+                        _recognizerBoundingBoxSize = CalculateBoundingBoxSize(_recognizerObjModel);
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer bounding box size: {_recognizerBoundingBoxSize}");
+                        break;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer stream loaded but parsing failed for {recognizerPath}");
+                    }
+                }
+                catch (System.Exception pathEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load recognizer from {recognizerPath}: {pathEx.Message}");
+                }
+            }
+            
+            if (_recognizerObjModel == null)
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: Could not load recognizer OBJ from any path");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Recognizer model load failed: {ex.Message}");
+            _recognizerObjModel = null;
         }
     }
 
@@ -266,10 +360,10 @@ public class WorldGraphics
             }
             else
             {
-                // Fallback: Draw a better-looking bike representation
-                var world = Matrix.CreateScale(4f, 3f, 8f) * // Even bigger for visibility
+                // Fallback: Draw a motorcycle-shaped representation
+                var world = Matrix.CreateScale(2f, 1.5f, 4f) * // Motorcycle proportions: wider than tall, longer than wide
                            Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
-                           Matrix.CreateTranslation(x, 2f, y); // Position on ground
+                           Matrix.CreateTranslation(x, 1f, y); // Position on ground
                 fx.World = world;
                 
                 // Get player color
@@ -286,7 +380,7 @@ public class WorldGraphics
                 fx.VertexColorEnabled = false;
                 fx.LightingEnabled = false;
                 
-                // Draw a simple but visible cube
+                // Draw a motorcycle-shaped cube
                 DrawSimpleCube(fx);
                 
                 // Reset effect state
@@ -412,6 +506,111 @@ public class WorldGraphics
         {
             System.Diagnostics.Debug.WriteLine($"GLTRON: DrawObjModel error: {ex.Message}");
         }
+    }
+
+    public void DrawRecognizer(BasicEffect fx, Recognizer recognizer)
+    {
+        if (recognizer == null || _recognizerObjModel == null) return;
+        
+        try
+        {
+            // Set up recognizer rendering state
+            _gd.BlendState = BlendState.AlphaBlend;
+            _gd.DepthStencilState = DepthStencilState.Default;
+            _gd.RasterizerState = RasterizerState.CullCounterClockwise;
+            
+            // Get recognizer transformation
+            Matrix worldMatrix = recognizer.GetWorldMatrix(_recognizerBoundingBoxSize);
+            fx.World = worldMatrix;
+            
+            // Set recognizer color
+            Vector4 recognizerColor = recognizer.GetColor();
+            fx.DiffuseColor = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
+            fx.Alpha = recognizerColor.W;
+            
+            // Set up effect for model rendering
+            fx.TextureEnabled = false;
+            fx.VertexColorEnabled = false;
+            fx.LightingEnabled = true;
+            fx.EnableDefaultLighting();
+            
+            // Set special lighting for recognizer (like Java version)
+            fx.EmissiveColor = new Vector3(0.1f, 0.05f, 0.05f); // Slight red glow
+            fx.SpecularColor = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
+            fx.SpecularPower = 16.0f;
+            
+            // Draw the recognizer model
+            if (_recognizerObjModel != null)
+            {
+                DrawObjModel(fx, _recognizerObjModel);
+            }
+            
+            // Draw shadow (simplified version - full stencil shadows would be complex in MonoGame)
+            DrawRecognizerShadow(fx, recognizer);
+            
+            // Reset effect state
+            fx.EmissiveColor = Vector3.Zero;
+            fx.SpecularColor = Vector3.Zero;
+            fx.TextureEnabled = true;
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawRecognizer error: {ex.Message}");
+        }
+    }
+    
+    private void DrawRecognizerShadow(BasicEffect fx, Recognizer recognizer)
+    {
+        try
+        {
+            // Simplified shadow - draw a darker version on the ground
+            var prevBlend = _gd.BlendState;
+            _gd.BlendState = BlendState.AlphaBlend;
+            
+            // Get shadow transformation (projected to ground)
+            Vector3 position = recognizer.GetPosition(_recognizerBoundingBoxSize);
+            float angle = recognizer.GetAngle();
+            
+            // Project shadow onto the ground (Y = 0)
+            Matrix shadowWorld = Matrix.CreateScale(0.25f) *
+                                Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
+                                Matrix.CreateTranslation(position.X, 0.1f, position.Z); // Slightly above ground
+            
+            fx.World = shadowWorld;
+            fx.DiffuseColor = Vector3.Zero; // Black shadow
+            fx.Alpha = 0.3f; // Semi-transparent
+            fx.LightingEnabled = false; // No lighting for shadow
+            
+            // Draw shadow
+            if (_recognizerObjModel != null)
+            {
+                DrawObjModel(fx, _recognizerObjModel);
+            }
+            
+            _gd.BlendState = prevBlend;
+        }
+        catch (System.Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GLTRON: DrawRecognizerShadow error: {ex.Message}");
+        }
+    }
+    
+    private Vector3 CalculateBoundingBoxSize(SimpleObjLoader.SimpleObjModel model)
+    {
+        if (model.Vertices.Length == 0)
+            return Vector3.One;
+        
+        Vector3 min = new Vector3(float.MaxValue);
+        Vector3 max = new Vector3(float.MinValue);
+        
+        foreach (var vertex in model.Vertices)
+        {
+            Vector3 pos = vertex.Position;
+            min = Vector3.Min(min, pos);
+            max = Vector3.Max(max, pos);
+        }
+        
+        return max - min;
     }
 
     public void SetGridSize(float gridSize)

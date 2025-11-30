@@ -37,6 +37,11 @@
 /processor:SoundEffectProcessor
 /build:Assets/game_crash.ogg
 
+#begin Assets/game_recognizer.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/build:Assets/game_recognizer.ogg
+
 # Textures
 #begin Assets/gltron_floor.png
 /importer:TextureImporter
@@ -206,4 +211,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Assets/gltron_bitmap.png
+
+
 

@@ -45,9 +45,9 @@ public class HUD
             : 0;
         _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}", new Vector2(10, 10), Color.White);
 
-        // Instructions / win/lose
-        if (_showInstr)
-            _sb.DrawString(_font, "Swipe left/right to turn", new Vector2(10, 30), Color.Yellow);
+        // Instructions / win/lose - CRITICAL FIX: Remove swipe text per user request
+        // if (_showInstr)
+        //     _sb.DrawString(_font, "Swipe left/right to turn", new Vector2(10, 30), Color.Yellow);
         if (_showWin)
             _sb.DrawString(_font, "YOU WIN", new Vector2(10, 50), Color.Lime);
         if (_showLose)

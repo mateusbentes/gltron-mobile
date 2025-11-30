@@ -23,8 +23,8 @@ public class Game1 : Game
     private Vector2? _swipeStartPosition = null;
     private double _swipeStartTime = 0;
     private bool _swipeInProgress = false;
-    private const float MIN_SWIPE_DISTANCE = 50f; // Minimum distance for a swipe
-    private const double MAX_SWIPE_TIME = 1000; // Maximum time for a swipe (milliseconds)
+    private const float MIN_SWIPE_DISTANCE = 30f; // Shorter minimum distance for more responsive swipes
+    private const double MAX_SWIPE_TIME = 500; // Shorter time for more responsive swipes (milliseconds)
 
     public Game1()
     {
@@ -669,6 +669,36 @@ public class Game1 : Game
                         catch { }
                     }
 
+                    // CRITICAL FIX: Draw recognizer (like Java version)
+                    if (_glTronGame?.DrawRecognizer() == true)
+                    {
+                        var recognizer = _glTronGame?.GetRecognizer();
+                        if (recognizer != null)
+                        {
+                            try
+                            {
+                                _worldGraphics.DrawRecognizer(_worldGraphics.Effect, recognizer);
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Debug("GLTRON", "Recognizer drawn successfully");
+#endif
+                                }
+                                catch { }
+                            }
+                            catch (System.Exception ex)
+                            {
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Error("GLTRON", $"DrawRecognizer FAILED: {ex.Message}");
+#endif
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+
                     // Draw player trails and bikes for all 4 players
                     var players = _glTronGame?.GetPlayers();
                     if (players != null && _trailsRenderer != null)
@@ -792,11 +822,17 @@ public class Game1 : Game
                         _spriteBatch.DrawString(_font, startText, 
                             new Vector2(centerX - startSize.X/2, centerY + 100), Color.White);
                         
-                        // Secondary instruction
-                        var instructText = "Swipe left/right to turn";
-                        var instructSize = _font.MeasureString(instructText);
-                        _spriteBatch.DrawString(_font, instructText, 
-                            new Vector2(centerX - instructSize.X/2, centerY + 150), Color.White);
+                        // Additional instructions
+                        var controlsText = "Top-left: Toggle Recognizer | Top-right: Switch Camera";
+                        var controlsSize = _font.MeasureString(controlsText);
+                        _spriteBatch.DrawString(_font, controlsText, 
+                            new Vector2(centerX - controlsSize.X/2, centerY + 200), Color.LightGray);
+                        
+                        // Secondary instruction - CRITICAL FIX: Remove swipe text per user request
+                        // var instructText = "Swipe left/right to turn";
+                        // var instructSize = _font.MeasureString(instructText);
+                        // _spriteBatch.DrawString(_font, instructText, 
+                        //     new Vector2(centerX - instructSize.X/2, centerY + 150), Color.White);
                         
 
                     }
@@ -817,7 +853,7 @@ public class Game1 : Game
                         // Restart SpriteBatch for additional UI elements
                         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
                         
-                        // Camera mode indicator and swipe instructions
+                        // Camera mode indicator and controls
                         if (_camera != null)
                         {
                             var cameraMode = _camera.GetCameraType().ToString();
@@ -825,21 +861,19 @@ public class Game1 : Game
                             _spriteBatch.DrawString(_font, "Tap top-right to switch camera", new Vector2(viewport.Width - 300, 10), Color.Gray);
                         }
                         
-                        // Swipe instructions
-                        _spriteBatch.DrawString(_font, "◄ Swipe Left", new Vector2(10, viewport.Height - 80), Color.Yellow);
-                        _spriteBatch.DrawString(_font, "Swipe Right ►", new Vector2(viewport.Width - 150, viewport.Height - 80), Color.Yellow);
-                        
-                        // Show swipe in progress
-                        if (_swipeInProgress && _swipeStartPosition.HasValue)
+                        // CRITICAL FIX: Recognizer toggle indicator
+                        if (_glTronGame != null)
                         {
-                            // Draw swipe start indicator
-                            var swipeColor = Color.Lime;
-                            var swipeRect = new Rectangle((int)_swipeStartPosition.Value.X - 10, (int)_swipeStartPosition.Value.Y - 10, 20, 20);
-                            _spriteBatch.Draw(_whitePixel, swipeRect, swipeColor);
-                            
-                            // Show swipe instruction
-                            _spriteBatch.DrawString(_font, "Swiping...", new Vector2(_swipeStartPosition.Value.X - 40, _swipeStartPosition.Value.Y - 40), swipeColor);
+                            string recognizerStatus = _glTronGame.DrawRecognizer() ? "ON" : "OFF";
+                            _spriteBatch.DrawString(_font, $"Recognizer: {recognizerStatus}", new Vector2(10, viewport.Height - 120), Color.Orange);
+                            _spriteBatch.DrawString(_font, "Tap top-left to toggle recognizer", new Vector2(10, viewport.Height - 140), Color.Gray);
                         }
+                        
+                        // Swipe instructions - CRITICAL FIX: Remove swipe text per user request
+                        // _spriteBatch.DrawString(_font, "◄ Swipe Left", new Vector2(10, viewport.Height - 80), Color.Yellow);
+                        // _spriteBatch.DrawString(_font, "Swipe Right ►", new Vector2(viewport.Width - 150, viewport.Height - 80), Color.Yellow);
+                        
+                        // No visual feedback during swipe - keep it clean like original GLTron
                         
 
                     }
@@ -916,13 +950,7 @@ public class Game1 : Game
                         _swipeStartTime = gameTime.TotalGameTime.TotalMilliseconds;
                         _swipeInProgress = true;
                         
-                        try
-                        {
-#if ANDROID
-                            Android.Util.Log.Debug("GLTRON", $"Swipe started at: {touch.Position.X:F1}, {touch.Position.Y:F1}");
-#endif
-                        }
-                        catch { }
+                        // Remove debug logging for cleaner experience
                         
                         // Check for camera switch (top-right corner tap)
                         if (touch.Position.X > viewport.Width * 0.8f && touch.Position.Y < viewport.Height * 0.2f)
@@ -944,6 +972,25 @@ public class Game1 : Game
                                 catch { }
                             }
                             _swipeInProgress = false; // Cancel swipe for camera switch
+                        }
+                        
+                        // CRITICAL FIX: Check for recognizer toggle (top-left corner tap)
+                        if (touch.Position.X < viewport.Width * 0.2f && touch.Position.Y < viewport.Height * 0.2f)
+                        {
+                            if (_glTronGame != null)
+                            {
+                                bool currentState = _glTronGame.DrawRecognizer();
+                                _glTronGame.SetDrawRecognizer(!currentState);
+                                
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Info("GLTRON", $"Recognizer toggled to: {!currentState}");
+#endif
+                                }
+                                catch { }
+                            }
+                            _swipeInProgress = false; // Cancel swipe for recognizer toggle
                         }
                         
                         // Handle menu tap (if in menu)
@@ -1015,25 +1062,11 @@ public class Game1 : Game
             float swipeDistance = swipeVector.Length();
             double swipeTime = gameTime.TotalGameTime.TotalMilliseconds - _swipeStartTime;
             
-            try
-            {
-#if ANDROID
-                Android.Util.Log.Debug("GLTRON", $"Swipe: distance={swipeDistance:F1}, time={swipeTime:F0}ms, vector=({swipeVector.X:F1},{swipeVector.Y:F1})");
-#endif
-            }
-            catch { }
+            // Remove excessive debug logging
             
             // Check if swipe is long enough
             if (swipeDistance < MIN_SWIPE_DISTANCE)
             {
-                try
-                {
-#if ANDROID
-                    Android.Util.Log.Debug("GLTRON", "Swipe too short, treating as tap");
-#endif
-                }
-                catch { }
-                
                 // Treat as tap if not in menu
                 if (_glTronGame?.IsShowingMenu() == false)
                 {
@@ -1051,32 +1084,16 @@ public class Game1 : Game
             // Only process horizontal swipes for turning
             if (horizontalComponent > verticalComponent)
             {
-                // Horizontal swipe
+                // Horizontal swipe - CRITICAL FIX: Match Java logic exactly
                 if (swipeVector.X > 0)
                 {
-                    // Swipe right
+                    // Swipe right = turn right (natural expectation)
                     ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
-                    
-                    try
-                    {
-#if ANDROID
-                        Android.Util.Log.Info("GLTRON", "SWIPE RIGHT - Turn Right");
-#endif
-                    }
-                    catch { }
                 }
                 else
                 {
-                    // Swipe left
+                    // Swipe left = turn left (natural expectation)
                     ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
-                    
-                    try
-                    {
-#if ANDROID
-                        Android.Util.Log.Info("GLTRON", "SWIPE LEFT - Turn Left");
-#endif
-                    }
-                    catch { }
                 }
             }
             else

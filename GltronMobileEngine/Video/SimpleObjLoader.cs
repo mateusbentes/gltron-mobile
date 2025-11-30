@@ -55,6 +55,40 @@ namespace GltronMobileEngine.Video
             }
         }
 
+        /// <summary>
+        /// CRITICAL FIX: Load OBJ from a Stream for cross-platform compatibility
+        /// </summary>
+        public static SimpleObjModel? LoadFromStream(Stream stream)
+        {
+            try
+            {
+                using var reader = new StreamReader(stream);
+                string objContent = reader.ReadToEnd();
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ content length: {objContent.Length} characters");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ content preview: {objContent.Substring(0, Math.Min(200, objContent.Length))}...");
+                
+                var result = ParseObjContent(objContent);
+                
+                if (result != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: OBJ parsing successful - {result.Vertices.Length} vertices, {result.TriangleCount} triangles");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: OBJ parsing returned null result");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load OBJ from stream: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Stack trace: {ex.StackTrace}");
+                return null;
+            }
+        }
+
         private static SimpleObjModel ParseObjContent(string objContent)
         {
             var vertices = new List<Vector3>();
@@ -63,6 +97,7 @@ namespace GltronMobileEngine.Video
             var faces = new List<(int v, int vt, int vn)>();
 
             string[] lines = objContent.Split('\n');
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Parsing OBJ with {lines.Length} lines");
 
             foreach (string line in lines)
             {
@@ -163,7 +198,14 @@ namespace GltronMobileEngine.Video
                 finalIndices.Add(i);
             }
 
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Loaded OBJ model - {vertices.Count} vertices, {faces.Count} face vertices, {finalVertices.Count} final vertices");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Parsed OBJ - {vertices.Count} vertices, {normals.Count} normals, {texCoords.Count} texCoords, {faces.Count} face vertices");
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Final model - {finalVertices.Count} final vertices, {finalIndices.Count} indices");
+
+            if (finalVertices.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("GLTRON: WARNING - No vertices in final model!");
+                return null;
+            }
 
             return new SimpleObjModel
             {

@@ -14,7 +14,9 @@ public class SoundManager
     private Song? _music;
     private SoundEffect? _engine;
     private SoundEffect? _crash;
+    private SoundEffect? _recognizer;
     private SoundEffectInstance? _engineInstance;
+    private SoundEffectInstance? _recognizerInstance;
 
     private SoundManager() { }
 
@@ -26,6 +28,7 @@ public class SoundManager
             _music = _content.Load<Song>("Assets/song_revenge_of_cats");
             _engine = _content.Load<SoundEffect>("Assets/game_engine");
             _crash = _content.Load<SoundEffect>("Assets/game_crash");
+            _recognizer = _content.Load<SoundEffect>("Assets/game_recognizer");
             // Sound content loaded successfully
         }
         catch (System.Exception ex)
@@ -95,12 +98,74 @@ public class SoundManager
         }
     }
 
+    public void PlayRecognizer(float volume = 0.5f, bool loop = true)
+    {
+        if (_recognizer == null) return;
+        
+        try
+        {
+            _recognizerInstance ??= _recognizer.CreateInstance();
+            if (_recognizerInstance == null) return;
+            
+            _recognizerInstance.Volume = volume;
+            _recognizerInstance.IsLooped = loop;
+            if (_recognizerInstance.State != SoundState.Playing)
+                _recognizerInstance.Play();
+        }
+        catch (System.Exception)
+        {
+            // Ignore sound errors to prevent game crashes
+        }
+    }
+
+    public void StopRecognizer()
+    {
+        try
+        {
+            if (_recognizerInstance != null && _recognizerInstance.State == SoundState.Playing)
+                _recognizerInstance.Stop();
+        }
+        catch (System.Exception)
+        {
+            // Ignore sound errors to prevent game crashes
+        }
+    }
+
+    public void StopSound(int soundId)
+    {
+        // Map sound IDs to actual stop methods (like Java version)
+        try
+        {
+            switch (soundId)
+            {
+                case 1: // CRASH_SOUND
+                    // Crash is one-shot, no need to stop
+                    break;
+                case 2: // ENGINE_SOUND
+                    StopEngine();
+                    break;
+                case 3: // MUSIC_SOUND
+                    StopMusic();
+                    break;
+                case 4: // RECOGNIZER_SOUND
+                    StopRecognizer();
+                    break;
+            }
+        }
+        catch (System.Exception)
+        {
+            // Ignore sound errors to prevent game crashes
+        }
+    }
+
     public void Dispose()
     {
         try
         {
             _engineInstance?.Dispose();
             _engineInstance = null;
+            _recognizerInstance?.Dispose();
+            _recognizerInstance = null;
         }
         catch (System.Exception)
         {

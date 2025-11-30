@@ -68,7 +68,8 @@ namespace GltronMobileGame
 
         private Player[] Players = new Player[MAX_PLAYERS];
 
-        // private Recognizer mRecognizer; // Implementar depois
+        // CRITICAL FIX: Add recognizer support like Java version
+        private GltronMobileEngine.Recognizer? mRecognizer;
 
         // Camera data (Substituir por lógica de câmera MonoGame)
         // private Camera Cam;
@@ -107,8 +108,8 @@ namespace GltronMobileGame
 
         private int aiCount = 1;
 
-        // Preferences (Substituir por um sistema de preferências MonoGame)
-        // public static UserPrefs mPrefs;
+        // CRITICAL FIX: Add recognizer preferences like Java version
+        private bool mDrawRecognizer = true; // Default to enabled like Java version
 
         public GLTronGame()
         {
@@ -224,6 +225,21 @@ namespace GltronMobileGame
         {
             return mCurrentGridSize;
         }
+        
+        public GltronMobileEngine.Recognizer? GetRecognizer()
+        {
+            return mRecognizer;
+        }
+        
+        public bool DrawRecognizer()
+        {
+            return mDrawRecognizer;
+        }
+        
+        public void SetDrawRecognizer(bool draw)
+        {
+            mDrawRecognizer = draw;
+        }
 
         private void initWalls()
         {
@@ -321,6 +337,17 @@ namespace GltronMobileGame
                 catch (System.Exception ex)
                 {
                     LogError($"GLTronGame.initialiseGame: AI initialization failed: {ex}");
+                }
+
+                // CRITICAL FIX: Initialize recognizer (like Java version)
+                try
+                {
+                    mRecognizer = new GltronMobileEngine.Recognizer(mCurrentGridSize);
+                    LogInfo("GLTronGame.initialiseGame: Recognizer initialized");
+                }
+                catch (System.Exception ex)
+                {
+                    LogError($"GLTronGame.initialiseGame: Recognizer initialization failed: {ex}");
                 }
 
                 // Reset timing and flags
@@ -481,6 +508,37 @@ namespace GltronMobileGame
                 
                 // CRITICAL: Update AI timing (like Java version)
                 GltronMobileEngine.ComputerAI.UpdateTime(TimeDt, TimeCurrent);
+                
+                // CRITICAL FIX: Update recognizer animation (like Java version)
+                if (mRecognizer != null && mDrawRecognizer)
+                {
+                    mRecognizer.DoMovement(TimeDt);
+                    
+                    // CRITICAL FIX: Play recognizer sound (like Java version)
+                    if (!boInitialState)
+                    {
+                        try
+                        {
+                            SoundManager.Instance.PlayRecognizer(0.3f, true);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            LogError($"RunGame: Failed to play recognizer sound: {ex}");
+                        }
+                    }
+                }
+                else
+                {
+                    // Stop recognizer sound if recognizer is disabled
+                    try
+                    {
+                        SoundManager.Instance.StopRecognizer();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        LogError($"RunGame: Failed to stop recognizer sound: {ex}");
+                    }
+                }
 
                 if (boProcessInput)
                 {
@@ -534,6 +592,22 @@ namespace GltronMobileGame
                 
                 // Reinitialize AI
                 GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
+                
+                // CRITICAL FIX: Reset recognizer (like Java version)
+                if (mRecognizer != null)
+                {
+                    mRecognizer.Reset();
+                }
+                
+                // CRITICAL FIX: Stop recognizer sound (like Java version)
+                try
+                {
+                    SoundManager.Instance.StopSound(RECOGNIZER_SOUND);
+                }
+                catch (System.Exception ex)
+                {
+                    LogError($"ResetGame: Failed to stop recognizer sound: {ex}");
+                }
                 
                 // Reset game state
                 boInitialState = true;
