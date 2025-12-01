@@ -61,4 +61,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
   </ItemGroup>
+
+  <!-- Ensure all Content (including XNBs) is packaged into the APK -->
+  <ItemGroup>
+    <AndroidAsset Include="Content\**\*.*" />
+  </ItemGroup>
 </Project>
