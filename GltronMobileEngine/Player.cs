@@ -262,7 +262,7 @@ namespace GltronMobileEngine
             }
         }
 
-        // Métodos de acesso (Getters)
+        // Getters
         public float getXpos()
         {
             return Trails[trailOffset].vStart.v[0] + Trails[trailOffset].vDirection.v[0];
@@ -363,39 +363,22 @@ namespace GltronMobileEngine
             for (int j = 0; j < walls.Length; j++)
             {
                 if (walls[j] == null) continue;
-                
-                // Convert ISegment to Segment
                 Segment Wall = walls[j] as Segment;
                 if (Wall == null) continue;
 
-
-
                 V = Current.Intersect(Wall);
-
                 if (V != null)
                 {
-                    // CRITICAL FIX: Use exact same criteria as Java original
-                    // t1 < 1.0f prevents collision at the exact endpoint of current segment (avoids self-collision)
-                    // This matches the working trail collision logic exactly
-                    if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
+                    // Walls: allow collision anywhere on the wall segment, including its endpoint
+                    // t1 < 1.0f avoids colliding with our own current endpoint
+                    if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 <= 1.0f)
                     {
-                        // EXACT same collision response as trail collision
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                         Speed = 0.0f;
                         _exploding = true;
                         _explodeTimer = 0f;
-                        
-                        try
-                        {
-                            SoundManager.Instance.PlayCrash();
-                            SoundManager.Instance.StopEngine();
-                        }
-                        catch (System.Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
-                        }
-                        
+                        try { SoundManager.Instance.PlayCrash(); SoundManager.Instance.StopEngine(); } catch (System.Exception ex) { System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}"); }
                         LogCrash($"Player {Player_num} CRASH wall {j}!");
                         break;
                     }
@@ -410,14 +393,14 @@ namespace GltronMobileEngine
             Segment Wall;
             Vec? V;
 
-            for (j = 0; j < players.Length; j++) // players.Length deve ser mCurrentPlayers
+            for (j = 0; j < players.Length; j++)
             {
                 if (players[j] == null || players[j].getTrailHeight() < TRAIL_HEIGHT)
                     continue;
 
                 for (k = 0; k < players[j].getTrailOffset() + 1; k++)
                 {
-                    // Evitar colisão com o próprio rastro mais recente
+                    // Avoid collision with our own newest trail segment
                     if (players[j] == this && k >= trailOffset - 1)
                         break;
 
@@ -427,32 +410,18 @@ namespace GltronMobileEngine
 
                     if (V != null)
                     {
+                        // Trails: collision must not happen at the trail endpoint (t2 < 1.0f)
+                        // t1 < 1.0f avoids colliding with our own current endpoint
                         if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                         {
-                            // Colisão detectada - stop at collision point
                             Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                             Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
                             Speed = 0.0f;
                             _exploding = true;
                             _explodeTimer = 0f;
-
-                            // Award points to the player whose trail was hit (like Java version)
                             players[j].addScore(10);
-                            
-                            // Multiplatform sound handling
-                            try
-                            {
-                                SoundManager.Instance.PlayCrash();
-                                SoundManager.Instance.StopEngine();
-                            }
-                            catch (System.Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}");
-                            }
-                            
-                            // Add console message (like Java version)
+                            try { SoundManager.Instance.PlayCrash(); SoundManager.Instance.StopEngine(); } catch (System.Exception ex) { System.Diagnostics.Debug.WriteLine($"GLTRON: Sound system error: {ex.Message}"); }
                             LogCrash($"Player {Player_num} CRASH trail!");
-
                             break;
                         }
                     }
