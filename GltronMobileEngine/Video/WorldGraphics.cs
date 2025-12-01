@@ -139,6 +139,52 @@ public class WorldGraphics
 
         // Try to load models in order of preference: FBX -> OBJ -> Procedural
         _useFbxModels = TryLoadModels(content);
+
+        // Fallback probes: try alternate content names without "Assets/" if initial attempt failed
+        if (!_useFbxModels)
+        {
+            try
+            {
+                // Try bike
+                _bikeModel = null;
+                _bikeBoneTransforms = null;
+                Model tmpBike = null;
+                try { tmpBike = content.Load<Model>("Assets/lightcyclehigh"); } catch {}
+                if (tmpBike == null)
+                {
+                    try { tmpBike = content.Load<Model>("lightcyclehigh"); } catch {}
+                }
+                if (tmpBike != null)
+                {
+                    _bikeModel = tmpBike;
+                    _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
+                    _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or 'Assets/lightcyclehigh'");
+#endif
+                }
+                // Try recognizer
+                _recognizerModel = null;
+                _recognizerBoneTransforms = null;
+                Model tmpRec = null;
+                try { tmpRec = content.Load<Model>("Assets/recognizerhigh"); } catch {}
+                if (tmpRec == null)
+                {
+                    try { tmpRec = content.Load<Model>("recognizerhigh"); } catch {}
+                }
+                if (tmpRec != null)
+                {
+                    _recognizerModel = tmpRec;
+                    _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
+                    _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
+#if ANDROID
+                    Android.Util.Log.Info("GLTRON", "FBX recognizer loaded via probe: 'recognizerhigh' or 'Assets/recognizerhigh'");
+#endif
+                }
+                _useFbxModels = _bikeModel != null && _recognizerModel != null;
+            }
+            catch {}
+        }
         
         // Mark that LoadContent has been successfully called
         _contentLoaded = true;

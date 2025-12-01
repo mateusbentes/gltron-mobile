@@ -66,4 +66,9 @@
   <ItemGroup>
     <AndroidAsset Include="Content\**\*.*" />
   </ItemGroup>
+  <!-- Explicitly include critical model XNBs -->
+  <ItemGroup>
+    <AndroidAsset Include="Content\Assets\lightcyclehigh.xnb" />
+    <AndroidAsset Include="Content\Assets\recognizerhigh.xnb" />
+  </ItemGroup>
 </Project>
