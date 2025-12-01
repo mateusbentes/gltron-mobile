@@ -200,22 +200,16 @@ namespace GltronMobileEngine
         public void doMovement(long dt, long current_time, Interfaces.ISegment[] walls, Interfaces.IPlayer[] players)
         {
             // Convert interface arrays to concrete types for internal processing
-            Segment[] concreteWalls = new Segment[walls.Length];
-            for (int i = 0; i < walls.Length; i++)
-            {
-                concreteWalls[i] = walls[i] as Segment ?? new Segment();
-            }
-            
             Player[] concretePlayers = new Player[players.Length];
             for (int i = 0; i < players.Length; i++)
             {
                 concretePlayers[i] = (players[i] as Player)!;
             }
             
-            DoMovementInternal(dt, current_time, concreteWalls, concretePlayers);
+            DoMovementInternal(dt, current_time, walls, concretePlayers);
         }
 
-        private void DoMovementInternal(long dt, long current_time, Segment[] walls, Player[] players)
+        private void DoMovementInternal(long dt, long current_time, Interfaces.ISegment[] walls, Player[] players)
         {
             float fs;
             float t;
@@ -359,27 +353,44 @@ namespace GltronMobileEngine
             Score += score;
         }
 
-        public void doCrashTestWalls(Segment[] Walls)
+        public void doCrashTestWalls(Interfaces.ISegment[] walls)
         {
-            if (Walls == null || Speed == 0.0f) return;
+            if (walls == null || Speed == 0.0f) return;
 
             Segment Current = Trails[trailOffset];
-            Segment Wall;
             Vec? V;
 
-            for (int j = 0; j < Walls.Length; j++)
+            for (int j = 0; j < walls.Length; j++)
             {
-                if (Walls[j] == null) continue;
+                if (walls[j] == null) continue;
                 
-                Wall = Walls[j];
+                // Convert ISegment to Segment
+                Segment Wall = walls[j] as Segment;
+                if (Wall == null) continue;
+
+                // Debug wall and current segment
+                float wallEndX = Wall.vStart.v[0] + Wall.vDirection.v[0];
+                float wallEndY = Wall.vStart.v[1] + Wall.vDirection.v[1];
+                float currentEndX = Current.vStart.v[0] + Current.vDirection.v[0];
+                float currentEndY = Current.vStart.v[1] + Current.vDirection.v[1];
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Testing wall {j}: ({Wall.vStart.v[0]:F1},{Wall.vStart.v[1]:F1}) to ({wallEndX:F1},{wallEndY:F1})");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Current segment: ({Current.vStart.v[0]:F1},{Current.vStart.v[1]:F1}) to ({currentEndX:F1},{currentEndY:F1})");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Player position: ({getXpos():F1},{getYpos():F1})");
 
                 V = Current.Intersect(Wall);
 
                 if (V != null)
                 {
-                    // Use EXACT same collision criteria as trail collision
-                    if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Intersection found at ({V.v[0]:F1},{V.v[1]:F1}) t1={Current.t1:F3} t2={Current.t2:F3}");
+                    
+                    // CRITICAL FIX: Different criteria for walls vs trails
+                    // Walls are full-length segments, so t2 can be anywhere along the wall (0.0 to 1.0)
+                    // Current trail segment must intersect within its current length (t1: 0.0 to 1.0)
+                    if (Current.t1 >= 0.0f && Current.t1 <= 1.0f && Current.t2 >= 0.0f && Current.t2 <= 1.0f)
                     {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: WALL COLLISION DETECTED! Player {Player_num} hit wall {j}");
+                        
                         // EXACT same collision response as trail collision
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
@@ -400,6 +411,14 @@ namespace GltronMobileEngine
                         LogCrash($"Player {Player_num} CRASH wall {j}!");
                         break;
                     }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GLTRON: Intersection found but outside valid range: t1={Current.t1:F3} t2={Current.t2:F3}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: No intersection with wall {j}");
                 }
             }
         }
