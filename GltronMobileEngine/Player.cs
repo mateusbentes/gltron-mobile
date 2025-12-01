@@ -368,29 +368,17 @@ namespace GltronMobileEngine
                 Segment Wall = walls[j] as Segment;
                 if (Wall == null) continue;
 
-                // Debug wall and current segment
-                float wallEndX = Wall.vStart.v[0] + Wall.vDirection.v[0];
-                float wallEndY = Wall.vStart.v[1] + Wall.vDirection.v[1];
-                float currentEndX = Current.vStart.v[0] + Current.vDirection.v[0];
-                float currentEndY = Current.vStart.v[1] + Current.vDirection.v[1];
-                
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Testing wall {j}: ({Wall.vStart.v[0]:F1},{Wall.vStart.v[1]:F1}) to ({wallEndX:F1},{wallEndY:F1})");
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Current segment: ({Current.vStart.v[0]:F1},{Current.vStart.v[1]:F1}) to ({currentEndX:F1},{currentEndY:F1})");
-                System.Diagnostics.Debug.WriteLine($"GLTRON: Player position: ({getXpos():F1},{getYpos():F1})");
+
 
                 V = Current.Intersect(Wall);
 
                 if (V != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Intersection found at ({V.v[0]:F1},{V.v[1]:F1}) t1={Current.t1:F3} t2={Current.t2:F3}");
-                    
-                    // CRITICAL FIX: Different criteria for walls vs trails
-                    // Walls are full-length segments, so t2 can be anywhere along the wall (0.0 to 1.0)
-                    // Current trail segment must intersect within its current length (t1: 0.0 to 1.0)
-                    if (Current.t1 >= 0.0f && Current.t1 <= 1.0f && Current.t2 >= 0.0f && Current.t2 <= 1.0f)
+                    // CRITICAL FIX: Use exact same criteria as Java original
+                    // t1 < 1.0f prevents collision at the exact endpoint of current segment (avoids self-collision)
+                    // This matches the working trail collision logic exactly
+                    if (Current.t1 >= 0.0f && Current.t1 < 1.0f && Current.t2 >= 0.0f && Current.t2 < 1.0f)
                     {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: WALL COLLISION DETECTED! Player {Player_num} hit wall {j}");
-                        
                         // EXACT same collision response as trail collision
                         Current.vDirection.v[0] = V.v[0] - Current.vStart.v[0];
                         Current.vDirection.v[1] = V.v[1] - Current.vStart.v[1];
@@ -411,14 +399,6 @@ namespace GltronMobileEngine
                         LogCrash($"Player {Player_num} CRASH wall {j}!");
                         break;
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"GLTRON: Intersection found but outside valid range: t1={Current.t1:F3} t2={Current.t2:F3}");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: No intersection with wall {j}");
                 }
             }
         }

@@ -53,7 +53,9 @@ public class Segment : Interfaces.ISegment
             if (!float.IsNaN(t1) && !float.IsNaN(t2) && 
                 !float.IsInfinity(t1) && !float.IsInfinity(t2))
             {
-                if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                // CRITICAL FIX: Let Player.cs decide the exact criteria (< vs <=)
+                // Return intersection if parameters are in valid range [0.0f, 1.0f]
+                if (t1 >= 0.0f && t1 <= 1.0f && t2 >= 0.0f && t2 <= 1.0f)
                 {
                     // Intersection point
                     float intersectX = vStart.v[0] + t1 * v1.v[0];
