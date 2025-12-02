@@ -200,17 +200,11 @@ namespace GltronMobileEngine
 
         public void doMovement(long dt, long current_time, Interfaces.ISegment[] walls, Interfaces.IPlayer[] players)
         {
-            // Convert interface arrays to concrete types for internal processing
-            Player[] concretePlayers = new Player[players.Length];
-            for (int i = 0; i < players.Length; i++)
-            {
-                concretePlayers[i] = (players[i] as Player)!;
-            }
-            
-            DoMovementInternal(dt, current_time, walls, concretePlayers);
+            // Work entirely against the IPlayer interface to avoid invalid casts
+            DoMovementInternal(dt, current_time, walls, players);
         }
 
-        private void DoMovementInternal(long dt, long current_time, Interfaces.ISegment[] walls, Player[] players)
+        private void DoMovementInternal(long dt, long current_time, Interfaces.ISegment[] walls, Interfaces.IPlayer[] players)
         {
             float fs;
             float t;
@@ -399,7 +393,7 @@ namespace GltronMobileEngine
                 Segment Wall = walls[j] as Segment;
                 if (Wall == null) continue;
 
-                V = Current.Intersect(Wall);
+                V = (Wall is Segment seg) ? Current.Intersect(seg) : null;
                 if (V != null)
                 {
                     // Accept collision with wall when our moving segment crosses it anywhere except exactly at our own start point.
@@ -424,11 +418,11 @@ namespace GltronMobileEngine
             }
         }
 
-        public void doCrashTestPlayer(Player[] players)
+        public void doCrashTestPlayer(Interfaces.IPlayer[] players)
         {
             int j, k;
             Segment Current = Trails[trailOffset];
-            Segment Wall;
+            Interfaces.ISegment Wall;
             Vec? V;
 
             for (j = 0; j < players.Length; j++)
@@ -439,12 +433,12 @@ namespace GltronMobileEngine
                 for (k = 0; k < players[j].getTrailOffset() + 1; k++)
                 {
                     // Avoid collision with our own newest trail segment
-                    if (players[j] == this && k >= trailOffset - 1)
+                    if (ReferenceEquals(players[j], this) && k >= trailOffset - 1)
                         break;
 
                     Wall = players[j].getTrail(k);
 
-                    V = Current.Intersect(Wall);
+                    V = (Wall is Segment seg) ? Current.Intersect(seg) : null;
 
                     if (V != null)
                     {

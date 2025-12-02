@@ -35,7 +35,9 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Error("GLTRON", "🏗️ WorldGraphics constructor called!");
+            #if ANDROID
+Android.Util.Log.Error("GLTRON", "🏗️ WorldGraphics constructor called!");
+#endif
 #endif
         }
         catch { }
@@ -51,7 +53,9 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Error("GLTRON", "✅ WorldGraphics constructor completed!");
+            #if ANDROID
+Android.Util.Log.Error("GLTRON", "✅ WorldGraphics constructor completed!");
+#endif
 #endif
         }
         catch { }
@@ -62,7 +66,9 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Error("GLTRON", "🚀🚀🚀 WorldGraphics.LoadContent() STARTED! 🚀🚀🚀");
+            #if ANDROID
+Android.Util.Log.Error("GLTRON", "🚀🚀🚀 WorldGraphics.LoadContent() STARTED! 🚀🚀🚀");
+#endif
 #endif
         }
         catch { }
@@ -72,7 +78,7 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Error("GLTRON", "About to load textures...");
+        Android.Util.Log.Error("GLTRON", "About to load textures...");
 #endif
         }
         catch { }
@@ -90,7 +96,9 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Info("GLTRON", "✅ Textures loaded successfully!");
+            #if ANDROID
+Android.Util.Log.Info("GLTRON", "✅ Textures loaded successfully!");
+#endif
 #endif
         }
         catch { }
@@ -99,7 +107,7 @@ public class WorldGraphics
         try
         {
 #if ANDROID
-            Android.Util.Log.Info("GLTRON", "=== STARTING MODEL LOADING DIAGNOSTICS ===");
+        Android.Util.Log.Info("GLTRON", "=== STARTING MODEL LOADING DIAGNOSTICS ===");
 #endif
             System.Diagnostics.Debug.WriteLine("GLTRON: === STARTING MODEL LOADING DIAGNOSTICS ===");
         }
@@ -120,34 +128,32 @@ public class WorldGraphics
         }
         
         // Diagnostics: log content root and expected XNB presence
+        string __root = "<null>";
         try
         {
-            var root = content.RootDirectory ?? "<null>";
-            System.Diagnostics.Debug.WriteLine($"GLTRON: Content.RootDirectory='{root}'");
-#if ANDROID
-            try { Android.Util.Log.Error("GLTRON", $"Content.RootDirectory='{root}'"); } catch {}
-#endif
-            try
-            {
-                string[] candidates = new [] {
-                    System.IO.Path.Combine(root, "Assets/lightcyclehigh.xnb"),
-                    System.IO.Path.Combine(root, "Assets/recognizerhigh.xnb"),
-                    System.IO.Path.Combine(root, "lightcyclehigh.xnb"),
-                    System.IO.Path.Combine(root, "recognizerhigh.xnb")
-                };
+            __root = content.RootDirectory ?? "<null>";
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Content.RootDirectory='{__root}'");
+        }
+        catch {}
+        string[] candidates;
+        try
+        {
+            candidates = new [] {
+                System.IO.Path.Combine(__root, "Assets/lightcyclehigh.xnb"),
+                System.IO.Path.Combine(__root, "Assets/recognizerhigh.xnb"),
+                System.IO.Path.Combine(__root, "lightcyclehigh.xnb"),
+                System.IO.Path.Combine(__root, "recognizerhigh.xnb")
+            };
                 foreach (var c in candidates)
                 {
                     bool exists = false;
                     try { exists = System.IO.File.Exists(c); } catch {}
                     System.Diagnostics.Debug.WriteLine($"GLTRON: Probe XNB exists? {exists} -> '{c}'");
 #if ANDROID
-                    try { Android.Util.Log.Error("GLTRON", $"Probe XNB exists? {exists} -> '{c}'"); } catch {}
-#endif
+                    Android.Util.Log.Error("GLTRON", $"Probe XNB exists? {exists} -> '{c}'");
+#endif 
                 }
-            }
-            catch {}
-        }
-        catch {}
+            } catch { }
 
         // Try to load models in order of preference: FBX -> OBJ -> Procedural
         _useFbxModels = TryLoadModels(content);
@@ -160,7 +166,7 @@ public class WorldGraphics
                 // Try bike
                 _bikeModel = null;
                 _bikeBoneTransforms = null;
-                Model tmpBike = null;
+                Model? tmpBike = null;
                 try { tmpBike = content.Load<Model>("Assets/lightcyclehigh"); } catch {}
                 if (tmpBike == null)
                 {
@@ -172,13 +178,15 @@ public class WorldGraphics
                     _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
                     _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
 #if ANDROID
-                    Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or 'Assets/lightcyclehigh'");
+                    #if ANDROID
+Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or 'Assets/lightcyclehigh'");
+#endif
 #endif
                 }
                 // Try recognizer
                 _recognizerModel = null;
                 _recognizerBoneTransforms = null;
-                Model tmpRec = null;
+                Model? tmpRec = null;
                 try { tmpRec = content.Load<Model>("Assets/recognizerhigh"); } catch {}
                 if (tmpRec == null)
                 {
@@ -1360,90 +1368,93 @@ public class WorldGraphics
     /// </summary>
     private bool TryLoadModels(ContentManager content)
     {
+        // Start log
         try
         {
 #if ANDROID
-            Android.Util.Log.Info("GLTRON", "🚀 Starting model loading process...");
+            #if ANDROID
+Android.Util.Log.Info("GLTRON", "🚀 Starting model loading process...");
+#endif
 #endif
             System.Diagnostics.Debug.WriteLine("GLTRON: 🚀 Starting model loading process...");
         }
         catch { }
-        
-        // Try FBX first
-        try
+
+        // Helper to log exceptions with stack
+        void LogEx(string tag, System.Exception ex)
         {
+            try { 
 #if ANDROID
-            Android.Util.Log.Info("GLTRON", "📁 Trying FBX models first...");
-#endif
-            System.Diagnostics.Debug.WriteLine("GLTRON: 📁 Trying FBX models first...");
-        }
-        catch { }
-        
-        if (TryLoadFbxModels(content))
+Android.Util.Log.Error("GLTRON", $"{tag}: {ex.GetType().Name} - {ex.Message}\n{ex}");
+#endif 
+            } 
+            catch { }
+                System.Diagnostics.Debug.WriteLine($"GLTRON: {tag}: {ex}");
+            }
+
+        // Try to load models using Content pipeline names (with and without Assets/)
+        string[] bikeNames = new[] { "Assets/lightcyclehigh", "lightcyclehigh" };
+        string[] recNames  = new[] { "Assets/recognizerhigh", "recognizerhigh" };
+
+        // Bike
+        _bikeModel = null;
+        _bikeBoneTransforms = null;
+        foreach (var name in bikeNames)
         {
             try
             {
+                var mdl = content.Load<Model>(name);
+                var bones = new Matrix[mdl.Bones.Count];
+                mdl.CopyAbsoluteBoneTransformsTo(bones);
+                _bikeModel = mdl;
+                _bikeBoneTransforms = bones;
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "🎉 SUCCESS! Using FBX models");
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", $"Bike model loaded: {name}");
 #endif
-                System.Diagnostics.Debug.WriteLine("GLTRON: 🎉 SUCCESS! Using FBX models");
-            }
-            catch { }
-            return true;
-        }
-        else
-        {
-            // Extra diagnostics: explicit per-asset attempts with alternate names
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("GLTRON: FBX direct load failed in bulk. Trying per-asset fallbacks...");
-                TryLoadFbxPerAsset(content);
-            }
-            catch { }
-            if (_bikeModel != null && _recognizerModel != null)
-            {
-                _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
-                _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
-                _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
-                _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
-                return true;
-            }
-        }
-        
-        // Try OBJ as fallback
-        try
-        {
-#if ANDROID
-            Android.Util.Log.Info("GLTRON", "📁 FBX failed, trying OBJ models...");
 #endif
-            System.Diagnostics.Debug.WriteLine("GLTRON: 📁 FBX failed, trying OBJ models...");
+                break;
+            }
+            catch (System.Exception ex)
+            {
+                LogEx($"Bike model load failed ({name})", ex);
+            }
         }
-        catch { }
-        
-        if (TryLoadObjModels(content))
+
+        // Recognizer
+        _recognizerModel = null;
+        _recognizerBoneTransforms = null;
+        foreach (var name in recNames)
         {
             try
             {
+                var mdl = content.Load<Model>(name);
+                var bones = new Matrix[mdl.Bones.Count];
+                mdl.CopyAbsoluteBoneTransformsTo(bones);
+                _recognizerModel = mdl;
+                _recognizerBoneTransforms = bones;
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "🎉 SUCCESS! Using OBJ models (FBX failed)");
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", $"Recognizer model loaded: {name}");
 #endif
-                System.Diagnostics.Debug.WriteLine("GLTRON: 🎉 SUCCESS! Using OBJ models (FBX failed)");
+#endif
+                break;
             }
-            catch { }
-            return true;
+            catch (System.Exception ex)
+            {
+                LogEx($"Recognizer model load failed ({name})", ex);
+            }
         }
-        
-        // Fall back to procedural
-        try
-        {
+
+        bool ok = _bikeModel != null && _recognizerModel != null;
+        try { 
 #if ANDROID
-            Android.Util.Log.Warn("GLTRON", "⚠️ FALLBACK! Using procedural models (both FBX and OBJ failed)");
-#endif
-            System.Diagnostics.Debug.WriteLine("GLTRON: ⚠️ FALLBACK! Using procedural models (both FBX and OBJ failed)");
-        }
-        catch { }
-        return false;
+Android.Util.Log.Info("GLTRON", $"Model load result: bike={_bikeModel!=null}, rec={_recognizerModel!=null}");
+#endif 
+        } catch { }
+            return ok;
     }
+    
     
     private bool TryLoadFbxModels(ContentManager content)
     {
@@ -1452,8 +1463,12 @@ public class WorldGraphics
             try
             {
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "🔄 Attempting to load FBX models...");
-                Android.Util.Log.Info("GLTRON", "Loading lightcyclehigh (FBX)...");
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", "🔄 Attempting to load FBX models...");
+#endif
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", "Loading lightcyclehigh (FBX)...");
+#endif
 #endif
             }
             catch { }
@@ -1464,7 +1479,9 @@ public class WorldGraphics
             try
             {
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "Loading recognizerhigh (FBX) via ModelLoader...");
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", "Loading recognizerhigh (FBX) via ModelLoader...");
+#endif
 #endif
             }
             catch { }
@@ -1474,7 +1491,9 @@ public class WorldGraphics
             try
             {
 #if ANDROID
-                Android.Util.Log.Info("GLTRON", "✅ FBX loads attempted");
+                #if ANDROID
+Android.Util.Log.Info("GLTRON", "✅ FBX loads attempted");
+#endif
 #endif
             }
             catch { }
@@ -1484,7 +1503,9 @@ public class WorldGraphics
                 try
                 {
 #if ANDROID
-                    Android.Util.Log.Info("GLTRON", "Setting up bone transforms...");
+                    #if ANDROID
+Android.Util.Log.Info("GLTRON", "Setting up bone transforms...");
+#endif
 #endif
                 }
                 catch { }
@@ -1498,8 +1519,12 @@ public class WorldGraphics
                 try
                 {
 #if ANDROID
-                    Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Bike: {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
-                    Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Recognizer: {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+                    #if ANDROID
+Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Bike: {_bikeModel.Meshes.Count} meshes, {_bikeModel.Bones.Count} bones");
+#endif
+                    #if ANDROID
+Android.Util.Log.Info("GLTRON", $"🎉 FBX SUCCESS! Recognizer: {_recognizerModel.Meshes.Count} meshes, {_recognizerModel.Bones.Count} bones");
+#endif
 #endif
                 }
                 catch { }
@@ -1511,7 +1536,9 @@ public class WorldGraphics
                 try
                 {
 #if ANDROID
-                    Android.Util.Log.Error("GLTRON", "❌ FBX models loaded but are null!");
+                    #if ANDROID
+Android.Util.Log.Error("GLTRON", "❌ FBX models loaded but are null!");
+#endif
 #endif
                 }
                 catch { }
@@ -1523,9 +1550,15 @@ public class WorldGraphics
             try
             {
 #if ANDROID
-                Android.Util.Log.Error("GLTRON", $"❌ FBX ContentLoadException: {ex.Message}");
-                Android.Util.Log.Error("GLTRON", $"❌ Inner exception: {ex.InnerException?.Message}");
-                Android.Util.Log.Error("GLTRON", "❌ This means the FBX files weren't processed correctly by content pipeline");
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", $"❌ FBX ContentLoadException: {ex.Message}");
+#endif
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", $"❌ Inner exception: {ex.InnerException?.Message}");
+#endif
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", "❌ This means the FBX files weren't processed correctly by content pipeline");
+#endif
 #endif
             }
             catch { }
@@ -1536,9 +1569,15 @@ public class WorldGraphics
             try
             {
 #if ANDROID
-                Android.Util.Log.Error("GLTRON", $"❌ FBX loading failed with unexpected error: {ex.Message}");
-                Android.Util.Log.Error("GLTRON", $"❌ Exception type: {ex.GetType().Name}");
-                Android.Util.Log.Error("GLTRON", $"❌ Stack trace: {ex.StackTrace}");
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", $"❌ FBX loading failed with unexpected error: {ex.Message}");
+#endif
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", $"❌ Exception type: {ex.GetType().Name}");
+#endif
+                #if ANDROID
+Android.Util.Log.Error("GLTRON", $"❌ Stack trace: {ex.StackTrace}");
+#endif
 #endif
             }
             catch { }
@@ -1568,7 +1607,9 @@ public class WorldGraphics
                 var m = content.Load<Model>(name);
                 System.Diagnostics.Debug.WriteLine($"GLTRON: ✅ Loaded {label} as '{name}'");
 #if ANDROID
-                try { Android.Util.Log.Error("GLTRON", $"✅ Loaded {label} as '{name}'"); } catch {}
+                try {
+Android.Util.Log.Error("GLTRON", $"✅ Loaded {label} as '{name}'");
+                } catch {}
 #endif
                 return m;
             }
@@ -1576,14 +1617,14 @@ public class WorldGraphics
             {
                 System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ Failed to load {label} as '{name}': {ex.Message}");
 #if ANDROID
-                try { Android.Util.Log.Error("GLTRON", $"❌ Failed to load {label} as '{name}': {ex.Message}"); } catch {}
+                Android.Util.Log.Error("GLTRON", $"❌ Failed to load {label} as '{name}': {ex.Message}");
 #endif
             }
             catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ Unexpected error loading {label} as '{name}': {ex.Message}");
 #if ANDROID
-                try { Android.Util.Log.Error("GLTRON", $"❌ Unexpected error loading {label} as '{name}': {ex.Message}"); } catch {}
+                Android.Util.Log.Error("GLTRON", $"❌ Unexpected error loading {label} as '{name}': {ex.Message}");
 #endif
             }
         }

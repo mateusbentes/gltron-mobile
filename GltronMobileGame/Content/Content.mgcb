@@ -128,22 +128,8 @@
 /build:Assets/gltron_wall_4.png
 
 #begin Assets/lightcyclehigh.fbx
-/importer:OpenAssetImporter
+/importer:FbxImporter
 /processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
 /build:Assets/lightcyclehigh.fbx
 
 #begin Assets/lightcyclehigh.obj
@@ -166,22 +152,8 @@
 /build:Assets/lightcyclehigh.obj
 
 #begin Assets/recognizerhigh.fbx
-/importer:OpenAssetImporter
+/importer:FbxImporter
 /processor:ModelProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=False
-/processorParam:DefaultEffect=BasicEffect
-/processorParam:GenerateMipmaps=False
-/processorParam:GenerateTangentFrames=False
-/processorParam:PremultiplyTextureAlpha=True
-/processorParam:PremultiplyVertexColors=True
-/processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=0
-/processorParam:RotationY=0
-/processorParam:RotationZ=0
-/processorParam:Scale=1
-/processorParam:SwapWindingOrder=False
-/processorParam:TextureFormat=Compressed
 /build:Assets/recognizerhigh.fbx
 
 #begin Assets/recognizerhigh.obj

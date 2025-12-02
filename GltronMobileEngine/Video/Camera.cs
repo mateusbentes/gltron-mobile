@@ -367,13 +367,9 @@ public class Camera
         }
         catch (System.Exception ex)
         {
-            try
-            {
 #if ANDROID
-                Android.Util.Log.Error("GLTRON", $"Failed to create view matrix: {ex.Message}");
+            try { Android.Util.Log.Error("GLTRON", $"Failed to create view matrix: {ex.Message}"); } catch {}
 #endif
-            }
-            catch { /* Ignore logging errors */ }
             
             // Fallback view matrix
             View = Matrix.Identity;
