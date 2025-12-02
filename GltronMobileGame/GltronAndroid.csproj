@@ -63,6 +63,13 @@
     </AndroidAsset>
   </ItemGroup>
 
+  <!-- Ensure top-level XNBs under Content/Assets are packaged into the APK -->
+  <ItemGroup>
+    <AndroidAsset Include="Content\Assets\*.xnb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AndroidAsset>
+  </ItemGroup>
+
   <!-- Ensure raw content is packaged only when not using MGCB -->
   <ItemGroup>
     <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />

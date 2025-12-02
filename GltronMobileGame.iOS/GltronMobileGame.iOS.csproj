@@ -43,7 +43,14 @@
     <Compile Include="..\GltronMobileGame\Video\**\*.cs" Link="Video\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="..\GltronMobileGame\Sound\SoundManager.cs" Link="Sound\SoundManager.cs" />
   </ItemGroup>
-  
+
+  <!-- Ensure top-level XNBs under Content/Assets are bundled into the iOS app -->
+  <ItemGroup>
+    <BundleResource Include="..\GltronMobileGame\Content\Assets\*.xnb" Link="Content\Assets\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </BundleResource>
+  </ItemGroup>
+
   <!-- CRITICAL FIX: Ensure .obj/.mtl files are packaged as iOS bundle resources for runtime loading -->
   <ItemGroup>
     <BundleResource Include="..\GltronMobileGame\Content\Assets\lightcyclehigh.obj" Link="Content\Assets\lightcyclehigh.obj">
