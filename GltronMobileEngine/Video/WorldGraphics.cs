@@ -77,15 +77,15 @@ public class WorldGraphics
         }
         catch { }
         
-        // Load textures
-        _texFloor = content.Load<Texture2D>("Assets/gltron_floor");
-        _texWall = content.Load<Texture2D>("Assets/gltron_wall_1");
-        _skyFaces[0] = content.Load<Texture2D>("Assets/skybox0");
-        _skyFaces[1] = content.Load<Texture2D>("Assets/skybox1");
-        _skyFaces[2] = content.Load<Texture2D>("Assets/skybox2");
-        _skyFaces[3] = content.Load<Texture2D>("Assets/skybox3");
-        _skyFaces[4] = content.Load<Texture2D>("Assets/skybox4");
-        _skyFaces[5] = content.Load<Texture2D>("Assets/skybox5");
+        // Load textures with XNB-first, PNG-fallback
+        _texFloor = TryLoadTexture(content, _gd, "Assets/gltron_floor", "Content/Assets/gltron_floor.png");
+        _texWall = TryLoadTexture(content, _gd, "Assets/gltron_wall_1", "Content/Assets/gltron_wall_1.png");
+        _skyFaces[0] = TryLoadTexture(content, _gd, "Assets/skybox0", "Content/Assets/skybox0.png");
+        _skyFaces[1] = TryLoadTexture(content, _gd, "Assets/skybox1", "Content/Assets/skybox1.png");
+        _skyFaces[2] = TryLoadTexture(content, _gd, "Assets/skybox2", "Content/Assets/skybox2.png");
+        _skyFaces[3] = TryLoadTexture(content, _gd, "Assets/skybox3", "Content/Assets/skybox3.png");
+        _skyFaces[4] = TryLoadTexture(content, _gd, "Assets/skybox4", "Content/Assets/skybox4.png");
+        _skyFaces[5] = TryLoadTexture(content, _gd, "Assets/skybox5", "Content/Assets/skybox5.png");
         
         try
         {
@@ -106,6 +106,18 @@ public class WorldGraphics
         catch { }
         
         ModelDiagnostics.DiagnoseModelLoading(content);
+        
+        Texture2D? TryLoadTexture(ContentManager cm, GraphicsDevice gd, string xnbPath, string pngPath)
+        {
+            try { return cm.Load<Texture2D>(xnbPath); } catch {}
+            try
+            {
+                using var s = TitleContainer.OpenStream(pngPath);
+                return Texture2D.FromStream(gd, s);
+            }
+            catch {}
+            return null;
+        }
         
         // Diagnostics: log content root and expected XNB presence
         try
