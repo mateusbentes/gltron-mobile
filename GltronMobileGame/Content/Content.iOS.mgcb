@@ -143,14 +143,22 @@
 #begin Assets/lightcyclehigh.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
+/processorParam:Scale=0.01
+/processorParam:GenerateTangentFrames=False
+/processorParam:SwapWindingOrder=True
+/processorParam:PremultiplyTextureAlpha=False
+/processorParam:TextureFormat=Compressed
 /build:Assets/lightcyclehigh.fbx
-
 
 #begin Assets/recognizerhigh.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
+/processorParam:Scale=0.01
+/processorParam:GenerateTangentFrames=False
+/processorParam:SwapWindingOrder=True
+/processorParam:PremultiplyTextureAlpha=False
+/processorParam:TextureFormat=Compressed
 /build:Assets/recognizerhigh.fbx
-
 
 #begin Assets/skybox0.png
 /importer:TextureImporter
