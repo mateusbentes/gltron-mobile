@@ -39,9 +39,15 @@ public class Game1 : Game
             {
                 throw new System.InvalidOperationException("Failed to create GraphicsDeviceManager");
             }
-            
-            // Set content root directory (multiplatform compatible)
-            Content.RootDirectory = "Content";
+
+            // CRITICAL: Set Content root directory for multiplatform compatibility
+            #if ANDROID
+            Content.RootDirectory = "Content/bin/Android/Content";
+            #elif IOS
+            Content.RootDirectory = "Content/bin/iOS/Content";
+            #else
+            Content.RootDirectory = "Content/bin/DesktopGL/Content";
+            #endif
             
             // Set up graphics for mobile landscape (multiplatform compatible)
             _graphics.IsFullScreen = true;

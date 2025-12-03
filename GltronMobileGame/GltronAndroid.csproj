@@ -49,28 +49,7 @@
 
   <!-- Package platform-specific XNBs directly from bin output path -->
   <ItemGroup>
-    <AndroidAsset Include="Content\bin\Android\Content\Assets\lightcyclehigh.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="Content\bin\Android\Content\Assets\recognizerhigh.xnb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-  </ItemGroup>
-
-  <!-- Ensure .obj/.mtl files are packaged as Android assets for runtime loading -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\Assets\lightcyclehigh.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="Content\Assets\lightcycle.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="Content\Assets\recognizerhigh.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="Content\Assets\recognizer.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
+    <AndroidAsset Include="Content\bin\Android\Content\Assets\*.xnb" />
   </ItemGroup>
 
   <!-- Ensure raw content is packaged only when not using MGCB -->

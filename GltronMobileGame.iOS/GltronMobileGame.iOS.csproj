@@ -41,22 +41,7 @@
   <!-- XNBs generated for iOS -->
   <ItemGroup>
     <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.xnb"
-                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
-  </ItemGroup>
-
-  <!-- OBJ and MTL to Assets folder -->
-  <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.obj" 
-                    Link="Content\Assets\%(Filename)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
-
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.mtl" 
-                    Link="Content\Assets\%(Filename)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </BundleResource>
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
