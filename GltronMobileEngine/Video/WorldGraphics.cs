@@ -1366,8 +1366,63 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
     /// <summary>
     /// Try to load models in order of preference: FBX -> OBJ -> Fallback to procedural
     /// </summary>
-    private bool TryLoadModels(ContentManager content)
-    {
+        private Model? SafeLoadModel(ContentManager content, string logicalName)
+        {
+            try { return content.Load<Model>(logicalName); }
+            catch (ContentLoadException ex)
+            {
+                try {
+#if ANDROID
+                    Android.Util.Log.Error("GLTRON", $"ContentLoadException for '{logicalName}': {ex.Message} | Inner: {ex.InnerException?.Message}");
+#endif
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: ContentLoadException for '{logicalName}': {ex}");
+                } catch {}
+                return null;
+            }
+            catch (System.Exception ex)
+            {
+                try {
+#if ANDROID
+                    Android.Util.Log.Error("GLTRON", $"Unexpected load error for '{logicalName}': {ex.Message}");
+#endif
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Unexpected load error for '{logicalName}': {ex}");
+                } catch {}
+                return null;
+            }
+        }
+
+        private Model? TryLoadWithAlternates(ContentManager content, string primary)
+        {
+            string[] names = primary.StartsWith("Assets/")
+                ? new[] { primary, primary.Substring("Assets/".Length) }
+                : new[] { primary, "Assets/" + primary };
+
+            foreach (var name in names)
+            {
+                var mdl = SafeLoadModel(content, name);
+                if (mdl != null) return mdl;
+            }
+
+            // Diagnostics: probe expected XNB path under RootDirectory
+            try
+            {
+                var root = content.RootDirectory ?? "Content";
+                var baseName = primary.StartsWith("Assets/") ? primary : ("Assets/" + primary);
+                var candidate = System.IO.Path.Combine(root, baseName + ".xnb");
+                bool exists = false;
+                try { exists = System.IO.File.Exists(candidate); } catch {}
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"Probe XNB exists? {exists} -> '{candidate}'");
+#endif
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Probe XNB exists? {exists} -> '{candidate}'");
+            }
+            catch {}
+
+            return null;
+        }
+
+        private bool TryLoadModels(ContentManager content)
+        {
         // Start log
         try
         {
@@ -1393,66 +1448,26 @@ Android.Util.Log.Error("GLTRON", $"{tag}: {ex.GetType().Name} - {ex.Message}\n{e
             }
 
         // Try to load models using Content pipeline names (with and without Assets/)
-        string[] bikeNames = new[] { "Assets/lightcyclehigh", "lightcyclehigh" };
-        string[] recNames  = new[] { "Assets/recognizerhigh", "recognizerhigh" };
+        string[] bikeNames = new[] { "Assets/lightcyclehigh", "lightcyclehigh" }; // legacy, replaced by TryLoadWithAlternates
+        // Prefer robust loader with alternates and diagnostics
+_bikeModel = TryLoadWithAlternates(content, "Assets/lightcyclehigh");
+if (_bikeModel != null) {
+    _bikeBoneTransforms = new Matrix[_bikeModel.Bones.Count];
+    _bikeModel.CopyAbsoluteBoneTransformsTo(_bikeBoneTransforms);
+}
+_recognizerModel = TryLoadWithAlternates(content, "Assets/recognizerhigh");
+if (_recognizerModel != null) {
+    _recognizerBoneTransforms = new Matrix[_recognizerModel.Bones.Count];
+    _recognizerModel.CopyAbsoluteBoneTransformsTo(_recognizerBoneTransforms);
+}
 
-        // Bike
-        _bikeModel = null;
-        _bikeBoneTransforms = null;
-        foreach (var name in bikeNames)
-        {
-            try
-            {
-                var mdl = content.Load<Model>(name);
-                var bones = new Matrix[mdl.Bones.Count];
-                mdl.CopyAbsoluteBoneTransformsTo(bones);
-                _bikeModel = mdl;
-                _bikeBoneTransforms = bones;
+bool ok = _bikeModel != null && _recognizerModel != null;
+try {
 #if ANDROID
-                #if ANDROID
-Android.Util.Log.Info("GLTRON", $"Bike model loaded: {name}");
+    Android.Util.Log.Info("GLTRON", $"Model load result (robust): bike={_bikeModel!=null}, rec={_recognizerModel!=null}");
 #endif
-#endif
-                break;
-            }
-            catch (System.Exception ex)
-            {
-                LogEx($"Bike model load failed ({name})", ex);
-            }
-        }
-
-        // Recognizer
-        _recognizerModel = null;
-        _recognizerBoneTransforms = null;
-        foreach (var name in recNames)
-        {
-            try
-            {
-                var mdl = content.Load<Model>(name);
-                var bones = new Matrix[mdl.Bones.Count];
-                mdl.CopyAbsoluteBoneTransformsTo(bones);
-                _recognizerModel = mdl;
-                _recognizerBoneTransforms = bones;
-#if ANDROID
-                #if ANDROID
-Android.Util.Log.Info("GLTRON", $"Recognizer model loaded: {name}");
-#endif
-#endif
-                break;
-            }
-            catch (System.Exception ex)
-            {
-                LogEx($"Recognizer model load failed ({name})", ex);
-            }
-        }
-
-        bool ok = _bikeModel != null && _recognizerModel != null;
-        try { 
-#if ANDROID
-Android.Util.Log.Info("GLTRON", $"Model load result: bike={_bikeModel!=null}, rec={_recognizerModel!=null}");
-#endif 
-        } catch { }
-            return ok;
+} catch {}
+return ok;
     }
     
     
