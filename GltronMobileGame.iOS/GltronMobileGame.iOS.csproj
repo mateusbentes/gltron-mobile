@@ -46,10 +46,10 @@
 
   <!-- Also bundle original compressed music files for MediaPlayer (mp3/m4a) -->
   <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.mp3"
-                    Link="Content\Assets\%(RecursiveDir)%(Filename)%(Extension)" />
-    <BundleResource Include="..\GltronMobileGame\Content\Assets\**\*.m4a"
-                    Link="Content\Assets\%(RecursiveDir)%(Filename)%(Extension)" />
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.mp3"
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.m4a"
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

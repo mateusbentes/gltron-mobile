@@ -55,8 +55,8 @@
 
   <!-- Also package original compressed music files for MediaPlayer (mp3/m4a) -->
   <ItemGroup>
-    <AndroidAsset Include="Content\Assets\**\*.mp3" />
-    <AndroidAsset Include="Content\Assets\**\*.m4a" />
+    <AndroidAsset Include="Content\bin\Android\Content\**\*.mp3" />
+    <AndroidAsset Include="Content\bin\Android\Content\**\*.m4a" />
   </ItemGroup>
 
   <!-- Ensure raw content is packaged only when not using MGCB -->
