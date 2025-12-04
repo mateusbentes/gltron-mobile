@@ -50,8 +50,8 @@ namespace GltronMobileEngine
             0.0f, 0.0f, 0.0f, 4.0f
         );
         
-        private const float SCALE_FACTOR = 0.25f;  // Original scale factor
-        private const float HEIGHT = 40.0f;        // Original height above ground
+        private const float SCALE_FACTOR = 0.08f;  // Much smaller scale for proper arena fit
+        private const float HEIGHT = 15.0f;        // Lower height to be more visible in arena
         
         // Placement mode: original GLTron behavior by default
         private bool _aboveMode = false;
@@ -69,7 +69,7 @@ namespace GltronMobileEngine
         /// <param name="deltaTime">Time elapsed in milliseconds</param>
         public void DoMovement(long deltaTime)
         {
-            // Original GLTron timing
+            // Original GLTron timing - controls movement speed
             _alpha += deltaTime / 2000.0f;
         }
         
@@ -106,26 +106,39 @@ namespace GltronMobileEngine
 
             // Original GLTron movement pattern inside arena
             // The recognizer moves in a complex Lissajous curve pattern
-            float boundary = _gridSize - max;
             
             // GetX() and GetY() return values between -1 and 1
-            // We map this to the available space in the arena
             float normalizedX = GetX(); // -1 to 1
             float normalizedY = GetY(); // -1 to 1
             
-            // Map from [-1, 1] to [max, gridSize - max]
-            // This ensures the recognizer stays within the arena with proper margins
-            float x = max + (normalizedX + 1.0f) * boundary / 2.0f;
-            float z = max + (normalizedY + 1.0f) * boundary / 2.0f;
-
-            // Additional safety clamping with wall margins
-            // The recognizer should never get too close to walls
-            float wallMargin = Math.Max(5.0f, max * 3.0f); // Larger margin for safety
-            x = MathHelper.Clamp(x, wallMargin, _gridSize - wallMargin);
-            z = MathHelper.Clamp(z, wallMargin, _gridSize - wallMargin);
+            // Calculate the actual model size in world units
+            float actualModelSize = modelBoundingBoxSize.X * SCALE_FACTOR;
             
-            // Add slight vertical bobbing for more dynamic movement
+            // Set movement boundaries - recognizer should move freely within arena
+            float wallMargin = 10.0f; // Safety margin from walls
+            float minPos = wallMargin;
+            float maxPos = _gridSize - wallMargin;
+            
+            // Available movement range
+            float range = maxPos - minPos;
+            
+            // Map from [-1, 1] to the safe movement range
+            // This creates the complex movement pattern
+            float x = minPos + (normalizedX + 1.0f) * range / 2.0f;
+            float z = minPos + (normalizedY + 1.0f) * range / 2.0f;
+            
+            // Final safety clamp to ensure we never leave arena
+            x = MathHelper.Clamp(x, minPos, maxPos);
+            z = MathHelper.Clamp(z, minPos, maxPos);
+            
+            // Add vertical bobbing for more dynamic movement
             float verticalBob = (float)Math.Sin(_alpha * 2.0f) * 2.0f;
+            
+            // Debug output occasionally
+            if (_alpha % 10.0f < 0.1f)
+            {
+                System.Diagnostics.Debug.WriteLine($"Recognizer: Pos({x:F1},{HEIGHT + verticalBob:F1},{z:F1}) Grid:{_gridSize} NormXY:({normalizedX:F2},{normalizedY:F2})");
+            }
             
             return new Vector3(x, HEIGHT + verticalBob, z);
         }
@@ -172,10 +185,12 @@ namespace GltronMobileEngine
             Vector3 position = GetPosition(modelBoundingBoxSize);
             float angle = GetAngle();
             
-            // Add some rotation animation for visual interest
-            float spinAngle = _alpha * 30.0f; // Slow rotation
+            // Add rotation animations for visual interest
+            float spinAngle = _alpha * 45.0f; // Continuous spin
+            float wobbleAngle = (float)Math.Sin(_alpha * 3.0f) * 10.0f; // Slight wobble
             
             return Matrix.CreateScale(SCALE_FACTOR) *
+                   Matrix.CreateRotationX(MathHelper.ToRadians(wobbleAngle)) *
                    Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
                    Matrix.CreateRotationZ(MathHelper.ToRadians(spinAngle)) *
                    Matrix.CreateTranslation(position);
@@ -234,6 +249,7 @@ namespace GltronMobileEngine
         private float GetX()
         {
             // Original formula for X position (-1 to 1 range)
+            // Creates complex horizontal movement pattern
             return (_xv[0] * (float)Math.Sin(_xv[1] * _alpha + _xv[2]) - 
                     _xv[3] * (float)Math.Sin(_xv[4] * _alpha + _xv[5]));
         }
@@ -241,8 +257,9 @@ namespace GltronMobileEngine
         private float GetY()
         {
             // Original formula for Y position (-1 to 1 range)
-            // Note: There was a typo in the original - should be + not -
-            return (_yv[0] * (float)Math.Cos(_yv[1] * _alpha + _yv[2]) - 
+            // Creates complex vertical movement pattern
+            // Fixed from original Java which had a typo (was using - instead of +)
+            return (_yv[0] * (float)Math.Cos(_yv[1] * _alpha + _yv[2]) + 
                     _yv[3] * (float)Math.Sin(_yv[4] * _alpha + _yv[5]));
         }
         

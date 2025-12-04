@@ -642,35 +642,33 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             Vector4 recognizerColor = recognizer.GetColor();
             Vector3 color = new Vector3(recognizerColor.X, recognizerColor.Y, recognizerColor.Z);
             
+            // Get recognizer's actual calculated position and transformation
+            Vector3 recognizerSize = new Vector3(RECOGNIZER_SIZE, RECOGNIZER_SIZE, RECOGNIZER_SIZE);
+            
             // Try to draw FBX model first
             if (_useFbxModels && _recognizerModel != null && _recognizerBoneTransforms != null)
             {
                 try
                 {
 #if ANDROID
-                    Android.Util.Log.Debug("GLTRON", "Drawing FBX recognizer (forced above placement)");
+                    Android.Util.Log.Debug("GLTRON", "Drawing FBX recognizer with original GLTron movement");
 #endif
                 }
                 catch { }
                 
-                // Force ABOVE placement at arena center with gentle bobbing
-                float rg_gridSize = _gridSize;
-                float rg_center = rg_gridSize * 0.5f;
-                float rg_baseHeight = Math.Max(12.0f, rg_gridSize * 0.22f);
-                float rg_bob = (float)Math.Sin((double)Environment.TickCount * 0.001 * 0.8) * 1.5f; // subtle bob using time
-                Vector3 position = new Vector3(rg_center, rg_baseHeight + rg_bob, rg_center);
-                float rg_angle = recognizer.GetAngle();
+                // Use the recognizer's actual position calculation (original GLTron movement)
+                Matrix fbxWorldMatrix = recognizer.GetWorldMatrix(recognizerSize);
                 
-                const float FBX_RECOGNIZER_SCALE = 0.10f; // Smaller, recognizer is more subtle above arena
-                Matrix fbxWorldMatrix = Matrix.CreateScale(FBX_RECOGNIZER_SCALE) *
-                                       Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle)) *
-                                       Matrix.CreateTranslation(position);
+                // Adjust scale for FBX model if needed (recognizer already has SCALE_FACTOR applied)
+                const float FBX_RECOGNIZER_SCALE = 0.5f; // Additional scale adjustment for FBX model
+                fbxWorldMatrix = Matrix.CreateScale(FBX_RECOGNIZER_SCALE) * fbxWorldMatrix;
                 
                 // Draw the FBX recognizer
                 DrawFbxModel(_recognizerModel, _recognizerBoneTransforms, fbxWorldMatrix, color);
                 
-                // Draw shadow directly under center position (small and faint)
-                DrawRecognizerShadowFlatAt(position);
+                // Draw shadow at actual position
+                Vector3 position = recognizer.GetPosition(recognizerSize);
+                DrawRecognizerShadowFlatAt(new Vector3(position.X, 0, position.Z));
                 return;
             }
             
@@ -678,20 +676,13 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             try
             {
 #if ANDROID
-                Android.Util.Log.Debug("GLTRON", "Drawing procedural recognizer (FBX not available)");
+                Android.Util.Log.Debug("GLTRON", "Drawing procedural recognizer with original GLTron movement");
 #endif
             }
             catch { }
             
-            // Force ABOVE placement at arena center with gentle bobbing for procedural as well
-            float rg_gridSize2 = _gridSize;
-            float rg_center2 = rg_gridSize2 * 0.5f;
-            float rg_baseHeight2 = Math.Max(12.0f, rg_gridSize2 * 0.22f);
-            float rg_bob2 = (float)Math.Sin((double)Environment.TickCount * 0.001 * 0.8) * 1.5f;
-            float rg_angle2 = recognizer.GetAngle();
-            Matrix worldMatrix = Matrix.CreateScale(RECOGNIZER_SIZE * 0.35f) *
-                                 Matrix.CreateRotationY(MathHelper.ToRadians(rg_angle2)) *
-                                 Matrix.CreateTranslation(new Vector3(rg_center2, rg_baseHeight2 + rg_bob2, rg_center2));
+            // Use the recognizer's actual calculated world matrix (original GLTron movement)
+            Matrix worldMatrix = recognizer.GetWorldMatrix(recognizerSize);
             fx.World = worldMatrix;
             
             fx.DiffuseColor = color;
@@ -738,8 +729,8 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             Vector3 position = recognizer.GetPosition(recognizerSize);
             float angle = recognizer.GetAngle();
             
-            // Project shadow onto the ground (Y = 0)
-            Matrix shadowWorld = Matrix.CreateScale(0.25f) *
+            // Project shadow onto the ground (Y = 0) with same scale as recognizer
+            Matrix shadowWorld = Matrix.CreateScale(0.15f) * // Match recognizer scale
                                 Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
                                 Matrix.CreateTranslation(position.X, 0.1f, position.Z); // Slightly above ground
             

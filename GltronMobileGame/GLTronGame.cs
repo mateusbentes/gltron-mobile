@@ -376,7 +376,9 @@ namespace GltronMobileGame
                 try
                 {
                     mRecognizer = new GltronMobileEngine.Recognizer(mCurrentGridSize);
-                    LogInfo("GLTronGame.initialiseGame: Recognizer initialized");
+                    // Ensure recognizer uses original GLTron movement pattern (not above mode)
+                    mRecognizer.SetAboveMode(false);
+                    LogInfo("GLTronGame.initialiseGame: Recognizer initialized with original GLTron movement");
                 }
                 catch (System.Exception ex)
                 {
