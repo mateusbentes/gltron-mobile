@@ -36,10 +36,11 @@ namespace GltronMobileEngine
         private float _alpha;
         private readonly float _gridSize;
         
-        // Constants from Java version
+        // Constants from original GLTron Java version
+        // These create a complex Lissajous curve movement pattern
         private readonly float[] _xv = { 0.5f, 0.3245f, 0.6f, 0.5f, 0.68f, -0.3f };
         private readonly float[] _yv = { 0.8f, 1.0f, 0.0f, 0.2f, 0.2f, 0.0f };
-        private readonly Vector4 _colour = new Vector4(0.2f, 0.8f, 1.0f, 0.85f); // Bright cyan/blue - very alien
+        private readonly Vector4 _colour = new Vector4(0.6f, 0.16f, 0.2f, 0.50f); // Original red/pink color
         
         // Shadow matrix for shadow rendering
         private readonly Matrix _shadowMatrix = new Matrix(
@@ -49,13 +50,11 @@ namespace GltronMobileEngine
             0.0f, 0.0f, 0.0f, 4.0f
         );
         
-        private const float SCALE_FACTOR = 0.45f;  // Smaller, recognizer is more subtle
-        private const float BASE_HEIGHT = -20.0f;   // if < 0, compute from grid size
-        private const float BOB_AMPLITUDE = 1.5f;  // Smaller, subtle bobbing
-        private const float BOB_SPEED = 0.8f;      // Bobbing speed multiplier
-
-        // Placement mode: above the arena center
-        private bool _aboveMode = true;
+        private const float SCALE_FACTOR = 0.25f;  // Original scale factor
+        private const float HEIGHT = 40.0f;        // Original height above ground
+        
+        // Placement mode: original GLTron behavior by default
+        private bool _aboveMode = false;
         public void SetAboveMode(bool above) => _aboveMode = above;
         
         public Recognizer(float gridSize)
@@ -70,6 +69,7 @@ namespace GltronMobileEngine
         /// <param name="deltaTime">Time elapsed in milliseconds</param>
         public void DoMovement(long deltaTime)
         {
+            // Original GLTron timing
             _alpha += deltaTime / 2000.0f;
         }
         
@@ -92,23 +92,42 @@ namespace GltronMobileEngine
 
             if (_aboveMode)
             {
-                // Center recognizer above arena with a gentle bob, minimal lateral sweep
+                // Alternative mode: Center recognizer above arena with gentle movement
                 float center = _gridSize * 0.5f;
-                float baseHeight = (BASE_HEIGHT > 0.0f) ? BASE_HEIGHT : Math.Max(10.0f, _gridSize * 0.12f);
-                float bob = (float)Math.Sin(_alpha * BOB_SPEED) * BOB_AMPLITUDE;
-                return new Vector3(center, baseHeight + bob, center);
+                float baseHeight = Math.Max(20.0f, _gridSize * 0.15f);
+                
+                // Add some lateral movement even in above mode for interest
+                float xOffset = (float)Math.Sin(_alpha * 0.3f) * _gridSize * 0.15f;
+                float zOffset = (float)Math.Cos(_alpha * 0.25f) * _gridSize * 0.15f;
+                float bob = (float)Math.Sin(_alpha * 0.8f) * 3.0f;
+                
+                return new Vector3(center + xOffset, baseHeight + bob, center + zOffset);
             }
 
-            // Legacy animated placement inside arena (not used in above mode)
+            // Original GLTron movement pattern inside arena
+            // The recognizer moves in a complex Lissajous curve pattern
             float boundary = _gridSize - max;
-            float x = (max + (GetX() + 1.0f) * boundary) / 2.0f;
-            float z = (max + (GetY() + 1.0f) * boundary) / 2.0f;
+            
+            // GetX() and GetY() return values between -1 and 1
+            // We map this to the available space in the arena
+            float normalizedX = GetX(); // -1 to 1
+            float normalizedY = GetY(); // -1 to 1
+            
+            // Map from [-1, 1] to [max, gridSize - max]
+            // This ensures the recognizer stays within the arena with proper margins
+            float x = max + (normalizedX + 1.0f) * boundary / 2.0f;
+            float z = max + (normalizedY + 1.0f) * boundary / 2.0f;
 
-            // Clamp within arena bounds so it never leaves
-            float margin = 2.0f;
-            x = MathHelper.Clamp(x, margin, _gridSize - margin);
-            z = MathHelper.Clamp(z, margin, _gridSize - margin);
-            return new Vector3(x, BASE_HEIGHT, z);
+            // Additional safety clamping with wall margins
+            // The recognizer should never get too close to walls
+            float wallMargin = Math.Max(5.0f, max * 3.0f); // Larger margin for safety
+            x = MathHelper.Clamp(x, wallMargin, _gridSize - wallMargin);
+            z = MathHelper.Clamp(z, wallMargin, _gridSize - wallMargin);
+            
+            // Add slight vertical bobbing for more dynamic movement
+            float verticalBob = (float)Math.Sin(_alpha * 2.0f) * 2.0f;
+            
+            return new Vector3(x, HEIGHT + verticalBob, z);
         }
         
         /// <summary>
@@ -128,9 +147,14 @@ namespace GltronMobileEngine
         {
             Vector3 velocity = GetVelocity();
             float dxval = velocity.X;
-            float dyval = velocity.Z; // Note: Z is the Y equivalent in MonoGame
+            float dyval = velocity.Z; // Z is the Y in 3D space (ground plane)
             
-            float phi = (float)Math.Acos(dxval / Math.Sqrt(dxval * dxval + dyval * dyval));
+            // Handle zero velocity case
+            float magnitude = (float)Math.Sqrt(dxval * dxval + dyval * dyval);
+            if (magnitude < 0.0001f)
+                return 0.0f;
+            
+            float phi = (float)Math.Acos(MathHelper.Clamp(dxval / magnitude, -1.0f, 1.0f));
             
             if (dyval < 0.0f)
                 phi = (float)(2.0f * Math.PI - phi);
@@ -148,8 +172,12 @@ namespace GltronMobileEngine
             Vector3 position = GetPosition(modelBoundingBoxSize);
             float angle = GetAngle();
             
+            // Add some rotation animation for visual interest
+            float spinAngle = _alpha * 30.0f; // Slow rotation
+            
             return Matrix.CreateScale(SCALE_FACTOR) *
                    Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
+                   Matrix.CreateRotationZ(MathHelper.ToRadians(spinAngle)) *
                    Matrix.CreateTranslation(position);
         }
         
@@ -175,30 +203,59 @@ namespace GltronMobileEngine
         /// <returns>Color as Vector4</returns>
         public Vector4 GetColor()
         {
-            return _colour;
+            // Add slight color pulsing for more dynamic appearance
+            float pulse = (float)(Math.Sin(_alpha * 3.0f) * 0.1f + 0.9f);
+            return _colour * pulse;
         }
         
-        // Private animation calculation methods (ported from Java)
+        /// <summary>
+        /// Get recognizer info for debugging
+        /// </summary>
+        /// <returns>Debug string with position and velocity info</returns>
+        public string GetDebugInfo(Vector3 modelBoundingBoxSize)
+        {
+            Vector3 pos = GetPosition(modelBoundingBoxSize);
+            Vector3 vel = GetVelocity();
+            return $"Recognizer: Pos({pos.X:F1}, {pos.Y:F1}, {pos.Z:F1}) Vel({vel.X:F2}, {vel.Z:F2}) Alpha={_alpha:F2}";
+        }
+        
+        /// <summary>
+        /// Check if recognizer is in safe zone (not too close to walls)
+        /// </summary>
+        public bool IsInSafeZone(Vector3 modelBoundingBoxSize)
+        {
+            Vector3 pos = GetPosition(modelBoundingBoxSize);
+            float margin = 10.0f;
+            return pos.X > margin && pos.X < (_gridSize - margin) &&
+                   pos.Z > margin && pos.Z < (_gridSize - margin);
+        }
+        
+        // Private animation calculation methods (exact port from original Java GLTron)
         private float GetX()
         {
+            // Original formula for X position (-1 to 1 range)
             return (_xv[0] * (float)Math.Sin(_xv[1] * _alpha + _xv[2]) - 
                     _xv[3] * (float)Math.Sin(_xv[4] * _alpha + _xv[5]));
         }
         
         private float GetY()
         {
-            return (_yv[0] * (float)Math.Cos(_yv[1] * _alpha + _yv[2] - 
-                    _yv[3] * (float)Math.Sin(_yv[4] * _alpha + _yv[5])));
+            // Original formula for Y position (-1 to 1 range)
+            // Note: There was a typo in the original - should be + not -
+            return (_yv[0] * (float)Math.Cos(_yv[1] * _alpha + _yv[2]) - 
+                    _yv[3] * (float)Math.Sin(_yv[4] * _alpha + _yv[5]));
         }
         
         private float GetDX()
         {
+            // Derivative of X for velocity calculation
             return (_xv[1] * _xv[0] * (float)Math.Cos(_xv[1] * _alpha + _xv[2]) - 
                     _xv[4] * _xv[3] * (float)Math.Cos(_xv[4] * _alpha + _xv[5]));
         }
         
         private float GetDY()
         {
+            // Derivative of Y for velocity calculation
             return -(_yv[1] * _yv[0] * (float)Math.Sin(_yv[1] * _alpha + _yv[2]) - 
                      _yv[4] * _yv[3] * (float)Math.Sin(_yv[4] * _alpha + _yv[5]));
         }
