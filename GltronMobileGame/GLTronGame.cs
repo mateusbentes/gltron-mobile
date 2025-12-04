@@ -549,12 +549,12 @@ namespace GltronMobileGame
                 // CRITICAL: Update AI timing (like Java version)
                 GltronMobileEngine.ComputerAI.UpdateTime(TimeDt, TimeCurrent);
                 
-                // CRITICAL FIX: Update recognizer animation (like Java version)
-                if (mRecognizer != null && mDrawRecognizer)
+                // Update recognizer only during gameplay (not in menu)
+                if (!boShowMenu && mRecognizer != null && mDrawRecognizer)
                 {
                     mRecognizer.DoMovement(TimeDt);
                     
-                    // Always allow recognizer sound in running rounds
+                    // Start/maintain recognizer sound only in running rounds
                     try
                     {
                         SoundManager.Instance.PlayRecognizer(0.3f, true);
