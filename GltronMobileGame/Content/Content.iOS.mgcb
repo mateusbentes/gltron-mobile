@@ -22,7 +22,7 @@
 
 #begin Assets/song_revenge_of_cats.ogg
 /importer:OggImporter
-/processor:SoundProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Assets/song_revenge_of_cats.ogg
 
