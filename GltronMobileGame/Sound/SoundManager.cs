@@ -68,7 +68,7 @@ public class SoundManager
         System.Diagnostics.Debug.WriteLine("GLTRON: Gameplay SFX loaded (engine, crash, recognizer)");
     }
 
-    public void PlayEngine(float volume = 0.25f, bool loop = true)
+    public void PlayEngine(float volume = 0.3f, bool loop = true)
     {
         EnsureGameplaySfxLoaded();
         if (_engine == null) return;
@@ -86,13 +86,13 @@ public class SoundManager
             _engineInstance.Stop();
     }
 
-    public void PlayCrash(float volume = 0.5f)
+    public void PlayCrash(float volume = 0.3f)
     {
         EnsureGameplaySfxLoaded();
         _crash?.Play(volume, 0f, 0f);
     }
 
-    public void PlayRecognizer(float volume = 0.18f, bool loop = true)
+    public void PlayRecognizer(float volume = 0.3f, bool loop = true)
     {
         EnsureGameplaySfxLoaded();
         if (_recognizer == null) return;
