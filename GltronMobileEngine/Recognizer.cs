@@ -40,7 +40,7 @@ namespace GltronMobileEngine
         // These create a complex Lissajous curve movement pattern
         private readonly float[] _xv = { 0.5f, 0.3245f, 0.6f, 0.5f, 0.68f, -0.3f };
         private readonly float[] _yv = { 0.8f, 1.0f, 0.0f, 0.2f, 0.2f, 0.0f };
-        private readonly Vector4 _colour = new Vector4(0.6f, 0.16f, 0.2f, 0.50f); // Original red/pink color
+        private readonly Vector4 _colour = new Vector4(0.8f, 0.2f, 0.1f, 0.60f); // Classic Tron red/orange glow
         
         // Shadow matrix for shadow rendering
         private readonly Matrix _shadowMatrix = new Matrix(
@@ -69,8 +69,8 @@ namespace GltronMobileEngine
         /// <param name="deltaTime">Time elapsed in milliseconds</param>
         public void DoMovement(long deltaTime)
         {
-            // Original GLTron timing - controls movement speed
-            _alpha += deltaTime / 2000.0f;
+            // Slower, more deliberate movement (Tron-style)
+            _alpha += deltaTime / 3000.0f; // Slower than original for more imposing presence
         }
         
         /// <summary>
@@ -131,8 +131,8 @@ namespace GltronMobileEngine
             x = MathHelper.Clamp(x, minPos, maxPos);
             z = MathHelper.Clamp(z, minPos, maxPos);
             
-            // Add vertical bobbing for more dynamic movement
-            float verticalBob = (float)Math.Sin(_alpha * 2.0f) * 2.0f;
+            // Add very subtle vertical hovering effect (Tron-style)
+            float verticalBob = (float)Math.Sin(_alpha * 0.5f) * 0.5f; // Very gentle hovering
             
             // Debug output occasionally
             if (_alpha % 10.0f < 0.1f)
@@ -185,14 +185,13 @@ namespace GltronMobileEngine
             Vector3 position = GetPosition(modelBoundingBoxSize);
             float angle = GetAngle();
             
-            // Add rotation animations for visual interest
-            float spinAngle = _alpha * 45.0f; // Continuous spin
-            float wobbleAngle = (float)Math.Sin(_alpha * 3.0f) * 10.0f; // Slight wobble
+            // Tron-style recognizer: stable and imposing
+            // Only rotate to face direction of movement (Y-axis rotation)
+            // Very subtle spin for some life, but not distracting
+            float gentleSpin = _alpha * 15.0f; // Very slow rotation around vertical axis
             
             return Matrix.CreateScale(SCALE_FACTOR) *
-                   Matrix.CreateRotationX(MathHelper.ToRadians(wobbleAngle)) *
-                   Matrix.CreateRotationY(MathHelper.ToRadians(angle)) *
-                   Matrix.CreateRotationZ(MathHelper.ToRadians(spinAngle)) *
+                   Matrix.CreateRotationY(MathHelper.ToRadians(angle + gentleSpin)) *
                    Matrix.CreateTranslation(position);
         }
         
@@ -218,8 +217,8 @@ namespace GltronMobileEngine
         /// <returns>Color as Vector4</returns>
         public Vector4 GetColor()
         {
-            // Add slight color pulsing for more dynamic appearance
-            float pulse = (float)(Math.Sin(_alpha * 3.0f) * 0.1f + 0.9f);
+            // Very subtle glow pulsing (Tron-style)
+            float pulse = (float)(Math.Sin(_alpha * 1.0f) * 0.05f + 0.95f);
             return _colour * pulse;
         }
         
