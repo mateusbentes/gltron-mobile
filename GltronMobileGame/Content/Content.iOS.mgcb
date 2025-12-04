@@ -23,25 +23,25 @@
 #begin Assets/song_revenge_of_cats.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
-/processorParam:Quality=Best
+/processorParam:Platform=iOS
 /build:Assets/song_revenge_of_cats.ogg
 
 #begin Assets/game_crash.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
-/processorParam:Quality=Best
+/processorParam:Platform=iOS
 /build:Assets/game_crash.ogg
 
 #begin Assets/game_engine.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
-/processorParam:Quality=Best
+/processorParam:Platform=iOS
 /build:Assets/game_engine.ogg
 
 #begin Assets/game_recognizer.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
-/processorParam:Quality=Best
+/processorParam:Platform=iOS
 /build:Assets/game_recognizer.ogg
 
 #begin Assets/gltron_bitmap.png
