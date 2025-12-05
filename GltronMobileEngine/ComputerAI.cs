@@ -138,14 +138,39 @@ namespace GltronMobileEngine
             float y = player.getYpos();
             int direction = player.getDirection();
 
-            float[] dirX = { 0f, 1f, 0f, -1f };
-            float[] dirY = { -1f, 0f, 1f, 0f };
+            // DIRS_X: 0=Up, 1=Left, 2=Down, 3=Right (based on Player.cs DIRS_X/Y)
+            // Player.cs DIRS_X: { 0.0f, -1.0f, 0.0f, 1.0f } (Up, Left, Down, Right)
+            // Player.cs DIRS_Y: { -1.0f, 0.0f, 1.0f, 0.0f } (Up, Left, Down, Right)
+            // The original Java AI used a different direction mapping (0=Up, 1=Right, 2=Down, 3=Left)
+            // We must use the Player.cs mapping: 0=Up, 1=Left, 2=Down, 3=Right
+            float[] dirX = { player.DIRS_X[0], player.DIRS_X[1], player.DIRS_X[2], player.DIRS_X[3] };
+            float[] dirY = { player.DIRS_Y[0], player.DIRS_Y[1], player.DIRS_Y[2], player.DIRS_Y[3] };
 
             float[] distances = new float[3];
 
             for (int i = 0; i < 3; i++)
             {
-                int checkDir = (direction + i - 1 + 4) % 4;
+                // i=0: Left turn (direction + 1) % 4 in Player.cs
+                // i=1: Forward (direction)
+                // i=2: Right turn (direction - 1 + 4) % 4 in Player.cs
+                // Player.cs uses: TURN_LEFT = 3, TURN_RIGHT = 1
+                // The AI decision logic uses: 0=Left, 1=Forward, 2=Right
+                // Let's map the AI index (0, 1, 2) to the actual direction index (0, 1, 2, 3)
+                int checkDir;
+                if (i == 0) // Left probe
+                {
+                    // Player.TURN_LEFT is +3, so (direction + 3) % 4
+                    checkDir = (direction + Player.TURN_LEFT) % 4;
+                }
+                else if (i == 2) // Right probe
+                {
+                    // Player.TURN_RIGHT is +1, so (direction + 1) % 4
+                    checkDir = (direction + Player.TURN_RIGHT) % 4;
+                }
+                else // Forward probe (i == 1)
+                {
+                    checkDir = direction;
+                }
                 distances[i] = CalculateDistanceInDirection(x, y, checkDir, dirX, dirY, playerIndex);
             }
 
@@ -207,9 +232,11 @@ namespace GltronMobileEngine
                 int startIndex = 0;
                 if (isOwnPlayer)
                 {
-                    // Skip the last 3-5 trail segments (adjust based on speed and turn frequency)
-                    // This prevents the AI from thinking it's blocked by its own current path
-                    startIndex = Math.Max(0, trailCount - 5);
+                // Skip the last 3-5 trail segments (adjust based on speed and turn frequency)
+                // This prevents the AI from thinking it's blocked by its own current path.
+                // The number of segments to skip should be proportional to the speed and turn time.
+                // A fixed value of 5 is a good starting point to skip the current segment and the last few.
+                startIndex = Math.Max(0, trailCount - 5);
                 }
 
                 for (int i = startIndex; i < trailCount; i++)
@@ -234,7 +261,8 @@ namespace GltronMobileEngine
                             (sx - aiX) * (sx - aiX) + (sy - aiY) * (sy - aiY));
                         
                         // If this segment starts very close to AI (within 3 units), and we're checking
-                        // a point close to the AI, skip it
+                        // a point close to the AI, skip it. This is a heuristic to ignore the
+                        // segment the AI is currently drawing.
                         if (distToSegmentStart < 3.0f && distanceFromAI < 3.0f)
                             continue;
                     }
@@ -295,13 +323,18 @@ namespace GltronMobileEngine
             float emergency = 7.0f;
 
             // Emergency: must turn
+            // If the path ahead is critically short, we must turn.
             if (forward < emergency)
             {
+                // Prefer the side with more space, but only if it's also safe (greater than emergency distance)
                 if (left > right && left > emergency)
                     return Player.TURN_LEFT;
+                
                 if (right > emergency)
                     return Player.TURN_RIGHT;
 
+                // If both sides are also dangerous, choose the one with slightly more space
+                // This is a last resort and often leads to a crash, but it's the best choice available.
                 return (left > right) ? Player.TURN_LEFT : Player.TURN_RIGHT;
             }
 
@@ -345,19 +378,23 @@ namespace GltronMobileEngine
             }
 
             // If safe ahead, prefer going straight
+            // If the path ahead is safe (greater than critical distance and safety margin)
             if (forward > criticalDist && forward > safetyMargin)
             {
                 // Plenty of space ahead - continue straight unless sides are much better
+                // Check if turning left or right yields a significantly better score AND is safe
                 if (leftScore > forwardScore + 15f && left > safetyMargin)
                     return Player.TURN_LEFT;
 
                 if (rightScore > forwardScore + 15f && right > safetyMargin)
                     return Player.TURN_RIGHT;
 
+                // Otherwise, continue straight (0 = no turn)
                 return 0;
             }
 
             // Otherwise, pick the best side
+            // If the path ahead is not safe, choose the direction with the highest score.
             if (leftScore > rightScore)
                 return Player.TURN_LEFT;
             else
