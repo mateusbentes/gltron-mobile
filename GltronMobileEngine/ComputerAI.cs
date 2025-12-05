@@ -138,9 +138,7 @@ namespace GltronMobileEngine
             float y = player.getYpos();
             int direction = player.getDirection();
 
-            // DIRS_X: { 0.0f, -1.0f, 0.0f, 1.0f } (Index 0: Up, 1: Left, 2: Down, 3: Right)
-            // DIRS_Y: { -1.0f, 0.0f, 1.0f, 0.0f } (Index 0: Up, 1: Left, 2: Down, 3: Right)
-            // These are fixed values from the Player class, which is not accessible via IPlayer.
+            // Match Player.DIRS_X/Y mapping exactly (see Player.cs)
             float[] dirX = { 0.0f, -1.0f, 0.0f, 1.0f };
             float[] dirY = { -1.0f, 0.0f, 1.0f, 0.0f };
 
@@ -154,13 +152,13 @@ namespace GltronMobileEngine
                 int checkDir;
                 if (i == 0) // Left probe
                 {
-                    // Left turn is (current direction + 3) % 4
-                    checkDir = (direction + 3) % 4;
+                    // Left turn is (current direction + Player.TURN_LEFT) % 4 where TURN_LEFT == 3
+                    checkDir = (direction + Player.TURN_LEFT) % 4;
                 }
                 else if (i == 2) // Right probe
                 {
-                    // Right turn is (current direction + 1) % 4
-                    checkDir = (direction + 1) % 4;
+                    // Right turn is (current direction + Player.TURN_RIGHT) % 4 where TURN_RIGHT == 1
+                    checkDir = (direction + Player.TURN_RIGHT) % 4;
                 }
                 else // Forward probe (i == 1)
                 {
@@ -182,7 +180,8 @@ namespace GltronMobileEngine
             float dy = dirY[direction];
 
             float maxDistance = 100f;
-            float step = 0.5f;
+            // Finer step to improve precision near walls/trails without affecting wall safety
+            float step = 0.25f;
 
             for (float d = step; d <= maxDistance; d += step)
             {
@@ -191,14 +190,14 @@ namespace GltronMobileEngine
 
                 float wallMargin = 0.5f;
 
-                // Boundary check
+                // Boundary check (hard stop for walls)
                 if (checkX <= wallMargin || checkX >= (_gridSize - wallMargin) ||
                     checkY <= wallMargin || checkY >= (_gridSize - wallMargin))
                 {
                     return Math.Max(0.1f, d - step);
                 }
 
-                // Trail collision - NOW WITH PLAYER INDEX TO AVOID CHECKING OWN RECENT TRAIL
+                // Trail collision - ignore own most recent trail segments better
                 if (CheckTrailCollision(checkX, checkY, playerIndex, startX, startY, d))
                     return Math.Max(0.1f, d - step);
             }
@@ -214,24 +213,21 @@ namespace GltronMobileEngine
         {
             if (_players == null) return false;
 
-            foreach (var player in _players)
+            for (int p = 0; p < _players.Length; p++)
             {
+                var player = _players[p];
                 if (player == null || player.getTrailHeight() <= 0) continue;
 
-                int playerIdx = Array.IndexOf(_players, player);
-                bool isOwnPlayer = (playerIdx == aiPlayerIndex);
+                bool isOwnPlayer = (p == aiPlayerIndex);
 
                 int trailCount = player.getTrailOffset() + 1;
-                
+
                 // For the AI's own trail, skip the most recent segments to avoid immediate self-collision
                 int startIndex = 0;
                 if (isOwnPlayer)
                 {
-                // Skip the last 3-5 trail segments (adjust based on speed and turn frequency)
-                // This prevents the AI from thinking it's blocked by its own current path.
-                // The number of segments to skip should be proportional to the speed and turn time.
-                // A fixed value of 5 is a good starting point to skip the current segment and the last few.
-                startIndex = Math.Max(0, trailCount - 5);
+                    // Skip the last few trail segments (current drawing + previous turns)
+                    startIndex = Math.Max(0, trailCount - 6);
                 }
 
                 for (int i = startIndex; i < trailCount; i++)
@@ -245,25 +241,23 @@ namespace GltronMobileEngine
                     float ey = sy + trail.vDirection.v[1];
 
                     // Skip zero-length segments
-                    if (Math.Abs(trail.vDirection.v[0]) < 0.1f &&
-                        Math.Abs(trail.vDirection.v[1]) < 0.1f)
+                    if (Math.Abs(trail.vDirection.v[0]) < 0.1f && Math.Abs(trail.vDirection.v[1]) < 0.1f)
                         continue;
 
-                    // Additional check: for own player, ignore segments very close to current position
                     if (isOwnPlayer)
                     {
-                        float distToSegmentStart = (float)Math.Sqrt(
-                            (sx - aiX) * (sx - aiX) + (sy - aiY) * (sy - aiY));
-                        
-                        // If this segment starts very close to AI (within 3 units), and we're checking
-                        // a point close to the AI, skip it. This is a heuristic to ignore the
-                        // segment the AI is currently drawing.
+                        float distToSegmentStart = (float)Math.Sqrt((sx - aiX) * (sx - aiX) + (sy - aiY) * (sy - aiY));
+                        // Heuristic: if point is very close to AI and segment starts near AI, ignore it (current drawing)
                         if (distToSegmentStart < 3.0f && distanceFromAI < 3.0f)
                             continue;
                     }
 
-                    // Use a slightly larger threshold for collision detection
-                    if (PointNearLineSegment(x, y, sx, sy, ex, ey, 1.2f))
+                    // Use slightly larger threshold for others; slightly smaller for our own very-near checks
+                    float threshold = 1.2f;
+                    if (isOwnPlayer && distanceFromAI < 3.0f)
+                        threshold = 0.6f;
+
+                    if (PointNearLineSegment(x, y, sx, sy, ex, ey, threshold))
                         return true;
                 }
             }
@@ -329,7 +323,12 @@ namespace GltronMobileEngine
                     return Player.TURN_RIGHT;
 
                 // If both sides are also dangerous, choose the one with slightly more space
-                // This is a last resort and often leads to a crash, but it's the best choice available.
+                // As a tie-breaker, avoid continuing the same spiral direction
+                if (Math.Abs(memory.SpiralCounter) > 5)
+                {
+                    if (memory.SpiralCounter > 5) return Player.TURN_RIGHT;
+                    else return Player.TURN_LEFT;
+                }
                 return (left > right) ? Player.TURN_LEFT : Player.TURN_RIGHT;
             }
 
@@ -355,8 +354,14 @@ namespace GltronMobileEngine
             float leftScore = left - memory.DangerMemory[1] * 5f;
             float rightScore = right - memory.DangerMemory[2] * 5f;
 
-            // Anti-spiral system
-            if (Math.Abs(memory.SpiralCounter) > 5)
+            // Mild preference to keep going straight when safe, to avoid boxing inward
+            if (forward > safetyMargin)
+            {
+                forwardScore += 5f;
+            }
+
+            // Anti-spiral system (avoid turning inward repeatedly when not in emergency)
+            if (Math.Abs(memory.SpiralCounter) > 5 && forward > emergency)
             {
                 if (memory.SpiralCounter > 5)
                 {
