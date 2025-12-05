@@ -28,8 +28,8 @@ public class TrailsRenderer
         int trailOffset = p.getTrailOffset();
         float trailHeight = p.getTrailHeight();
         
-        // CRITICAL FIX: Show trails even when height is low (fading trails)
-        if (trailOffset <= 0 || trailHeight <= 0.01f) return;
+        // CRITICAL FIX: Show trails even when height is very low (fading trails) - improved threshold
+        if (trailOffset <= 0 || trailHeight <= 0.001f) return;
         
         // CRITICAL FIX: Draw trail walls correctly - each segment is a wall from start to start+direction
         var verts = new List<VertexPositionColor>();
@@ -102,10 +102,10 @@ public class TrailsRenderer
             }
             perp *= halfWidth;
 
-            float h = Math.Max(trailHeight, 0.2f); // ensure visible height
+            float h = Math.Max(trailHeight, 0.1f); // ensure visible height even when fading
 
-            // Lift slightly above floor to avoid z-fighting
-            const float yLift = 0.001f;
+            // Lift slightly above floor to avoid z-fighting - improved for camera proximity
+            const float yLift = 0.002f;
             segStart.Y += yLift;
             segEnd.Y += yLift;
 

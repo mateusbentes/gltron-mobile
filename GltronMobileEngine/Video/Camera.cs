@@ -40,11 +40,11 @@ public class Camera
     public int ViewportWidth { get; }
     public int ViewportHeight { get; }
 
-    // GLTron camera constants (optimized for following player)
+    // GLTron camera constants (optimized for following player and trail visibility)
     private const float CAM_CIRCLE_DIST = 25.0f;
-    private const float CAM_FOLLOW_DIST = 20.0f;  // Good distance behind player
+    private const float CAM_FOLLOW_DIST = 18.0f;  // Slightly closer for better trail visibility
     private const float CAM_FOLLOW_FAR_DIST = 35.0f;
-    private const float CAM_FOLLOW_CLOSE_DIST = 12.0f;
+    private const float CAM_FOLLOW_CLOSE_DIST = 10.0f;  // Closer but still shows trails
     private const float CAM_FOLLOW_BIRD_DIST = 60.0f;
     private const float CAM_CIRCLE_Z = 15.0f;
     private const float CAM_COCKPIT_Z = 4.0f;
@@ -104,9 +104,9 @@ public class Camera
 
     private void InitializeFollowCamera()
     {
-        // CRITICAL FIX: Match Java camera defaults exactly
-        _movement[0] = CAM_FOLLOW_DIST; // 20.0f - same as Java
-        _movement[1] = MathHelper.Pi / 4.0f; // 45 degree elevation - same as Java  
+        // CRITICAL FIX: Match Java camera defaults exactly - optimized for trail visibility
+        _movement[0] = CAM_FOLLOW_DIST; // 18.0f - closer for better trail visibility
+        _movement[1] = MathHelper.Pi / 5.0f; // Slightly lower elevation for better trail view
         _movement[2] = MathHelper.Pi / 72.0f; // Small rotation offset - same as Java
         _movement[3] = 0.0f; // No additional offset
         _phi = 0.0f;
@@ -225,10 +225,10 @@ public class Camera
             // Target slightly ahead of the player for better view
             _target = new Vector3(smoothPlayerPos.X, 2f, smoothPlayerPos.Z);
             
-            // GLTron-style camera: close behind and slightly above the motorcycle
-            // Distance: 12 units behind, Height: 8 units above ground
-            float cameraDistance = 12f;
-            float cameraHeight = 8f;
+            // GLTron-style camera: optimized distance for trail visibility
+            // Distance: 10 units behind, Height: 6 units above ground for better trail view
+            float cameraDistance = 10f;
+            float cameraHeight = 6f;
             
             _camPos = new Vector3(smoothPlayerPos.X, cameraHeight, smoothPlayerPos.Z + cameraDistance);
         }
@@ -270,9 +270,9 @@ public class Camera
             // Target slightly ahead of the player in movement direction
             _target = smoothPlayerPos + forwardDir * 3f + new Vector3(0, 1f, 0);
             
-            // Position camera behind the motorcycle
-            float cameraDistance = 10f;
-            float cameraHeight = 6f;
+            // Position camera behind the motorcycle - optimized for trail visibility
+            float cameraDistance = 8f;  // Closer for better trail detail
+            float cameraHeight = 5f;    // Lower for better trail perspective
             
             _camPos = smoothPlayerPos + backwardDir * cameraDistance + new Vector3(0, cameraHeight, 0);
         }

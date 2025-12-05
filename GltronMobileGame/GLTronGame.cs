@@ -56,9 +56,9 @@ namespace GltronMobileGame
         public const int OWN_PLAYER = 0;
         public int mCurrentPlayers = 4; // Original GLTron has 4 players
         
-        // Auto-reset state
-        private bool _autoResetPending = false;
-        private long _autoResetAt = 0;
+        // Manual reset state - no auto-reset
+        private bool _gameOverState = false;
+        private bool _playerWon = false;
 
         // Define game textures (serão carregadas no MonoGame Game1)
         // private GLTexture ExplodeTex;
@@ -73,7 +73,7 @@ namespace GltronMobileGame
         private Player[] Players = new Player[MAX_PLAYERS];
 
         // CRITICAL FIX: Add recognizer support like Java version
-        private GltronMobileEngine.Recognizer? mRecognizer;
+        private GltronMobileEngine.Recognizer mRecognizer;
 
         // Camera data (Substituir por lógica de câmera MonoGame)
         // private Camera Cam;
@@ -230,7 +230,7 @@ namespace GltronMobileGame
             return mCurrentGridSize;
         }
         
-        public GltronMobileEngine.Recognizer? GetRecognizer()
+        public GltronMobileEngine.Recognizer GetRecognizer()
         {
             return mRecognizer;
         }
@@ -243,6 +243,16 @@ namespace GltronMobileGame
         public void SetDrawRecognizer(bool draw)
         {
             mDrawRecognizer = draw;
+        }
+        
+        public bool IsGameOver()
+        {
+            return _gameOverState;
+        }
+        
+        public bool PlayerWon()
+        {
+            return _playerWon;
         }
 
         private void initWalls()
@@ -472,6 +482,7 @@ namespace GltronMobileGame
                 {
                     System.Diagnostics.Debug.WriteLine("GLTRON: addTouchEvent: Menu tap detected, starting game");
                     boShowMenu = false;
+                    _gameOverState = false;
                     tronHUD?.AddLineToConsole("Game Started!");
                     // Auto-start round immediately (skip initial idle state)
                     boInitialState = false;
@@ -481,6 +492,14 @@ namespace GltronMobileGame
                         Sound.SoundManager.Instance.EnsureGameplaySfxLoaded();
                         Sound.SoundManager.Instance.PlayEngine(0.3f, true);
                     } catch { }
+                    return;
+                }
+
+                // Handle game over state - manual restart only
+                if (_gameOverState)
+                {
+                    System.Diagnostics.Debug.WriteLine("GLTRON: addTouchEvent: Game over tap detected, restarting game");
+                    ResetGame();
                     return;
                 }
 
@@ -610,12 +629,7 @@ namespace GltronMobileGame
                     RunGameLogic();
                 }
                 
-                // Auto-reset timer check
-                if (_autoResetPending && TimeCurrent >= _autoResetAt)
-                {
-                    _autoResetPending = false;
-                    ResetGame();
-                }
+                // No auto-reset - game waits for manual restart
             }
             catch (System.Exception ex)
             {
@@ -655,13 +669,15 @@ namespace GltronMobileGame
                     LogError($"ResetGame: Failed to stop recognizer sound: {ex}");
                 }
                 
-                // Reset game state - auto-start next round immediately
+                // Reset game state - manual restart, start fresh round
+                _gameOverState = false;
+                _playerWon = false;
                 boInitialState = false;
                 tronHUD?.ResetConsole();
                 tronHUD?.DisplayInstr(false);
                 try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
                 
-                LogInfo("Game reset completed and next round auto-started");
+                LogInfo("Game reset completed - new round started");
             }
             catch (System.Exception ex)
             {
@@ -767,28 +783,26 @@ namespace GltronMobileGame
         {
             try
             {
-                if (!ownPlayerActive && otherPlayersActive)
+                if (!ownPlayerActive && otherPlayersActive && !_gameOverState)
                 {
                     // Player lost
+                    _gameOverState = true;
+                    _playerWon = false;
                     tronHUD?.DisplayLose();
-                    LogInfo("Player lost the round");
-                    // Auto-advance to next round after short delay
-                    _autoResetPending = true;
-                    _autoResetAt = TimeCurrent + 1000; // 1s delay
+                    LogInfo("Player lost the round - tap to restart");
                 }
-                else if (ownPlayerActive && !otherPlayersActive)
+                else if (ownPlayerActive && !otherPlayersActive && !_gameOverState)
                 {
                     // Player won
+                    _gameOverState = true;
+                    _playerWon = true;
                     tronHUD?.DisplayWin();
                     if (Players[OWN_PLAYER] != null)
                     {
                         Players[OWN_PLAYER].setSpeed(0.0f);
                         Players[OWN_PLAYER].addScore(100); // Bonus for winning
                     }
-                    LogInfo("Player won the round");
-                    // Auto-advance to next round after short delay
-                    _autoResetPending = true;
-                    _autoResetAt = TimeCurrent + 1000; // 1s delay
+                    LogInfo("Player won the round - tap to restart");
                 }
             }
             catch (System.Exception ex)

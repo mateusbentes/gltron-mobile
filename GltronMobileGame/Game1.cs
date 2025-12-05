@@ -928,6 +928,42 @@ public class Game1 : Game
                     }
                 }
                 
+                // CRITICAL FIX: Show game over screen with restart message
+                if (_glTronGame != null && _glTronGame.IsGameOver())
+                {
+                    var gameOverViewport = GraphicsDevice.Viewport;
+                    string gameOverText = _glTronGame.PlayerWon() ? "YOU WIN!" : "GAME OVER";
+                    Color gameOverColor = _glTronGame.PlayerWon() ? Color.Lime : Color.Red;
+                    _spriteBatch.Draw(_whitePixel, new Rectangle(0, 0, gameOverViewport.Width, gameOverViewport.Height), Color.Black * 0.7f);
+                    
+                    // Game over text
+                    Vector2 gameOverSize = _font.MeasureString(gameOverText);
+                    Vector2 gameOverPos = new Vector2(
+                        (gameOverViewport.Width - gameOverSize.X) / 2,
+                        gameOverViewport.Height / 3
+                    );
+                    _spriteBatch.DrawString(_font, gameOverText, gameOverPos, gameOverColor);
+                    
+                    // Score
+                    string scoreText = $"SCORE: {_glTronGame.GetOwnPlayerScore()}";
+                    Vector2 scoreSize = _font.MeasureString(scoreText);
+                    Vector2 scorePos = new Vector2(
+                        (gameOverViewport.Width - scoreSize.X) / 2,
+                        gameOverPos.Y + gameOverSize.Y + 20
+                    );
+                    _spriteBatch.DrawString(_font, scoreText, scorePos, Color.White);
+                    
+                    // Restart instruction with pulsing effect
+                    string restartText = "TAP TO RESTART";
+                    float pulse = (float)(System.Math.Sin(gameTime.TotalGameTime.TotalSeconds * 3) * 0.3f + 0.7f);
+                    Vector2 restartSize = _font.MeasureString(restartText);
+                    Vector2 restartPos = new Vector2(
+                        (gameOverViewport.Width - restartSize.X) / 2,
+                        gameOverViewport.Height * 0.7f
+                    );
+                    _spriteBatch.DrawString(_font, restartText, restartPos, Color.Yellow * pulse);
+                }
+                
                 _spriteBatch.End();
             }
             catch (System.Exception ex)
