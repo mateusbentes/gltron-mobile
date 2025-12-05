@@ -188,7 +188,15 @@ namespace GltronMobileEngine
                 float checkX = startX + dx * d;
                 float checkY = startY + dy * d;
 
+                // Base wall margin
                 float wallMargin = 0.5f;
+                // Near-wall anticipation: if we're heading toward a wall and are already close, anticipate earlier
+                float nearWallThreshold = 10.0f;
+                if ((dx < 0 && startX < nearWallThreshold) || (dx > 0 && (_gridSize - startX) < nearWallThreshold) ||
+                    (dy < 0 && startY < nearWallThreshold) || (dy > 0 && (_gridSize - startY) < nearWallThreshold))
+                {
+                    wallMargin = 1.0f; // slightly inflate margin when near the arena boundary
+                }
 
                 // Boundary check (hard stop for walls)
                 if (checkX <= wallMargin || checkX >= (_gridSize - wallMargin) ||
@@ -311,6 +319,14 @@ namespace GltronMobileEngine
             float criticalDist = CRITICAL_DISTANCE[_aiLevel] * _gridSize;
             float emergency = 7.0f;
 
+            // Dynamic friction: discourage rapid consecutive turns
+            float recentTurnBias = 0f;
+            long sinceTurn = _currentTime - memory.LastTurnTime;
+            if (sinceTurn > 0 && sinceTurn < (long)(MIN_TURN_TIME[_aiLevel] * 1.5f))
+            {
+                recentTurnBias = 8f; // require extra margin to justify a new turn
+            }
+
             // Emergency: must turn
             // If the path ahead is critically short, we must turn.
             if (forward < emergency)
@@ -350,14 +366,14 @@ namespace GltronMobileEngine
             }
 
             // Compute lane scores
-            float forwardScore = forward - memory.DangerMemory[0] * 5f;
-            float leftScore = left - memory.DangerMemory[1] * 5f;
-            float rightScore = right - memory.DangerMemory[2] * 5f;
+            float forwardScore = forward - memory.DangerMemory[0] * 4f; // reduce memory weight slightly
+            float leftScore = left - memory.DangerMemory[1] * 4f;
+            float rightScore = right - memory.DangerMemory[2] * 4f;
 
             // Mild preference to keep going straight when safe, to avoid boxing inward
             if (forward > safetyMargin)
             {
-                forwardScore += 5f;
+                forwardScore += 8f; // stronger straight bias when safe
             }
 
             // Anti-spiral system (avoid turning inward repeatedly when not in emergency)
@@ -382,11 +398,12 @@ namespace GltronMobileEngine
             if (forward > criticalDist && forward > safetyMargin)
             {
                 // Plenty of space ahead - continue straight unless sides are much better
-                // Check if turning left or right yields a significantly better score AND is safe
-                if (leftScore > forwardScore + 15f && left > safetyMargin)
+                // Require a larger advantage to justify a turn, plus recent-turn friction
+                float neededAdvantage = 20f + recentTurnBias;
+                if (leftScore > forwardScore + neededAdvantage && left > safetyMargin)
                     return Player.TURN_LEFT;
 
-                if (rightScore > forwardScore + 15f && right > safetyMargin)
+                if (rightScore > forwardScore + neededAdvantage && right > safetyMargin)
                     return Player.TURN_RIGHT;
 
                 // Otherwise, continue straight (0 = no turn)
@@ -395,10 +412,18 @@ namespace GltronMobileEngine
 
             // Otherwise, pick the best side
             // If the path ahead is not safe, choose the direction with the highest score.
-            if (leftScore > rightScore)
+            // Apply recent-turn friction lightly here too to avoid rapid alternating turns
+            if (leftScore > rightScore + recentTurnBias * 0.5f)
                 return Player.TURN_LEFT;
-            else
+            else if (rightScore > leftScore + recentTurnBias * 0.5f)
                 return Player.TURN_RIGHT;
+            else
+            {
+                // Tie or too close: hold straight if not yet dangerous
+                if (forward > emergency)
+                    return 0;
+                return (left >= right) ? Player.TURN_LEFT : Player.TURN_RIGHT;
+            }
         }
 
         /// <summary>
