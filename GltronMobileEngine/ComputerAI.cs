@@ -90,8 +90,8 @@ namespace GltronMobileEngine
 
             memory.DecayMemory();
 
-            // Distance probes
-            float[] distances = CalculateDistances(player);
+            // Distance probes - NOW PASSING PLAYER INDEX TO AVOID SELF-COLLISION
+            float[] distances = CalculateDistances(player, playerIndex);
 
             // Debug only when forward is dangerous
             if (distances[1] < 10f)
@@ -132,7 +132,7 @@ namespace GltronMobileEngine
         /// <summary>
         /// Returns left, forward, and right distances.
         /// </summary>
-        private static float[] CalculateDistances(IPlayer player)
+        private static float[] CalculateDistances(IPlayer player, int playerIndex)
         {
             float x = player.getXpos();
             float y = player.getYpos();
@@ -146,7 +146,7 @@ namespace GltronMobileEngine
             for (int i = 0; i < 3; i++)
             {
                 int checkDir = (direction + i - 1 + 4) % 4;
-                distances[i] = CalculateDistanceInDirection(x, y, checkDir, dirX, dirY);
+                distances[i] = CalculateDistanceInDirection(x, y, checkDir, dirX, dirY, playerIndex);
             }
 
             return distances;
@@ -156,7 +156,7 @@ namespace GltronMobileEngine
         /// Raycast distance in a given direction.
         /// </summary>
         private static float CalculateDistanceInDirection(
-            float startX, float startY, int direction, float[] dirX, float[] dirY)
+            float startX, float startY, int direction, float[] dirX, float[] dirY, int playerIndex)
         {
             float dx = dirX[direction];
             float dy = dirY[direction];
@@ -178,8 +178,8 @@ namespace GltronMobileEngine
                     return Math.Max(0.1f, d - step);
                 }
 
-                // Trail collision
-                if (CheckTrailCollision(checkX, checkY))
+                // Trail collision - NOW WITH PLAYER INDEX TO AVOID CHECKING OWN RECENT TRAIL
+                if (CheckTrailCollision(checkX, checkY, playerIndex, startX, startY, d))
                     return Math.Max(0.1f, d - step);
             }
 
@@ -188,8 +188,9 @@ namespace GltronMobileEngine
 
         /// <summary>
         /// True if the point is touching any player's trail.
+        /// FIXED: Now ignores the AI's own recent trail segments to prevent self-collision detection.
         /// </summary>
-        private static bool CheckTrailCollision(float x, float y)
+        private static bool CheckTrailCollision(float x, float y, int aiPlayerIndex, float aiX, float aiY, float distanceFromAI)
         {
             if (_players == null) return false;
 
@@ -197,8 +198,21 @@ namespace GltronMobileEngine
             {
                 if (player == null || player.getTrailHeight() <= 0) continue;
 
+                int playerIdx = Array.IndexOf(_players, player);
+                bool isOwnPlayer = (playerIdx == aiPlayerIndex);
+
                 int trailCount = player.getTrailOffset() + 1;
-                for (int i = 0; i < trailCount; i++)
+                
+                // For the AI's own trail, skip the most recent segments to avoid immediate self-collision
+                int startIndex = 0;
+                if (isOwnPlayer)
+                {
+                    // Skip the last 3-5 trail segments (adjust based on speed and turn frequency)
+                    // This prevents the AI from thinking it's blocked by its own current path
+                    startIndex = Math.Max(0, trailCount - 5);
+                }
+
+                for (int i = startIndex; i < trailCount; i++)
                 {
                     var trail = player.getTrail(i);
                     if (trail == null) continue;
@@ -208,11 +222,25 @@ namespace GltronMobileEngine
                     float ex = sx + trail.vDirection.v[0];
                     float ey = sy + trail.vDirection.v[1];
 
+                    // Skip zero-length segments
                     if (Math.Abs(trail.vDirection.v[0]) < 0.1f &&
                         Math.Abs(trail.vDirection.v[1]) < 0.1f)
                         continue;
 
-                    if (PointNearLineSegment(x, y, sx, sy, ex, ey, 1.0f))
+                    // Additional check: for own player, ignore segments very close to current position
+                    if (isOwnPlayer)
+                    {
+                        float distToSegmentStart = (float)Math.Sqrt(
+                            (sx - aiX) * (sx - aiX) + (sy - aiY) * (sy - aiY));
+                        
+                        // If this segment starts very close to AI (within 3 units), and we're checking
+                        // a point close to the AI, skip it
+                        if (distToSegmentStart < 3.0f && distanceFromAI < 3.0f)
+                            continue;
+                    }
+
+                    // Use a slightly larger threshold for collision detection
+                    if (PointNearLineSegment(x, y, sx, sy, ex, ey, 1.2f))
                         return true;
                 }
             }
