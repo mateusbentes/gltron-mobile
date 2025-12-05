@@ -470,7 +470,7 @@ public class Game1 : Game
                         }
                     }
 
-                    // Safe camera update - get real player position
+                    // CRITICAL FIX: Immediate camera update - get real player position without delay
                     var player = _glTronGame?.GetOwnPlayer();
                     Vector3 playerPos = Vector3.Zero;
                     if (player != null)
@@ -480,6 +480,21 @@ public class Game1 : Game
                             float x = player.getXpos();
                             float y = player.getYpos();
                             playerPos = new Vector3(x, 0, y); // X, Y=0, Z for GLTron coordinate system
+                            
+                            // CRITICAL FIX: Handle camera reset request for immediate positioning
+                            if (_glTronGame.IsCameraResetRequested() && _camera != null)
+                            {
+                                _camera.ResetForNewGame();
+                                _glTronGame.CameraResetHandled();
+                                
+                                try
+                                {
+#if ANDROID
+                                    Android.Util.Log.Info("GLTRON", "Camera reset handled - immediate positioning enabled");
+#endif
+                                }
+                                catch { }
+                            }
                             
                             try
                             {

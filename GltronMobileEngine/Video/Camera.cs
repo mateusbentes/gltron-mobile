@@ -85,10 +85,10 @@ public class Camera
         _cameraType = CameraType.Follow;
         InitializeFollowCamera();
         
-        // CRITICAL FIX: Set initial camera position to see arena center properly
-        float arenaCenter = 50f; // Should be gridSize / 2
+        // CRITICAL FIX: Set initial camera position - will be updated immediately when player is available
+        float arenaCenter = 50f; // Default arena center
         _target = new Vector3(arenaCenter, 0f, arenaCenter); // Arena center at ground level
-        _camPos = new Vector3(arenaCenter, 25f, arenaCenter + 30f); // Higher and further back for better view
+        _camPos = new Vector3(arenaCenter, 15f, arenaCenter + 20f); // Closer initial position for faster transition
         
         UpdateViewMatrix();
     }
@@ -123,6 +123,15 @@ public class Camera
 
     public void Update(Vector3 playerPos, GameTime gameTime)
     {
+        // CRITICAL FIX: Immediate camera response when player position is available
+        if (playerPos != Vector3.Zero && _lastPlayerPos == Vector3.Zero)
+        {
+            // First valid player position - snap camera immediately to avoid delay
+            _lastPlayerPos = playerPos;
+            _target = new Vector3(playerPos.X, 2f, playerPos.Z);
+            _camPos = new Vector3(playerPos.X, 8f, playerPos.Z + 12f);
+        }
+        
         // Choose camera behavior based on type
         switch (_cameraType)
         {
@@ -211,12 +220,12 @@ public class Camera
         // GLTron-style third-person camera following behind the motorcycle
         if (playerPos != Vector3.Zero)
         {
-            // Smooth camera interpolation for less jarring movement
-            float lerpFactor = 0.2f; // Slightly faster for responsive following
+            // CRITICAL FIX: Immediate camera positioning at game start, then smooth following
+            float lerpFactor = (_lastPlayerPos == Vector3.Zero) ? 1.0f : 0.4f; // Instant snap on first frame, then smooth
             
             if (_lastPlayerPos == Vector3.Zero)
             {
-                _lastPlayerPos = playerPos; // First frame
+                _lastPlayerPos = playerPos; // First frame - immediate positioning
             }
             
             Vector3 smoothPlayerPos = Vector3.Lerp(_lastPlayerPos, playerPos, lerpFactor);
@@ -245,8 +254,8 @@ public class Camera
         // GLTron-style third-person camera following behind the motorcycle based on direction
         if (playerPos != Vector3.Zero)
         {
-            // Smooth camera interpolation
-            float lerpFactor = 0.25f; // Responsive following
+            // CRITICAL FIX: Immediate camera response at game start
+            float lerpFactor = (_lastPlayerPos == Vector3.Zero) ? 1.0f : 0.35f; // Instant snap on first frame, then smooth
             
             if (_lastPlayerPos == Vector3.Zero)
             {
@@ -398,5 +407,20 @@ public class Camera
     public CameraType GetCameraType()
     {
         return _cameraType;
+    }
+    
+    // CRITICAL FIX: Reset camera state to eliminate startup delay
+    public void ResetForNewGame()
+    {
+        _lastPlayerPos = Vector3.Zero; // Force immediate positioning on next update
+        _phi = 0.0f;
+        
+        try
+        {
+#if ANDROID
+            Android.Util.Log.Info("GLTRON", "Camera reset for new game - will snap to player immediately");
+#endif
+        }
+        catch { }
     }
 }

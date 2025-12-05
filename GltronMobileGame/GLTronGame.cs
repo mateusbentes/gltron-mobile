@@ -59,6 +59,7 @@ namespace GltronMobileGame
         // Manual reset state - no auto-reset
         private bool _gameOverState = false;
         private bool _playerWon = false;
+        private bool _cameraResetRequested = false;
 
         // Define game textures (serão carregadas no MonoGame Game1)
         // private GLTexture ExplodeTex;
@@ -253,6 +254,16 @@ namespace GltronMobileGame
         public bool PlayerWon()
         {
             return _playerWon;
+        }
+        
+        public bool IsCameraResetRequested()
+        {
+            return _cameraResetRequested;
+        }
+        
+        public void CameraResetHandled()
+        {
+            _cameraResetRequested = false;
         }
 
         private void initWalls()
@@ -492,6 +503,9 @@ namespace GltronMobileGame
                         Sound.SoundManager.Instance.EnsureGameplaySfxLoaded();
                         Sound.SoundManager.Instance.PlayEngine(0.3f, true);
                     } catch { }
+                    
+                    // CRITICAL FIX: Signal that camera should reset for immediate following
+                    _cameraResetRequested = true;
                     return;
                 }
 
@@ -672,12 +686,13 @@ namespace GltronMobileGame
                 // Reset game state - manual restart, start fresh round
                 _gameOverState = false;
                 _playerWon = false;
+                _cameraResetRequested = true; // Request camera reset for immediate positioning
                 boInitialState = false;
                 tronHUD?.ResetConsole();
                 tronHUD?.DisplayInstr(false);
                 try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
                 
-                LogInfo("Game reset completed - new round started");
+                LogInfo("Game reset completed - new round started with camera reset");
             }
             catch (System.Exception ex)
             {
