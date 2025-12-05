@@ -728,6 +728,9 @@ public class Game1 : Game
                     var players = _glTronGame?.GetPlayers();
                     if (players != null && _trailsRenderer != null)
                     {
+                        // Ensure camera matrices are current before drawing trails and bikes
+                        _worldGraphics.BeginDraw(_camera.View, _camera.Projection);
+
                         for (int i = 0; i < players.Length && i < 4; i++) // Ensure we draw all 4 players
                         {
                             if (players[i] != null)
