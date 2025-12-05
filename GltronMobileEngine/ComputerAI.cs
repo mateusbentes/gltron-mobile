@@ -33,6 +33,15 @@ namespace GltronMobileEngine
             public long LastTurnTime = 0;
             public int SpiralCounter = 0;
 
+            // Rolling average of last 3 frames distances: [left, forward, right]
+            public float[][] DistHistory = new float[3][] { new float[3], new float[3], new float[3] };
+            public int DistHistIndex = 0;
+            public int DistHistCount = 0;
+
+            // Decision stickiness
+            public int LastDecision = 0; // -1(left), 0(straight), +1(right)
+            public int StableFrames = 0; // how many frames the alternative has been better
+
             public void DecayMemory()
             {
                 for (int i = 0; i < 3; i++)
@@ -91,7 +100,25 @@ namespace GltronMobileEngine
             memory.DecayMemory();
 
             // Distance probes - NOW PASSING PLAYER INDEX TO AVOID SELF-COLLISION
-            float[] distances = CalculateDistances(player, playerIndex);
+            float[] distancesRaw = CalculateDistances(player, playerIndex);
+
+            // Update rolling average in memory
+            memory.DistHistory[memory.DistHistIndex][0] = distancesRaw[0];
+            memory.DistHistory[memory.DistHistIndex][1] = distancesRaw[1];
+            memory.DistHistory[memory.DistHistIndex][2] = distancesRaw[2];
+            memory.DistHistIndex = (memory.DistHistIndex + 1) % 3;
+            if (memory.DistHistCount < 3) memory.DistHistCount++;
+
+            float[] distances = new float[3];
+            for (int i = 0; i < memory.DistHistCount; i++)
+            {
+                distances[0] += memory.DistHistory[i][0];
+                distances[1] += memory.DistHistory[i][1];
+                distances[2] += memory.DistHistory[i][2];
+            }
+            distances[0] /= Math.Max(1, memory.DistHistCount);
+            distances[1] /= Math.Max(1, memory.DistHistCount);
+            distances[2] /= Math.Max(1, memory.DistHistCount);
 
             // Debug only when forward is dangerous
             if (distances[1] < 10f)
@@ -101,6 +128,40 @@ namespace GltronMobileEngine
             }
 
             int decision = MakeUltraDefensiveDecision(playerIndex, distances, memory);
+
+            // Decision stickiness: require stability across frames to switch decisions when not emergency
+            if (decision == Player.TURN_LEFT)
+            {
+                // desired = -1
+                if (memory.LastDecision == -1)
+                    memory.StableFrames++;
+                else
+                    memory.StableFrames = 1;
+                memory.LastDecision = -1;
+            }
+            else if (decision == Player.TURN_RIGHT)
+            {
+                if (memory.LastDecision == 1)
+                    memory.StableFrames++;
+                else
+                    memory.StableFrames = 1;
+                memory.LastDecision = 1;
+            }
+            else
+            {
+                if (memory.LastDecision == 0)
+                    memory.StableFrames++;
+                else
+                    memory.StableFrames = 1;
+                memory.LastDecision = 0;
+            }
+
+            // If not emergency (forward reasonably safe), require at least 2 stable frames before taking a side turn
+            bool forwardSafe = distances[1] > 10.0f;
+            if (forwardSafe && decision != 0 && memory.StableFrames < 2)
+            {
+                decision = 0; // hold straight until the side has been better consistently
+            }
 
             // Execute turn
             if (decision != 0)
@@ -264,8 +325,9 @@ namespace GltronMobileEngine
                     if (isOwnPlayer)
                     {
                         float distToSegmentStart = (float)Math.Sqrt((sx - aiX) * (sx - aiX) + (sy - aiY) * (sy - aiY));
-                        // Heuristic: if point is very close to AI and segment starts near AI, ignore it (current drawing)
-                        if (distToSegmentStart < 3.0f && distanceFromAI < 3.0f)
+                        float distToSegmentEnd = (float)Math.Sqrt((ex - aiX) * (ex - aiX) + (ey - aiY) * (ey - aiY));
+                        // Heuristic: if point is very close to AI and segment starts/ends near AI, ignore it (current drawing or fresh corner)
+                        if ((distToSegmentStart < 3.0f || distToSegmentEnd < 3.0f) && distanceFromAI < 3.0f)
                             continue;
                     }
 
@@ -326,7 +388,10 @@ namespace GltronMobileEngine
             // Adjust safety margins based on difficulty
             float safetyMargin = SAFETY_MARGIN[_aiLevel];
             float criticalDist = CRITICAL_DISTANCE[_aiLevel] * _gridSize;
-            float emergency = 7.0f;
+            // Scale emergency with speed and wall proximity
+            float speed = (_players != null && playerIndex < _players.Length && _players[playerIndex] != null) ? _players[playerIndex].getSpeed() : 6.0f;
+            float wallProximity = Math.Min(Math.Min(distances[1], Math.Min(distances[0], distances[2])), 10.0f);
+            float emergency = 7.0f + 0.25f * speed + ((wallProximity < 10.0f) ? (10.0f - wallProximity) * 0.2f : 0.0f);
 
             // Dynamic friction: discourage rapid consecutive turns
             float recentTurnBias = 0f;
