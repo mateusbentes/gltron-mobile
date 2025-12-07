@@ -1,0 +1,130 @@
+name: Android Build and Release
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'microsoft'
+        java-version: '11'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      run: dotnet restore GltronMobileGame/GltronAndroid.csproj
+
+    - name: Build Debug APK
+      run: |
+        dotnet publish GltronMobileGame/GltronAndroid.csproj \
+          -c Debug \
+          -f net8.0-android \
+          --no-restore
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: gltron-mobile-debug-apk
+        path: GltronMobileGame/bin/Debug/net8.0-android/publish/*.apk
+        retention-days: 30
+
+  release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'microsoft'
+        java-version: '11'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Restore dependencies
+      run: dotnet restore GltronMobileGame/GltronAndroid.csproj
+
+    - name: Decode Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > gltron-release.keystore
+      if: ${{ secrets.KEYSTORE_BASE64 }}
+
+    - name: Build Signed AAB
+      run: |
+        dotnet publish GltronMobileGame/GltronAndroid.csproj \
+          -c Release \
+          -f net8.0-android \
+          -p:AndroidPackageFormat=aab \
+          -p:AndroidKeyStore=true \
+          -p:AndroidSigningKeyStore="$(pwd)/gltron-release.keystore" \
+          -p:AndroidSigningKeyAlias="${{ secrets.KEY_ALIAS }}" \
+          -p:AndroidSigningKeyPass="${{ secrets.KEY_PASSWORD }}" \
+          -p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" \
+          --no-restore
+      if: ${{ secrets.KEYSTORE_BASE64 }}
+
+    - name: Build Unsigned AAB (fallback)
+      run: |
+        dotnet publish GltronMobileGame/GltronAndroid.csproj \
+          -c Release \
+          -f net8.0-android \
+          -p:AndroidPackageFormat=aab \
+          --no-restore
+      if: ${{ !secrets.KEYSTORE_BASE64 }}
+
+    - name: Upload Release AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: gltron-mobile-release-aab
+        path: GltronMobileGame/bin/Release/net8.0-android/publish/*.aab
+        retention-days: 90
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: GltronMobileGame/bin/Release/net8.0-android/publish/*.aab
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
