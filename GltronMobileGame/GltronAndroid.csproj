@@ -6,18 +6,18 @@
   <PropertyGroup>
     <TargetFramework>net8.0-android</TargetFramework>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
-    <TargetAndroidVersion>34</TargetAndroidVersion>
+    <TargetAndroidVersion>36</TargetAndroidVersion>
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
-    <AndroidTargetFrameworkVersion>v34.0</AndroidTargetFrameworkVersion>
-    <AndroidTargetSdkVersion>34</AndroidTargetSdkVersion>
-    <TargetFrameworkVersion>v34.0</TargetFrameworkVersion>
-    <AndroidCompileSdkVersion>34</AndroidCompileSdkVersion>
+    <AndroidTargetFrameworkVersion>v36.0</AndroidTargetFrameworkVersion>
+    <AndroidTargetSdkVersion>36</AndroidTargetSdkVersion>
+    <TargetFrameworkVersion>v36.0</TargetFrameworkVersion>
+    <AndroidCompileSdkVersion>36</AndroidCompileSdkVersion>
     <AndroidUseIntermediateDesignerFile>false</AndroidUseIntermediateDesignerFile>
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>2</ApplicationVersion>
+    <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
     
     <!-- MonoGame Content Pipeline Configuration -->
     <MonoGamePlatform>Android</MonoGamePlatform>
