@@ -3,6 +3,16 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Net;
+using Microsoft.Xna.Framework.Storage;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using GltronMobileGame;
 
 namespace gltron.org.gltronmobile
@@ -23,48 +33,50 @@ namespace gltron.org.gltronmobile
 
         protected override void OnCreate(Bundle bundle)
         {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "=== MONOGAME GAME1 INITIALIZATION ===");
-                Android.Util.Log.Info("GLTRON", "Activity.OnCreate starting...");
-                
-                base.OnCreate(bundle);
-                Android.Util.Log.Info("GLTRON", "Activity.OnCreate completed");
 
-                Android.Util.Log.Info("GLTRON", "Step 1: Creating Game1 instance...");
-                
-                // Create the game instance
+
+
+
+
+                base.OnCreate(bundle);
+
+
+
+
+
                 _game = new Game1();
-                Android.Util.Log.Info("GLTRON", "Game1 instance created successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 2: Getting game view from services...");
-                var gameView = _game.Services.GetService(typeof(Android.Views.View));
-                if (gameView == null)
-                {
-                    Android.Util.Log.Error("GLTRON", "ERROR: Game view service is null!");
-                    throw new System.InvalidOperationException("Game view service not available");
-                }
-                Android.Util.Log.Info("GLTRON", "Game view service obtained successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 3: Setting content view...");
-                SetContentView((Android.Views.View)gameView);
-                Android.Util.Log.Info("GLTRON", "Content view set successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 4: Starting game loop...");
-                _game.RunOneFrame();
-                Android.Util.Log.Info("GLTRON", "Game loop started");
-                
-                Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", "=== MONOGAME INITIALIZATION EXCEPTION ===");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION TYPE: {ex.GetType().FullName}");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION MESSAGE: {ex.Message}");
-                Android.Util.Log.Error("GLTRON", $"EXCEPTION STACK: {ex.StackTrace}");
-                
-                ShowErrorScreen(ex);
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            SetContentView((View)_game.Services.GetService(typeof(View)));
+            _game.Run();
         }
 
         private void ShowErrorScreen(System.Exception ex)
@@ -92,13 +104,15 @@ namespace gltron.org.gltronmobile
 
         protected override void OnPause()
         {
-            Android.Util.Log.Info("GLTRON", "Activity1.OnPause");
+
+            _game?.OnPause();
             base.OnPause();
         }
 
         protected override void OnResume()
         {
-            Android.Util.Log.Info("GLTRON", "Activity1.OnResume");
+
+            _game?.OnResume();
             base.OnResume();
         }
 
@@ -113,10 +127,15 @@ namespace gltron.org.gltronmobile
             }
             catch (System.Exception ex)
             {
-                Android.Util.Log.Error("GLTRON", $"Error disposing game: {ex}");
-            }
-            
-            base.OnDestroy();
+                System.Diagnostics.Debug.WriteLine("GLTRON", $"Error disposing game: {ex}");
+
+
+
         }
+
+            base.OnDestroy();
     }
 }
+
+}
+
