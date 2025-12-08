@@ -24,11 +24,11 @@ jobs:
     - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
-        distribution: 'microsoft'
-        java-version: '11'
+        distribution: 'temurin'
+        java-version: '17'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+    - name: Install .NET Android workload
+      run: dotnet workload install android
 
     - name: Cache NuGet packages
       uses: actions/cache@v3
