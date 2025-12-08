@@ -14,7 +14,7 @@ namespace gltron.org.gltronmobile
         MainLauncher = true,
         AlwaysRetainTaskState = true,
         LaunchMode = LaunchMode.SingleInstance,
-        ScreenOrientation = ScreenOrientation.Landscape,
+        ScreenOrientation = ScreenOrientation.SensorLandscape,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
@@ -26,111 +26,99 @@ namespace gltron.org.gltronmobile
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("=== GLTron FNA Android Activity Starting ===");
+                FNAHelper.LogInfo("=== FNA ANDROID ACTIVITY STARTING ===");
+                FNAHelper.LogInfo("Activity.OnCreate starting...");
                 
                 // Call base.OnCreate first
                 base.OnCreate(bundle);
+                FNAHelper.LogInfo("Base OnCreate completed");
                 
-                // Set up FNA environment variables
-                SetupFNAEnvironment();
+                // Set up FNA environment variables before creating the game
+                FNAHelper.SetupFNAEnvironment();
                 
                 // Create the game instance
-                System.Diagnostics.Debug.WriteLine("Creating Game1 instance...");
+                FNAHelper.LogInfo("Creating Game1 instance...");
                 _game = new Game1();
+                FNAHelper.LogInfo("Game1 instance created successfully");
                 
-                // Start the game - FNA handles the view creation internally
-                System.Diagnostics.Debug.WriteLine("Starting FNA game...");
+                // FNA handles view creation and management internally
+                // We just need to start the game loop
+                FNAHelper.LogInfo("Starting FNA game loop...");
                 _game.Run();
                 
-                System.Diagnostics.Debug.WriteLine("GLTron FNA Activity initialized successfully!");
+                FNAHelper.LogInfo("FNA Activity initialized successfully!");
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Activity OnCreate failed: {ex}");
-                Android.Util.Log.Error("GLTron", $"Activity OnCreate failed: {ex}");
+                FNAHelper.LogError("=== FNA INITIALIZATION EXCEPTION ===");
+                FNAHelper.LogError($"EXCEPTION TYPE: {ex.GetType().FullName}");
+                FNAHelper.LogError($"EXCEPTION MESSAGE: {ex.Message}");
+                FNAHelper.LogError($"EXCEPTION STACK: {ex.StackTrace}");
+                
                 ShowErrorScreen(ex);
             }
         }
 
-        private void SetupFNAEnvironment()
-        {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("Setting up FNA environment variables...");
-                
-                // Set FNA environment variables for Android
-                System.Environment.SetEnvironmentVariable("FNA_PLATFORM_BACKEND", "SDL2");
-                System.Environment.SetEnvironmentVariable("FNA_AUDIO_BACKEND", "OpenAL");
-                System.Environment.SetEnvironmentVariable("FNA_GRAPHICS_BACKEND", "OpenGL");
-                
-                // Android-specific OpenGL settings
-                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_ES3", "1");
-                System.Environment.SetEnvironmentVariable("FNA_OPENGL_FORCE_COMPATIBILITY_PROFILE", "0");
-                
-                // Additional FNA settings for better Android compatibility
-                System.Environment.SetEnvironmentVariable("SDL_ANDROID_SEPARATE_MOUSE_AND_TOUCH", "1");
-                System.Environment.SetEnvironmentVariable("SDL_TOUCH_MOUSE_EVENTS", "0");
-                
-                System.Diagnostics.Debug.WriteLine("FNA environment variables set successfully");
-            }
-            catch (System.Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"FNA environment setup failed: {ex}");
-                Android.Util.Log.Warn("GLTron", $"FNA environment setup failed: {ex}");
-            }
-        }
+
 
         private void ShowErrorScreen(System.Exception ex)
         {
             try
             {
-                var errorView = new Android.Widget.TextView(this)
-                {
-                    Text = $"GLTron Mobile - Initialization Error\n\n" +
-                           $"Error: {ex.GetType().Name}\n" +
-                           $"Message: {ex.Message}\n\n" +
-                           $"Please restart the application.\n\n" +
-                           $"If the problem persists, check that your device supports OpenGL ES 3.0.",
-                    TextAlignment = TextAlignment.Center,
-                    TextSize = 16,
-                };
+                var errorView = new Android.Widget.TextView(this);
+                errorView.Text = $"GLTron Mobile - FNA Initialization Error\n\n" +
+                               $"Error Type: {ex.GetType().Name}\n" +
+                               $"Message: {ex.Message}\n\n" +
+                               $"FNA requires:\n" +
+                               $"• OpenGL ES 3.0 support\n" +
+                               $"• SDL2 native libraries\n" +
+                               $"• OpenAL audio support\n\n" +
+                               $"Please restart the application.\n" +
+                               $"If the problem persists, your device may not support FNA requirements.";
                 errorView.SetTextColor(Android.Graphics.Color.White);
                 errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
+                errorView.Gravity = Android.Views.GravityFlags.Center;
                 errorView.SetPadding(20, 20, 20, 20);
+                errorView.TextSize = 14f;
                 SetContentView(errorView);
                 
-                Android.Util.Log.Error("GLTron", "Error view displayed");
+                FNAHelper.LogError("FNA error view displayed");
             }
             catch (System.Exception ex2)
             {
-                Android.Util.Log.Error("GLTron", $"Failed to show error view: {ex2}");
+                FNAHelper.LogError($"Failed to show error view: {ex2}");
             }
         }
 
         protected override void OnPause()
         {
-            System.Diagnostics.Debug.WriteLine("Activity1.OnPause");
+            FNAHelper.LogInfo("Activity1.OnPause - FNA handles pause automatically");
             base.OnPause();
+            // FNA handles game pausing automatically when the activity pauses
         }
 
         protected override void OnResume()
         {
-            System.Diagnostics.Debug.WriteLine("Activity1.OnResume");
+            FNAHelper.LogInfo("Activity1.OnResume - FNA handles resume automatically");
             base.OnResume();
+            // FNA handles game resuming automatically when the activity resumes
         }
 
         protected override void OnDestroy()
         {
-            System.Diagnostics.Debug.WriteLine("Activity1.OnDestroy");
+            FNAHelper.LogInfo("Activity1.OnDestroy - Disposing FNA game");
+            
             try
             {
                 _game?.Dispose();
-                System.Diagnostics.Debug.WriteLine("Game disposed successfully");
+                _game = null;
+                FNAHelper.LogInfo("FNA game disposed successfully");
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Game disposal error: {ex}");
+                FNAHelper.LogError($"Error disposing FNA game: {ex}");
             }
+            
             base.OnDestroy();
         }
     }
