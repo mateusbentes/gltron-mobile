@@ -143,11 +143,11 @@ jobs:
           echo "Using Android NDK: $ANDROID_NDK_ROOT"
           
           # Make scripts executable
-          chmod +x scripts/download-real-fna-libs.sh
+          chmod +x scripts/compile-real-fna-libs.sh
           chmod +x scripts/verify-native-libs.sh
           
           # Run our improved native library setup
-          if timeout 300 ./scripts/download-real-fna-libs.sh; then
+          if timeout 300 ./scripts/compile-real-fna-libs.sh; then
             echo "✅ Native library setup completed successfully"
           else
             echo "⚠️ Native library setup timed out or failed, but continuing..."
