@@ -180,6 +180,18 @@ int SDL_InitSubSystem(uint32_t flags) { return 0; }
 void SDL_QuitSubSystem(uint32_t flags) { }
 uint32_t SDL_WasInit(uint32_t flags) { return flags; }
 
+// CRITICAL: FNA requires this function
+void SDL_SetMainReady(void) { }
+
+// Additional SDL2 functions that FNA might need
+int SDL_SetHintWithPriority(const char* name, const char* value, int priority) { return 1; }
+void SDL_LogSetAllPriority(int priority) { }
+void SDL_LogSetOutputFunction(void* callback, void* userdata) { }
+int SDL_GetNumAudioDrivers(void) { return 1; }
+const char* SDL_GetAudioDriver(int index) { return "android"; }
+int SDL_AudioInit(const char* driver_name) { return 0; }
+void SDL_AudioQuit(void) { }
+
 // Window management
 typedef struct SDL_Window SDL_Window;
 SDL_Window* SDL_CreateWindow(const char* title, int x, int y, int w, int h, uint32_t flags) { 
