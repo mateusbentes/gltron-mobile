@@ -4,6 +4,7 @@ using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
+using System;
 
 namespace gltron.org.gltronmobile
 {
@@ -122,7 +123,8 @@ namespace gltron.org.gltronmobile
             try
             {
                 // FNA handles pausing automatically when the activity pauses
-                _game?.OnDeactivated(this, EventArgs.Empty);
+                // We don't need to manually call OnDeactivated - FNA handles this internally
+                System.Diagnostics.Debug.WriteLine("FNA will handle pause automatically");
             }
             catch (System.Exception ex)
             {
@@ -138,7 +140,8 @@ namespace gltron.org.gltronmobile
             try
             {
                 // FNA handles resuming automatically when the activity resumes
-                _game?.OnActivated(this, EventArgs.Empty);
+                // We don't need to manually call OnActivated - FNA handles this internally
+                System.Diagnostics.Debug.WriteLine("FNA will handle resume automatically");
             }
             catch (System.Exception ex)
             {
