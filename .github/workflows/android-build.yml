@@ -45,7 +45,6 @@ jobs:
         echo "Downloading SDL2-CS..."
         if curl -fsSL --retry 3 --retry-delay 2 -o lib/SDL2-CS/src/SDL2.cs https://raw.githubusercontent.com/flibitijibibo/SDL2-CS/master/src/SDL2.cs; then
           echo "✅ SDL2-CS downloaded successfully"
-          echo "namespace SDL2 { public static class SDL { } }" >> lib/SDL2-CS/src/SDL2.cs
         else
           echo "❌ SDL2-CS download failed, creating functional placeholder"
           echo 'namespace SDL2' > lib/SDL2-CS/src/SDL2.cs
