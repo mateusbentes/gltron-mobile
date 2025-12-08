@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0-android</TargetFrameworks>
+    <TargetFrameworks>net9.0-android36.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,6 +10,9 @@
     <!-- Android-specific properties -->
     <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
     <TargetPlatformVersion>36.0</TargetPlatformVersion>
+    <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
+    <AndroidTargetSdkVersion>36</AndroidTargetSdkVersion>
+    <AndroidCompileSdkVersion>36</AndroidCompileSdkVersion>
     
 
     <!-- FNA Configuration -->

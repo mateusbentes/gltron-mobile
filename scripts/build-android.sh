@@ -7,7 +7,7 @@ set -euo pipefail
 
 CONFIG="Release"
 PROJ_DIR="GltronMobileGame"
-TFM="net9.0-android"
+TFM="net9.0-android36.0"
 
 while getopts ":c:p:f:" opt; do
   case $opt in
