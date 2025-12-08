@@ -26,9 +26,10 @@
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   
-  <!-- Disable default compile items to avoid conflicts with FNA -->
+  <!-- FNA requires unsafe code -->
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);FNA</DefineConstants>
   </PropertyGroup>
   
@@ -42,6 +43,8 @@
   <!-- Include FNA source files -->
   <ItemGroup>
     <Compile Include="FNA\src\**\*.cs" />
+    <!-- Exclude platform-specific files that don't apply to Android -->
+    <Compile Remove="FNA\src\FNAPlatform\SDL3_FNAPlatform.cs" />
   </ItemGroup>
   
   <!-- Add Android-specific properties for FNA -->
@@ -56,20 +59,26 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
 
-  <!-- Package platform-specific XNBs directly from bin output path -->
+  <!-- FNA Content: Package raw content files (not XNBs) -->
   <ItemGroup>
-    <!-- Include all XNBs under Content root (Assets, Fonts, etc.) -->
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.xnb" />
-  </ItemGroup>
-
-  <!-- Also package original compressed music files for MediaPlayer (mp3/m4a) -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.mp3" />
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.m4a" />
-  </ItemGroup>
-
-  <!-- Ensure raw content is packaged only when not using MGCB -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
+    <!-- Include all raw content files for FNA -->
+    <AndroidAsset Include="Content\Assets\**\*.*" />
+    <AndroidAsset Include="Content\Fonts\**\*.*" />
+    <!-- Include audio files -->
+    <AndroidAsset Include="Content\**\*.mp3" />
+    <AndroidAsset Include="Content\**\*.ogg" />
+    <AndroidAsset Include="Content\**\*.wav" />
+    <AndroidAsset Include="Content\**\*.m4a" />
+    <!-- Include image files -->
+    <AndroidAsset Include="Content\**\*.png" />
+    <AndroidAsset Include="Content\**\*.jpg" />
+    <AndroidAsset Include="Content\**\*.jpeg" />
+    <!-- Include font files -->
+    <AndroidAsset Include="Content\**\*.ttf" />
+    <AndroidAsset Include="Content\**\*.otf" />
+    <!-- Include 3D model files -->
+    <AndroidAsset Include="Content\**\*.fbx" />
+    <AndroidAsset Include="Content\**\*.obj" />
+    <AndroidAsset Include="Content\**\*.mtl" />
   </ItemGroup>
 </Project>

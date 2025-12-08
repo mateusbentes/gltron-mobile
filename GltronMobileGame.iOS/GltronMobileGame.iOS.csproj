@@ -14,12 +14,23 @@
     <ApplicationVersion>1</ApplicationVersion>
 
     <!-- FNA Configuration -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>$(DefineConstants);FNA</DefineConstants>
   </PropertyGroup>
 
-  <!-- FNA source files -->
+  <!-- Explicitly include our game files -->
+  <ItemGroup>
+    <Compile Include="..\GltronMobileGame\*.cs" />
+    <Compile Include="..\GltronMobileGame\Video\*.cs" />
+    <Compile Include="..\GltronMobileGame\Sound\*.cs" />
+  </ItemGroup>
+
+  <!-- Include FNA source files -->
   <ItemGroup>
     <Compile Include="..\GltronMobileGame\FNA\src\**\*.cs" />
+    <!-- Exclude platform-specific files that don't apply to iOS -->
+    <Compile Remove="..\GltronMobileGame\FNA\src\FNAPlatform\SDL3_FNAPlatform.cs" />
   </ItemGroup>
 
   <!-- Shared Engine -->
@@ -27,10 +38,7 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
 
-  <!-- Share all .cs of the game -->
-  <ItemGroup>
-    <Compile Include="..\GltronMobileGame\**\*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
+  <!-- Game files are now explicitly included above with FNA -->
 
   <!-- FNA Content (raw files, not XNBs) -->
   <ItemGroup>
