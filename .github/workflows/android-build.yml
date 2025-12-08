@@ -37,14 +37,12 @@ jobs:
           echo "namespace SDL2 { public static class SDL { } }" >> lib/SDL2-CS/src/SDL2.cs
         else
           echo "❌ SDL2-CS download failed, creating functional placeholder"
-          cat > lib/SDL2-CS/src/SDL2.cs << 'EOF'
         # Download FAudio
         echo "Downloading FAudio..."
         if curl -fsSL --retry 3 --retry-delay 2 -o lib/FAudio/csharp/FAudio.cs https://raw.githubusercontent.com/FNA-XNA/FAudio/master/csharp/FAudio.cs; then
           echo "✅ FAudio downloaded successfully"
         else
           echo "❌ FAudio download failed, creating functional placeholder"
-          cat > lib/FAudio/csharp/FAudio.cs << 'EOF'
         # Download Theorafile
         echo "Downloading Theorafile..."
         if curl -fsSL --retry 3 --retry-delay 2 -o lib/Theorafile/csharp/Theorafile.cs https://raw.githubusercontent.com/FNA-XNA/Theorafile/master/csharp/Theorafile.cs; then
