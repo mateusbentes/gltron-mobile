@@ -18,16 +18,7 @@ namespace GltronMobileGame
     /// </summary>
     public class MultiplatformGameRunner
     {
-        private GraphicsDeviceManager _graphics;
-        private GLTronGame _glTronGame;
-        private SpriteBatch _spriteBatch;
-        private SpriteFont _font;
-        private GltronMobileEngine.Video.HUD _hud;
-        private GltronMobileEngine.Video.WorldGraphics _worldGraphics;
-        private GltronMobileEngine.Video.TrailsRenderer _trailsRenderer;
-        private GltronMobileEngine.Video.Camera _camera;
-        private Texture2D _whitePixel;
-        private Texture2D _menuBackground;
+        private Game1 _game;
         private bool _isRunning = false;
         
         // Platform-specific context
@@ -73,10 +64,10 @@ namespace GltronMobileGame
             {
                 LogInfo("MultiplatformGameRunner constructor starting...");
                 
-                // Create GLTronGame first (we know this works on all platforms)
-                _glTronGame = new GLTronGame();
+                // The actual Game1 creation will be deferred to Initialize() method
+                // to avoid the hanging constructor issue
                 
-                LogInfo("MultiplatformGameRunner constructor completed");
+                LogInfo("MultiplatformGameRunner constructor completed - Game1 creation deferred");
             }
             catch (System.Exception ex)
             {
@@ -91,8 +82,13 @@ namespace GltronMobileGame
             {
                 LogInfo("MultiplatformGameRunner Initialize starting...");
                 
-                // Initialize GLTronGame
-                _glTronGame?.initialiseGame();
+                // Create Game1 instance here where it's safer
+                if (_game == null)
+                {
+                    LogInfo("Creating Game1 instance in Initialize()...");
+                    _game = new Game1();
+                    LogInfo("Game1 instance created successfully!");
+                }
                 
                 LogInfo("MultiplatformGameRunner Initialize completed");
             }
@@ -109,7 +105,8 @@ namespace GltronMobileGame
             {
                 LogInfo("MultiplatformGameRunner LoadContent starting...");
                 
-                // Content loading would go here when we have a proper graphics context
+                // Game1 handles its own content loading through its lifecycle
+                // We don't need to do anything here
                 
                 LogInfo("MultiplatformGameRunner LoadContent completed");
             }
@@ -124,8 +121,8 @@ namespace GltronMobileGame
         {
             try
             {
-                // Run game logic
-                _glTronGame?.RunGame(gameTime);
+                // Let Game1 handle its own update cycle
+                // We don't need to do anything here - Game1.Run() handles everything
             }
             catch (System.Exception ex)
             {
@@ -137,13 +134,8 @@ namespace GltronMobileGame
         {
             try
             {
-                // Drawing would go here when we have a proper graphics context
-                // For now, just log that we're running
-                if (!_isRunning)
-                {
-                    LogInfo("MultiplatformGameRunner Draw - game is running!");
-                    _isRunning = true;
-                }
+                // Let Game1 handle its own draw cycle
+                // We don't need to do anything here - Game1.Run() handles everything
             }
             catch (System.Exception ex)
             {
@@ -157,28 +149,24 @@ namespace GltronMobileGame
             {
                 LogInfo("MultiplatformGameRunner Run starting...");
                 
+                // Initialize and create Game1
                 Initialize();
                 LoadContent();
                 
-                // Simple game loop for testing
-                var gameTime = new GameTime();
-                int frameCount = 0;
-                
-                while (frameCount < 100) // Run for 100 frames as a test
+                // Run the actual Game1 instance
+                if (_game != null)
                 {
-                    Update(gameTime);
-                    Draw(gameTime);
-                    frameCount++;
-                    
-                    if (frameCount % 30 == 0)
-                    {
-                        LogInfo($"MultiplatformGameRunner running - frame {frameCount}");
-                    }
-                    
-                    System.Threading.Thread.Sleep(16); // ~60 FPS
+                    LogInfo("Starting Game1.Run()...");
+                    _game.Run();
+                    LogInfo("Game1.Run() completed");
+                }
+                else
+                {
+                    LogError("Game1 instance is null - cannot run game");
+                    throw new System.InvalidOperationException("Game1 instance is null");
                 }
                 
-                LogInfo("MultiplatformGameRunner completed test run successfully!");
+                LogInfo("MultiplatformGameRunner completed successfully!");
             }
             catch (System.Exception ex)
             {
@@ -193,18 +181,9 @@ namespace GltronMobileGame
             {
                 LogInfo("MultiplatformGameRunner disposing...");
                 
-                // Don't dispose GraphicsDeviceManager directly - it's managed by FNA
-                // _graphics?.Dispose(); // This is protected
-                _spriteBatch?.Dispose();
-                _whitePixel?.Dispose();
-                _menuBackground?.Dispose();
-                
-                // Set references to null for garbage collection
-                _graphics = null;
-                _spriteBatch = null;
-                _whitePixel = null;
-                _menuBackground = null;
-                _glTronGame = null;
+                // Dispose Game1 instance
+                _game?.Dispose();
+                _game = null;
                 
                 LogInfo("MultiplatformGameRunner disposed");
             }
