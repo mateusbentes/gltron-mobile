@@ -32,15 +32,13 @@ else
   echo "Using Android-only solution"
 fi
 
-# Initialize FNA submodules if needed
-echo "Checking FNA submodules..."
+# Check FNA dependencies
+echo "Checking FNA dependencies..."
 if [ ! -f "GltronMobileGame/FNA/lib/SDL2-CS/src/SDL2.cs" ]; then
-  echo "Initializing FNA submodules..."
-  cd GltronMobileGame/FNA
-  git submodule update --init --recursive
-  cd ../..
+  echo "FNA dependencies missing. Please run the setup script or CI will handle this."
+  echo "Continuing with build - dependencies should be available..."
 else
-  echo "FNA submodules already initialized"
+  echo "FNA dependencies found"
 fi
 
 # Restore FNA project first

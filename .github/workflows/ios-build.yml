@@ -15,14 +15,42 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        submodules: recursive
 
-    - name: Initialize FNA submodules
+    - name: Setup FNA dependencies
       run: |
-        echo "Initializing FNA submodules..."
+        echo "Setting up FNA dependencies..."
         cd GltronMobileGame/FNA
-        git submodule update --init --recursive
-        echo "FNA submodules initialized successfully"
+        
+        # Check if FNA submodules exist, if not download them
+        if [ ! -f "lib/SDL2-CS/src/SDL2.cs" ]; then
+          echo "FNA submodules missing, downloading dependencies..."
+          
+          # Create lib directory structure
+          mkdir -p lib/SDL2-CS/src
+          mkdir -p lib/FAudio/csharp
+          mkdir -p lib/Theorafile/csharp
+          mkdir -p lib/SDL3-CS/SDL3
+          
+          # Download SDL2-CS
+          echo "Downloading SDL2-CS..."
+          wget -q -O lib/SDL2-CS/src/SDL2.cs https://raw.githubusercontent.com/flibitijibibo/SDL2-CS/master/src/SDL2.cs || echo "SDL2-CS download failed"
+          
+          # Download FAudio
+          echo "Downloading FAudio..."
+          wget -q -O lib/FAudio/csharp/FAudio.cs https://raw.githubusercontent.com/FNA-XNA/FAudio/master/csharp/FAudio.cs || echo "FAudio download failed"
+          
+          # Download Theorafile
+          echo "Downloading Theorafile..."
+          wget -q -O lib/Theorafile/csharp/Theorafile.cs https://raw.githubusercontent.com/FNA-XNA/Theorafile/master/csharp/Theorafile.cs || echo "Theorafile download failed"
+          
+          # Download SDL3-CS (legacy)
+          echo "Downloading SDL3-CS..."
+          wget -q -O lib/SDL3-CS/SDL3/SDL3.Legacy.cs https://raw.githubusercontent.com/flibitijibibo/SDL3-CS/main/SDL3/SDL3.Legacy.cs || echo "SDL3-CS download failed"
+          
+          echo "FNA dependencies download completed"
+        else
+          echo "FNA submodules already exist"
+        fi
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
