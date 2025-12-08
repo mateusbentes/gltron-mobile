@@ -17,8 +17,8 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Multiplatform MonoGame support -->
-    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0-android'" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net9.0-android'" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net9.0'" />
     <!-- Note: Content building is handled by the game projects, not the engine -->
   </ItemGroup>
   <ItemGroup>
