@@ -19,6 +19,17 @@ jobs:
     - name: Setup FNA dependencies
       run: |
         echo "Setting up FNA dependencies..."
+        
+        # First, ensure FNA source code is available
+        if [ ! -d "GltronMobileGame/FNA" ] || [ ! -f "GltronMobileGame/FNA/FNA.NetStandard.csproj" ]; then
+          echo "📥 FNA source not found, downloading..."
+          cd GltronMobileGame
+          git clone https://github.com/FNA-XNA/FNA.git
+          cd ..
+        else
+          echo "✅ FNA source already available"
+        fi
+        
         cd GltronMobileGame/FNA
         
         # Always ensure lib directory structure exists
@@ -217,20 +228,26 @@ jobs:
 
     - name: Restore dependencies
       run: |
-        # Restore the main solution (FNA will be restored as part of project references)
-        dotnet restore GltronMobile.sln
+        # Restore the full solution (includes FNA project)
+        dotnet restore GltronMobile.Full.sln
 
     - name: Verify FNA Build Environment
       run: |
         echo "Verifying FNA build environment..."
         
+        # Verify FNA project exists
+        if [ ! -f "GltronMobileGame/FNA/FNA.NetStandard.csproj" ]; then
+          echo "❌ FNA project file not found!"
+          exit 1
+        fi
+        
         # Check if FNA project can be built
         echo "Testing FNA project build..."
-        dotnet build GltronMobileGame/FNA/FNA.NetStandard.csproj -c Debug --verbosity detailed
+        dotnet build GltronMobileGame/FNA/FNA.NetStandard.csproj -c Debug --verbosity normal
         
         # Check if engine project can be built
         echo "Testing engine project build..."
-        dotnet build GltronMobileEngine/GltronMobileEngine.csproj -c Debug --verbosity detailed
+        dotnet build GltronMobileEngine/GltronMobileEngine.csproj -c Debug --verbosity normal
 
     - name: Build Debug APK
       run: |
