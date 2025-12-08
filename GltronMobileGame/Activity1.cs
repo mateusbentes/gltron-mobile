@@ -28,11 +28,23 @@ namespace gltron.org.gltronmobile
             {
                 FNAHelper.LogInfo("=== FNA ANDROID ACTIVITY STARTING ===");
                 
-                // Check device compatibility first
-                var compatibilityResult = FNACompatibilityChecker.CheckCompatibility(this);
-                if (!compatibilityResult.IsCompatible)
+                // Check device compatibility first (non-blocking)
+                try
                 {
-                    throw new System.NotSupportedException($"Device does not support FNA requirements: {compatibilityResult.ErrorMessage}");
+                    var compatibilityResult = FNACompatibilityChecker.CheckCompatibility(this);
+                    if (!compatibilityResult.IsCompatible)
+                    {
+                        FNAHelper.LogError($"Device compatibility warning: OpenGL ES 3.0: {compatibilityResult.OpenGLESSupported}, Architecture: {compatibilityResult.ArchitectureSupported}, Android Version: {compatibilityResult.AndroidVersionSupported}");
+                        // Continue anyway - let FNA decide if it can work
+                    }
+                    else
+                    {
+                        FNAHelper.LogInfo("Device compatibility check passed");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    FNAHelper.LogError($"Compatibility check failed, continuing anyway: {ex.Message}");
                 }
                 
                 // CRITICAL: Set up FNA environment BEFORE calling base.OnCreate

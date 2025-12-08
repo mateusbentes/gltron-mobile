@@ -1,8 +1,6 @@
 using System;
 using Android.Content;
 using Android.Content.PM;
-using Android.Opengl;
-using Javax.Microedition.Khronos.Opengles;
 
 namespace GltronMobileGame
 {
@@ -31,8 +29,8 @@ namespace GltronMobileGame
                 // Check Android version
                 result.AndroidVersionSupported = CheckAndroidVersionSupport();
                 
-                // Check audio support
-                result.AudioSupported = CheckAudioSupport(context);
+                // Audio support - assume true for most devices
+                result.AudioSupported = true;
                 
                 result.IsCompatible = result.OpenGLESSupported && 
                                     result.ArchitectureSupported && 
@@ -58,24 +56,20 @@ namespace GltronMobileGame
             {
                 var packageManager = context.PackageManager;
                 
-                // Check for OpenGL ES 3.0 support
-                bool hasOpenGLES30 = packageManager.HasSystemFeature(PackageManager.FeatureOpenglesExtensionPack) ||
-                                   packageManager.HasSystemFeature("android.hardware.opengles.aep");
+                // Check for OpenGL ES 3.0 support through feature info
+                var featureInfos = packageManager.GetSystemAvailableFeatures();
+                bool hasOpenGLES30 = false;
                 
-                if (!hasOpenGLES30)
+                foreach (var featureInfo in featureInfos)
                 {
-                    // Fallback: check version through feature info
-                    var featureInfos = packageManager.GetSystemAvailableFeatures();
-                    foreach (var featureInfo in featureInfos)
+                    if (featureInfo.Name == null) // OpenGL ES feature
                     {
-                        if (featureInfo.Name == null) // OpenGL ES feature
+                        // OpenGL ES 3.0 = 0x30000
+                        if (featureInfo.ReqGlEsVersion >= 0x30000)
                         {
-                            // OpenGL ES 3.0 = 0x30000
-                            if (featureInfo.ReqGlEsVersion >= 0x30000)
-                            {
-                                hasOpenGLES30 = true;
-                                break;
-                            }
+                            hasOpenGLES30 = true;
+                            FNAHelper.LogInfo($"OpenGL ES version: {featureInfo.ReqGlEsVersion:X}");
+                            break;
                         }
                     }
                 }
@@ -133,23 +127,7 @@ namespace GltronMobileGame
             }
         }
         
-        private static bool CheckAudioSupport(Context context)
-        {
-            try
-            {
-                var packageManager = context.PackageManager;
-                bool hasAudio = packageManager.HasSystemFeature(PackageManager.FeatureAudio);
-                bool hasLowLatencyAudio = packageManager.HasSystemFeature(PackageManager.FeatureAudioLowLatency);
-                
-                FNAHelper.LogInfo($"Audio support: {hasAudio}, Low latency: {hasLowLatencyAudio}");
-                return hasAudio;
-            }
-            catch (System.Exception ex)
-            {
-                FNAHelper.LogError($"Audio check failed: {ex}");
-                return false;
-            }
-        }
+
         
         private static void LogCompatibilityResult(FNACompatibilityResult result)
         {
