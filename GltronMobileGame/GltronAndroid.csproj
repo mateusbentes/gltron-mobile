@@ -19,33 +19,32 @@
     <ApplicationVersion>2</ApplicationVersion>
     <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
     
-    <!-- MonoGame Content Pipeline Configuration -->
-    <MonoGamePlatform>Android</MonoGamePlatform>
-    <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
+    <!-- FNA Configuration -->
     <AndroidLinkMode>None</AndroidLinkMode>
-    <UseMonoGamePipeline>true</UseMonoGamePipeline>
-    <!-- Suppress .NET 9 compatibility warnings for MonoGame -->
+    <!-- Suppress .NET 9 compatibility warnings -->
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   
+  <!-- FNA will be included as source files -->
   <ItemGroup>
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.2.1105" />
-    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" />
+    <!-- We'll add FNA source files directly to the project -->
+    <Compile Include="FNA\src\**\*.cs" />
   </ItemGroup>
   
-  <!-- Add Android-specific properties that MonoGame might need -->
+  <!-- FNA compilation symbols -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);FNA</DefineConstants>
+  </PropertyGroup>
+  
+  <!-- Add Android-specific properties for FNA -->
   <PropertyGroup>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
     <!-- Use latest Android SDK version 34 -->
     <AndroidSdkBuildToolsVersion>36.0.0</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
-  
-  <!-- Re-enable MGCB build for Android: build content from Content/Content.mgcb -->
-  <ItemGroup>
-    <MonoGameContentReference Include="Content/Content.mgcb" />
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>

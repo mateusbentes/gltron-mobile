@@ -13,14 +13,13 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
-    <!-- MonoGame -->
-    <MonoGamePlatform>iOS</MonoGamePlatform>
+    <!-- FNA Configuration -->
+    <DefineConstants>$(DefineConstants);FNA</DefineConstants>
   </PropertyGroup>
 
-  <!-- MonoGame packages -->
+  <!-- FNA source files -->
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.1.303" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <Compile Include="..\GltronMobileGame\FNA\src\**\*.cs" />
   </ItemGroup>
 
   <!-- Shared Engine -->
@@ -33,23 +32,26 @@
     <Compile Include="..\GltronMobileGame\**\*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Use default MGCB pipeline -->
+  <!-- FNA Content (raw files, not XNBs) -->
   <ItemGroup>
-    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.mgcb" />
-  </ItemGroup>
-
-  <!-- XNBs generated for iOS -->
-  <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.xnb"
+    <BundleResource Include="..\GltronMobileGame\Content\**\*.*"
                     Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Also bundle original compressed music files for MediaPlayer (mp3/m4a) -->
+  <!-- FNA iOS Native Frameworks -->
   <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.mp3"
-                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
-    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.m4a"
-                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
+    <NativeReference Include="Frameworks\SDL2.framework">
+      <Kind>Framework</Kind>
+      <Frameworks>SDL2</Frameworks>
+    </NativeReference>
+    <NativeReference Include="Frameworks\OpenAL.framework">
+      <Kind>Framework</Kind>
+      <Frameworks>OpenAL</Frameworks>
+    </NativeReference>
+    <NativeReference Include="Frameworks\Theoraplay.framework">
+      <Kind>Framework</Kind>
+      <Frameworks>Theoraplay</Frameworks>
+    </NativeReference>
   </ItemGroup>
 
 </Project>

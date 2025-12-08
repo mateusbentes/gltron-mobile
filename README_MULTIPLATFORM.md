@@ -1,15 +1,16 @@
 GLTron Mobile - Android and iOS build instructions (MonoGame)
 
 Overview
-This guide explains how to build and package GLTron Mobile for Android and iOS using MonoGame and .NET 8. The Android build works on Linux/Windows/macOS, while iOS build requires macOS with Xcode. It uses ready-to-run scripts placed under scripts/ for Android.
+This guide explains how to build and package GLTron Mobile for Android and iOS using FNA (FNA's Not Accurate) and .NET 9. FNA is a reimplementation of Microsoft XNA Game Studio 4.0 that provides better compatibility and easier deployment than MonoGame. The Android build works on Linux/Windows/macOS, while iOS build requires macOS with Xcode.
 
 What you will get
 - GLTron Mobile Android APK (or AAB) for Android devices
 - GLTron Mobile iOS IPA for iOS devices (when built on macOS)
-- MonoGame Android project (GltronMobileGame) with full source
-- MonoGame iOS project (GltronMobileGame.iOS) ready for macOS builds
+- FNA Android project (GltronMobileGame) with full source and direct activity management
+- FNA iOS project (GltronMobileGame.iOS) ready for macOS builds
 - HUD with FPS/score display, background music and sound effects
 - Shared codebase between Android and iOS platforms
+- Better .NET 9 compatibility and easier deployment than MonoGame
 
 Prerequisites for Android
 =========================
@@ -32,25 +33,59 @@ Prerequisites for Android
    - Install Android workload for .NET (required for net9.0-android):
      dotnet workload install android
 
-3) Install MGCB command-line tool and MonoGame templates
+3) Install FNA and dependencies
 
-    # Install MGCB first so scripts can call `mgcb`
-    dotnet tool install -g dotnet-mgcb
-    # Ensure .NET global tools (like dotnet-mgcb) are available
-    export PATH="$PATH:/home/mateus/.dotnet/tools"
-    # Optional: MGCB Editor UI and MonoGame templates
-    dotnet tool install -g dotnet-mgcb-editor
-    dotnet new --install MonoGame.Templates.CSharp
-    # ensure global tools are on PATH (add to your shell profile)
-    export PATH="$HOME/.dotnet/tools:$PATH"
-    # verify MGCB is available
-    mgcb --version
+    # FNA requires native libraries for audio, graphics, and input
+    # On Ubuntu/Debian:
+    sudo apt-get update
+    sudo apt-get install libsdl2-dev libopenal-dev libtheoraplay-dev
+    
+    # On macOS (using Homebrew):
+    brew install sdl2 openal-soft
+    
+    # On Windows, FNA will automatically download required DLLs
+    
+    # FNA is typically included as source or NuGet package in the project
+    # No additional global tools needed - FNA handles content loading directly
+
+FNA Setup for Android
+====================
+FNA requires additional setup for Android development:
+
+1) Download FNA native libraries for Android
+   # Create native libraries directory
+   mkdir -p GltronMobileGame/lib/arm64-v8a
+   mkdir -p GltronMobileGame/lib/armeabi-v7a
+   
+   # Download FNA Android native libraries from:
+   # https://github.com/FNA-XNA/FNA/releases
+   # Extract libSDL2.so, libopenal.so to the lib directories
+
+2) Set up FNA environment variables
+   export FNA_PLATFORM_BACKEND=SDL2
+   export FNA_AUDIO_BACKEND=OpenAL
+   export FNA_GRAPHICS_BACKEND=OpenGL
+
+FNA Quick Setup
+===============
+Run the automated setup script:
+
+    # Set up FNA source and directory structure
+    ./scripts/setup-fna.sh
+    
+    # This will:
+    # - Download FNA source code
+    # - Create native library directories
+    # - Show instructions for downloading native libraries
 
 Android Build Steps
 ===================
 Option A: One-shot end-to-end script (recommended)
 - Make scripts executable (once):
   chmod +x scripts/*.sh
+- Set up FNA (first time only):
+  ./scripts/setup-fna.sh
+  # Follow the instructions to download FNA native libraries
 - Verify setup: ./scripts/verify-build.sh
 - Run the app builder (builds with Release configuration by default):
   ./scripts/build-android-app.sh
@@ -62,24 +97,23 @@ Option B: Manual steps (advanced)
 2) Copy game code and content from GltronMobileEngine into GltronMobileGame
    - Files: Game1.cs, GLTronGame.cs, Player.cs, Segment.cs, Vec.cs
    - Folders: Video/*, Sound/*, Content/*
-3) Ensure Content/Content.mgcb contains font/audio entries (already configured in this repo) and is built for Android
-   - Build manually:
-     mgcb -@:"GltronMobileGame/Content/Content.mgcb" /platform:Android \
-          /outputDir:"GltronMobileGame/Content/bin/Android" \
-          /intermediateDir:"GltronMobileGame/Content/obj/Android"
+3) Ensure FNA native libraries are in place (see setup-fna.sh output)
 4) Build APK:
-   dotnet build GltronMobileGame -c Release -f net8.0-android
+   dotnet build GltronMobileGame -c Release -f net9.0-android
 
 iOS Build Instructions (macOS only)
 ===================================
 Prerequisites for iOS:
 1) macOS with Xcode installed
-2) .NET 8 SDK with iOS workload:
+2) .NET 9 SDK with iOS workload:
    dotnet workload install ios
-3) MonoGame templates and MGCB tool (same as Android prerequisites)
+3) FNA native frameworks (set up automatically with setup script)
 
 Building for iOS:
 Option A: Using build scripts (recommended)
+- Set up FNA (first time only):
+  ./scripts/setup-fna.sh
+  # Follow the instructions to download FNA iOS frameworks
 - Verify iOS setup: ./scripts/verify-ios.sh
 - Build for iOS Simulator: ./scripts/build-ios-app.sh -p iPhoneSimulator
 - Build for iOS Device: ./scripts/build-ios-app.sh -p iPhone
