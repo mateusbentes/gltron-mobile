@@ -67,7 +67,7 @@ namespace gltron.org.gltronmobile
                 System.Environment.SetEnvironmentVariable("FNA_GRAPHICS_BACKEND", "OpenGL");
                 
                 // Set the current activity for FNA
-                // FNA uses a different approach than MonoGame for activity management
+                // FNA uses a different approach than other frameworks for activity management
                 var fnaType = System.Type.GetType("Microsoft.Xna.Framework.FNAPlatform");
                 if (fnaType != null)
                 {

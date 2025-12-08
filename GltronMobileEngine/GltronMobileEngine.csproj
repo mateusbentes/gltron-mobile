@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net9.0-android</TargetFrameworks>
+    <TargetFrameworks>net9.0;net9.0-android;net9.0-ios</TargetFrameworks>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,17 +11,21 @@
     <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-android'">24.0</SupportedOSPlatformVersion>
     <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-android'">36.0</TargetPlatformVersion>
     
-    <!-- MonoGame Platform Properties -->
-    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0'">DesktopGL</MonoGamePlatform>
-    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0-android'">Android</MonoGamePlatform>
-    <!-- Suppress .NET 9 compatibility warnings for MonoGame -->
+    <!-- iOS-specific properties -->
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-ios'">11.0</SupportedOSPlatformVersion>
+    
+    <!-- FNA Configuration -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);FNA</DefineConstants>
+    <!-- Suppress .NET 9 compatibility warnings for FNA -->
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
+    <!-- Disable SDK auto-generated assembly info to avoid conflicts with FNA -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Multiplatform MonoGame support -->
-    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net9.0-android'" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <!-- FNA project reference for all platforms -->
+    <ProjectReference Include="..\GltronMobileGame\FNA\FNA.NetStandard.csproj" />
     <!-- Note: Content building is handled by the game projects, not the engine -->
   </ItemGroup>
   <ItemGroup>

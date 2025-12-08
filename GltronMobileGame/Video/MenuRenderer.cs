@@ -182,7 +182,7 @@ namespace GltronMobileGame.Video
             }
 
             // Draw version info
-            string version = "MonoGame Port v1.0";
+            string version = "FNA Port v2.0";
             var versionSize = _font.MeasureString(version);
             var versionPos = new Vector2(
                 viewport.Width - versionSize.X - 10,

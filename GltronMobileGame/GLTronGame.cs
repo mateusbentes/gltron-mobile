@@ -458,7 +458,7 @@ namespace GltronMobileGame
 
         private void UpdateTime(GameTime gameTime)
         {
-            // Prefer GameTime for MonoGame correctness
+            // Prefer GameTime for FNA correctness
             long now = (long)gameTime.TotalGameTime.TotalMilliseconds;
             long last = TimeCurrent;
             if (last == 0)
