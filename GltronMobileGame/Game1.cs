@@ -532,12 +532,12 @@ public class Game1 : Game
             // CRITICAL: Check if GraphicsDevice is in a valid state
             try
             {
-                var viewport = GraphicsDevice.Viewport;
-                if (viewport.Width <= 0 || viewport.Height <= 0)
+                var viewportCheck = GraphicsDevice.Viewport;
+                if (viewportCheck.Width <= 0 || viewportCheck.Height <= 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"GLTRON: Invalid viewport size: {viewport.Width}x{viewport.Height}");
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: Invalid viewport size: {viewportCheck.Width}x{viewportCheck.Height}");
 #if ANDROID
-                    Android.Util.Log.Error("GLTRON", $"Invalid viewport size: {viewport.Width}x{viewport.Height}");
+                    Android.Util.Log.Error("GLTRON", $"Invalid viewport size: {viewportCheck.Width}x{viewportCheck.Height}");
 #endif
                     return;
                 }

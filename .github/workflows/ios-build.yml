@@ -101,8 +101,13 @@ jobs:
         echo "Verifying .NET version..."
         dotnet --version
         
-        # Ensure we don't accidentally install Android workload
-        echo "iOS-only build - Android workload not needed"
+        # Explicitly ensure Android workload is NOT installed
+        echo "iOS-only build - ensuring Android workload is not installed"
+        dotnet workload list | grep -v android || echo "✅ Android workload not installed (as expected)"
+        
+        # Check available workloads
+        echo "Available workloads:"
+        dotnet workload search
 
     - name: Cache NuGet packages
       uses: actions/cache@v3
@@ -197,7 +202,8 @@ jobs:
         echo "Building FNA iOS Debug App for Simulator..."
         
         # Build for iOS Simulator (no code signing required)
-        dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -p:RuntimeIdentifier=iossimulator-x64 --verbosity detailed
+        # Use specific target framework to avoid Android workload conflicts
+        dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net9.0-ios -p:RuntimeIdentifier=iossimulator-x64 --verbosity detailed
         
         # Find the generated app
         echo "Looking for generated iOS app..."
@@ -215,7 +221,8 @@ jobs:
         echo "Building FNA iOS Release App..."
         
         # Build for iOS Simulator (since we can't sign for device in CI)
-        dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Release --verbosity detailed
+        # Use specific target framework to avoid Android workload conflicts
+        dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Release -f net9.0-ios --verbosity detailed
         
         # Find the generated app
         echo "Looking for generated iOS release app..."
