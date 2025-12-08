@@ -200,6 +200,16 @@ Troubleshooting
   • Run ./scripts/setup-fna-deps.sh to download FNA C# bindings.
 - ANDROID_HOME not set / sdkmanager/adb not found
   • Set ANDROID_HOME to your SDK path or source scripts/setup-android-env.sh.
+- FNA platform initialization failed: SDL2 native library missing or incompatible
+  • Run ./scripts/download-real-fna-libs.sh to download proper native libraries.
+  • Ensure ANDROID_NDK_ROOT is set: export ANDROID_NDK_ROOT=/home/mateus/Android/Sdk/ndk/29.0.14206865
+  • Verify libraries with ./scripts/verify-native-libs.sh
+- OpenAL audio missing / OpenGL ES 3.0 not supported
+  • Check AndroidManifest.xml has proper OpenGL ES fallback configuration.
+  • Ensure device supports at least OpenGL ES 2.0.
+- Native library architecture mismatch
+  • Delete old stub libraries: rm -rf GltronMobileGame/lib/
+  • Re-run ./scripts/download-real-fna-libs.sh with proper NDK setup.
 - No APK/AAB after build
   • Check build output in GltronMobileGame/bin/<Config>/, review dotnet build logs for errors.
 - TypeInitializationException at runtime
