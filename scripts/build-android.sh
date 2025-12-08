@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the FNA Android project
 # Usage: ./scripts/build-android.sh [-c Debug|Release] [-p ProjectDir] [-f TargetFramework]
-# Defaults: -c Release, -p GltronMobileGame, -f net9.0-android
+# Defaults: -c Release, -p GltronMobileGame, -f net9.0-android36.0
 
 set -euo pipefail
 
@@ -51,7 +51,7 @@ echo "Content files will be packaged directly from Content/ directory"
 
 # Build FNA solution (engine + game) - Android targets only
 echo "Building FNA solution for Android..."
-dotnet build "$SOLUTION_FILE" -c "$CONFIG" -f net9.0-android
+dotnet build "$SOLUTION_FILE" -c "$CONFIG"
 
 # Build the FNA Android project
 echo "Building FNA Android project (TFM: $TFM)..."
