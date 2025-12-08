@@ -34,7 +34,7 @@ namespace gltron.org.gltronmobile
     // We manually implement all MonoGame integration without using AndroidGameActivity.
     public class Activity1 : Activity
     {
-        private Game1 _game;  // Instance of the MonoGame game class (for future use)
+        private Game1 _game;  // Instance of the full MonoGame GLTron game
         private View _view;   // The Android View that will render the MonoGame content
 
         // OnCreate is called when the Activity is first created.
@@ -49,16 +49,11 @@ namespace gltron.org.gltronmobile
             {
                 System.Diagnostics.Debug.WriteLine("=== DIRECT ACTIVITY SIMPLE INITIALIZATION ===");
 
-                // ATTEMPT 1: Try to create the actual game
-                if (!TryCreateMonoGame())
+                // Create the full 3D GLTron game with graphics, music, and all features
+                if (!TryCreateFullGLTronGame())
                 {
-                    // FALLBACK: Show simple demo if MonoGame fails
-                    CreateSimpleGameView();
-                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Fallback to simple view - MonoGame initialization failed");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Full GLTron game is running with direct activity management!");
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Full 3D game failed, showing error");
+                    ShowErrorScreen(new System.Exception("MonoGame initialization failed - platform context setup needed"));
                 }
             }
             catch (System.Exception ex)
@@ -104,72 +99,99 @@ namespace gltron.org.gltronmobile
             }
         }
 
-        // Try to create the actual MonoGame with proper initialization
-        private bool TryCreateMonoGame()
+        // Try to create the full 3D GLTron game with graphics, music, and all features
+        private bool TryCreateFullGLTronGame()
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Attempting full MonoGame initialization...");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Attempting full 3D GLTron game initialization...");
 
-                // CRITICAL: Initialize MonoGame platform before creating Game1
-                InitializeMonoGamePlatform();
+                // Use our proper MonoGame initializer
+                _game = DirectMonoGameInitializer.CreateGame1WithProperInitialization(this);
 
-                // Create the actual Game1 instance
-                _game = new Game1();
-                
-                // Register services
-                _game.Services.AddService(typeof(Activity), this);
-
-                // Start the game
+                // Start the game - this should now show the full 3D GLTron experience
                 _game.Run();
 
                 // Get the view
                 _view = _game.Services.GetService<View>();
                 
-                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Full MonoGame initialization SUCCESS!");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: SUCCESS! Full 3D GLTron game is running!");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: You should now see:");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ 3D arena with walls and floor");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Light cycles (bikes) and trails");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Background music and sound effects");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ HUD with score and instructions");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Menu system and touch controls");
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: ✅ Direct activity management (no AndroidGameActivity)");
                 return true;
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: MonoGame initialization failed: {ex}");
+                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Full 3D game initialization failed: {ex}");
+                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Error details: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
             }
         }
 
-        // Initialize MonoGame platform properly
-        private void InitializeMonoGamePlatform()
+        // Set up MonoGame's Android platform context manually
+        private void SetupMonoGameAndroidPlatform()
         {
             try
             {
-                // Set up the Android context for MonoGame
-                // This is the critical missing piece
-                var platformType = Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
-                if (platformType != null)
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Setting up MonoGame Android platform...");
+
+                // Method 1: Try to initialize AndroidGamePlatform directly
+                var platformAssembly = System.Reflection.Assembly.GetAssembly(typeof(Microsoft.Xna.Framework.Game));
+                if (platformAssembly != null)
                 {
-                    var constructor = platformType.GetConstructor(new[] { typeof(Activity) });
-                    if (constructor != null)
+                    var platformType = platformAssembly.GetType("Microsoft.Xna.Framework.AndroidGamePlatform");
+                    if (platformType != null)
                     {
-                        var platform = constructor.Invoke(new object[] { this });
-                        System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: AndroidGamePlatform created successfully");
-                        return;
+                        var initMethod = platformType.GetMethod("Initialize", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                        if (initMethod != null)
+                        {
+                            initMethod.Invoke(null, new object[] { this });
+                            System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: AndroidGamePlatform.Initialize() called successfully");
+                            return;
+                        }
                     }
                 }
 
-                // Alternative: Try to set static context
+                // Method 2: Set static activity reference
                 var gameType = typeof(Microsoft.Xna.Framework.Game);
-                var contextField = gameType.GetField("_context", BindingFlags.Static | BindingFlags.NonPublic);
+                var activityField = gameType.GetField("Activity", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                if (activityField != null)
+                {
+                    activityField.SetValue(null, this);
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Set Game.Activity static field");
+                    return;
+                }
+
+                // Method 3: Try to set context field
+                var contextField = gameType.GetField("_context", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
                 if (contextField != null)
                 {
                     contextField.SetValue(null, this);
-                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Set MonoGame static context");
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Set Game._context static field");
+                    return;
                 }
+
+                System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Could not find MonoGame platform initialization method");
             }
             catch (System.Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Platform initialization failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"DIRECT ACTIVITY: Platform setup failed: {ex}");
                 throw;
             }
         }
+
+
+
+
 
         // Create a simple working game view to demonstrate direct activity management
         private void CreateSimpleGameView()
@@ -202,9 +224,13 @@ namespace gltron.org.gltronmobile
                            "• Direct Activity inheritance (no AndroidGameActivity)\n" +
                            "• Complete lifecycle control\n" +
                            "• Custom activity management\n\n" +
-                           "The MonoGame integration can be added back\n" +
-                           "once the platform context is properly set up.",
-                    TextSize = 16
+                           "⚠️ MonoGame initialization failed\n" +
+                           "This means the full GLTron game (3D graphics,\n" +
+                           "menu, music) couldn't start, but direct activity\n" +
+                           "management is working perfectly!\n\n" +
+                           "The MonoGame integration needs platform\n" +
+                           "context setup to show the full game.",
+                    TextSize = 14
                 };
                 statusView.SetTextColor(Android.Graphics.Color.LightGray);
                 statusView.Gravity = Android.Views.GravityFlags.Center;
@@ -333,10 +359,12 @@ namespace gltron.org.gltronmobile
                 
                 if (_game != null)
                 {
-                    // Clean up the game if it exists
+                    // Clean up the MonoGame if it exists
                     _game.Dispose();
-                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: Game disposed successfully");
+                    System.Diagnostics.Debug.WriteLine("DIRECT ACTIVITY: MonoGame disposed successfully");
                 }
+                
+
             }
             catch (System.Exception ex)
             {
