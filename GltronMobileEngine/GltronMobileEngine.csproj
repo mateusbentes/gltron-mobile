@@ -14,6 +14,9 @@
     <!-- MonoGame Platform Properties -->
     <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0'">DesktopGL</MonoGamePlatform>
     <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0-android'">Android</MonoGamePlatform>
+    <!-- Suppress .NET 9 compatibility warnings for MonoGame -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   <ItemGroup>
     <!-- Multiplatform MonoGame support -->

@@ -24,6 +24,9 @@
     <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
     <AndroidLinkMode>None</AndroidLinkMode>
     <UseMonoGamePipeline>true</UseMonoGamePipeline>
+    <!-- Suppress .NET 9 compatibility warnings for MonoGame -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
   
   <ItemGroup>
