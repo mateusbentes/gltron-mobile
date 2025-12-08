@@ -15,7 +15,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        submodules: recursive
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -95,7 +94,11 @@ jobs:
         find GltronMobileGame/lib -name "*.so" -type f || echo "Warning: No .so files found"
 
     - name: Restore dependencies
-      run: dotnet restore GltronMobile.sln
+      run: |
+        # First restore FNA project separately
+        dotnet restore GltronMobileGame/FNA/FNA.NetStandard.csproj
+        # Then restore the main solution
+        dotnet restore GltronMobile.sln
 
     - name: Build Debug APK
       run: |

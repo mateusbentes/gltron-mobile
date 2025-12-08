@@ -43,6 +43,10 @@ else
   echo "FNA submodules already initialized"
 fi
 
+# Restore FNA project first
+echo "Restoring FNA project..."
+dotnet restore "GltronMobileGame/FNA/FNA.NetStandard.csproj"
+
 # Restore solution
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
@@ -50,6 +54,10 @@ dotnet restore "$SOLUTION_FILE"
 # FNA uses raw content files - no MGCB build needed
 echo "FNA: Using raw content files (no MGCB processing required)"
 echo "Content files will be packaged directly from Content/ directory"
+
+# Build FNA project first
+echo "Building FNA project..."
+dotnet build "GltronMobileGame/FNA/FNA.NetStandard.csproj" -c "$CONFIG"
 
 # Build FNA solution (engine + game)
 echo "Building FNA solution..."
