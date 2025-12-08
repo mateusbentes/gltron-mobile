@@ -120,42 +120,105 @@ namespace gltron.org.gltronmobile
             {
                 FNAHelper.LogInfo("Checking FNA native libraries...");
                 
-                // Check if we can load SDL2
+                // Check if library files exist in APK
+                var context = Android.App.Application.Context;
+                var packageManager = context.PackageManager;
+                var packageInfo = packageManager.GetPackageInfo(context.PackageName, PackageInfoFlags.SharedLibraryFiles);
+                
+                FNAHelper.LogInfo($"App package: {context.PackageName}");
+                FNAHelper.LogInfo($"App data dir: {context.ApplicationInfo.DataDir}");
+                FNAHelper.LogInfo($"Native lib dir: {context.ApplicationInfo.NativeLibraryDir}");
+                
+                // List native libraries in the APK
                 try
                 {
-                    System.Runtime.InteropServices.NativeLibrary.TryLoad("SDL2", out var sdl2Handle);
-                    if (sdl2Handle != System.IntPtr.Zero)
+                    var libDir = new Java.IO.File(context.ApplicationInfo.NativeLibraryDir);
+                    if (libDir.Exists())
                     {
-                        FNAHelper.LogInfo("SDL2 library found");
-                        System.Runtime.InteropServices.NativeLibrary.Free(sdl2Handle);
+                        var files = libDir.ListFiles();
+                        FNAHelper.LogInfo($"Native libraries in APK ({files?.Length ?? 0} files):");
+                        if (files != null)
+                        {
+                            foreach (var file in files)
+                            {
+                                FNAHelper.LogInfo($"  - {file.Name} ({file.Length()} bytes)");
+                            }
+                        }
                     }
                     else
                     {
-                        FNAHelper.LogError("SDL2 library not found - using placeholder");
+                        FNAHelper.LogError($"Native library directory does not exist: {context.ApplicationInfo.NativeLibraryDir}");
                     }
                 }
                 catch (System.Exception ex)
                 {
-                    FNAHelper.LogError($"SDL2 check failed: {ex.Message}");
+                    FNAHelper.LogError($"Failed to list native libraries: {ex.Message}");
                 }
                 
-                // Check if we can load OpenAL
-                try
+                // Try to load libraries with different names
+                string[] sdlNames = { "SDL2", "libSDL2", "libSDL2.so" };
+                string[] openalNames = { "openal", "libopenal", "libopenal.so", "OpenAL32" };
+                
+                bool sdlFound = false;
+                bool openalFound = false;
+                
+                // Check SDL2
+                foreach (var name in sdlNames)
                 {
-                    System.Runtime.InteropServices.NativeLibrary.TryLoad("openal", out var openalHandle);
-                    if (openalHandle != System.IntPtr.Zero)
+                    try
                     {
-                        FNAHelper.LogInfo("OpenAL library found");
-                        System.Runtime.InteropServices.NativeLibrary.Free(openalHandle);
+                        if (System.Runtime.InteropServices.NativeLibrary.TryLoad(name, out var handle))
+                        {
+                            FNAHelper.LogInfo($"✅ SDL2 library loaded successfully as '{name}'");
+                            System.Runtime.InteropServices.NativeLibrary.Free(handle);
+                            sdlFound = true;
+                            break;
+                        }
                     }
-                    else
+                    catch (System.Exception ex)
                     {
-                        FNAHelper.LogError("OpenAL library not found - using placeholder");
+                        FNAHelper.LogInfo($"Failed to load SDL2 as '{name}': {ex.Message}");
                     }
                 }
-                catch (System.Exception ex)
+                
+                if (!sdlFound)
                 {
-                    FNAHelper.LogError($"OpenAL check failed: {ex.Message}");
+                    FNAHelper.LogError("❌ SDL2 library not found with any name variant");
+                }
+                
+                // Check OpenAL
+                foreach (var name in openalNames)
+                {
+                    try
+                    {
+                        if (System.Runtime.InteropServices.NativeLibrary.TryLoad(name, out var handle))
+                        {
+                            FNAHelper.LogInfo($"✅ OpenAL library loaded successfully as '{name}'");
+                            System.Runtime.InteropServices.NativeLibrary.Free(handle);
+                            openalFound = true;
+                            break;
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        FNAHelper.LogInfo($"Failed to load OpenAL as '{name}': {ex.Message}");
+                    }
+                }
+                
+                if (!openalFound)
+                {
+                    FNAHelper.LogError("❌ OpenAL library not found with any name variant");
+                }
+                
+                // Summary
+                if (sdlFound && openalFound)
+                {
+                    FNAHelper.LogInfo("✅ All required native libraries found and loadable");
+                }
+                else
+                {
+                    FNAHelper.LogError($"⚠️ Missing libraries - SDL2: {sdlFound}, OpenAL: {openalFound}");
+                    FNAHelper.LogError("This may cause FNA initialization to fail");
                 }
                 
                 FNAHelper.LogInfo("Native library check completed");
