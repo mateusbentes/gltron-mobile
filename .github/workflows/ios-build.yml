@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    # Skip iOS builds by default until frameworks are properly set up
+    if: false
     
     steps:
     - name: Checkout code

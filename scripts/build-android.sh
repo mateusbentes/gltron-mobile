@@ -49,9 +49,9 @@ dotnet restore "$SOLUTION_FILE"
 echo "FNA: Using raw content files (no MGCB processing required)"
 echo "Content files will be packaged directly from Content/ directory"
 
-# Build FNA solution (engine + game)
-echo "Building FNA solution..."
-dotnet build "$SOLUTION_FILE" -c "$CONFIG"
+# Build FNA solution (engine + game) - Android targets only
+echo "Building FNA solution for Android..."
+dotnet build "$SOLUTION_FILE" -c "$CONFIG" -f net9.0-android
 
 # Build the FNA Android project
 echo "Building FNA Android project (TFM: $TFM)..."
