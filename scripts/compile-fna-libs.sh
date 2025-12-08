@@ -29,6 +29,7 @@ create_minimal_stubs() {
 // Comprehensive SDL2 stub for FNA compatibility
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 // SDL2 initialization and core functions
 int SDL_Init(uint32_t flags) { return 0; }
@@ -42,6 +43,18 @@ uint32_t SDL_WasInit(uint32_t flags) { return flags; }
 // CRITICAL: FNA requires this function
 void SDL_SetMainReady(void) { }
 
+// CRITICAL: FNA path functions
+char* SDL_GetBasePath(void) { 
+    // Return a valid path that FNA can use
+    static char base_path[] = "/data/data/gltron.org.gltronmobile/";
+    return base_path; 
+}
+char* SDL_GetPrefPath(const char* org, const char* app) { 
+    // Return a valid preferences path
+    static char pref_path[] = "/data/data/gltron.org.gltronmobile/files/";
+    return pref_path; 
+}
+
 // Additional SDL2 functions that FNA might need
 int SDL_SetHintWithPriority(const char* name, const char* value, int priority) { return 1; }
 void SDL_LogSetAllPriority(int priority) { }
@@ -50,6 +63,12 @@ int SDL_GetNumAudioDrivers(void) { return 1; }
 const char* SDL_GetAudioDriver(int index) { return "android"; }
 int SDL_AudioInit(const char* driver_name) { return 0; }
 void SDL_AudioQuit(void) { }
+
+// Memory management functions
+void SDL_free(void* mem) { if (mem) free(mem); }
+void* SDL_malloc(size_t size) { return malloc(size); }
+void* SDL_calloc(size_t nmemb, size_t size) { return calloc(nmemb, size); }
+void* SDL_realloc(void* ptr, size_t size) { return realloc(ptr, size); }
 
 // Window management
 typedef struct SDL_Window SDL_Window;
