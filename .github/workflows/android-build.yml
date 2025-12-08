@@ -176,25 +176,56 @@ jobs:
               # Try different possible directory structures
               COPIED_LIBS=false
               
+              echo "Searching for Android native libraries..."
+              find fnalibs -name "*.so" -type f | head -20
+              
               # Check for Android-specific directories first
-              for arch_dir in "fnalibs/android/arm64-v8a" "fnalibs/lib64" "fnalibs/lib"; do
+              for arch_dir in "fnalibs/lib/arm64-v8a" "fnalibs/android/arm64-v8a" "fnalibs/lib64" "fnalibs/lib"; do
                 if [ -d "$arch_dir" ] && [ "$(find "$arch_dir" -name "*.so" | wc -l)" -gt 0 ]; then
-                  echo "Found libraries in: $arch_dir"
-                  cp "$arch_dir"/libSDL2.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null && echo "Copied libSDL2.so for arm64" || echo "libSDL2.so not found for arm64"
-                  cp "$arch_dir"/libopenal.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null && echo "Copied libopenal.so for arm64" || echo "libopenal.so not found for arm64"
-                  cp "$arch_dir"/libtheoraplay.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null && echo "Copied libtheoraplay.so for arm64" || echo "libtheoraplay.so not found for arm64"
-                  COPIED_LIBS=true
+                  echo "Found ARM64 libraries in: $arch_dir"
+                  find "$arch_dir" -name "*.so" -type f
+                  
+                  # Copy essential libraries for ARM64
+                  if cp "$arch_dir"/libSDL2.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null; then
+                    echo "✅ Copied libSDL2.so for arm64"
+                    COPIED_LIBS=true
+                  else
+                    echo "❌ libSDL2.so not found for arm64"
+                  fi
+                  
+                  if cp "$arch_dir"/libopenal.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null; then
+                    echo "✅ Copied libopenal.so for arm64"
+                  else
+                    echo "❌ libopenal.so not found for arm64"
+                  fi
+                  
+                  # Optional libraries
+                  cp "$arch_dir"/libtheoraplay.so GltronMobileGame/lib/arm64-v8a/ 2>/dev/null && echo "✅ Copied libtheoraplay.so for arm64" || echo "⚠️  libtheoraplay.so not found for arm64"
                   break
                 fi
               done
               
-              for arch_dir in "fnalibs/android/armeabi-v7a" "fnalibs/lib" "fnalibs/lib32"; do
+              for arch_dir in "fnalibs/lib/armeabi-v7a" "fnalibs/android/armeabi-v7a" "fnalibs/lib32" "fnalibs/lib"; do
                 if [ -d "$arch_dir" ] && [ "$(find "$arch_dir" -name "*.so" | wc -l)" -gt 0 ]; then
-                  echo "Found libraries in: $arch_dir"
-                  cp "$arch_dir"/libSDL2.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null && echo "Copied libSDL2.so for armv7" || echo "libSDL2.so not found for armv7"
-                  cp "$arch_dir"/libopenal.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null && echo "Copied libopenal.so for armv7" || echo "libopenal.so not found for armv7"
-                  cp "$arch_dir"/libtheoraplay.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null && echo "Copied libtheoraplay.so for armv7" || echo "libtheoraplay.so not found for armv7"
-                  COPIED_LIBS=true
+                  echo "Found ARMv7 libraries in: $arch_dir"
+                  find "$arch_dir" -name "*.so" -type f
+                  
+                  # Copy essential libraries for ARMv7
+                  if cp "$arch_dir"/libSDL2.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null; then
+                    echo "✅ Copied libSDL2.so for armv7"
+                    COPIED_LIBS=true
+                  else
+                    echo "❌ libSDL2.so not found for armv7"
+                  fi
+                  
+                  if cp "$arch_dir"/libopenal.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null; then
+                    echo "✅ Copied libopenal.so for armv7"
+                  else
+                    echo "❌ libopenal.so not found for armv7"
+                  fi
+                  
+                  # Optional libraries
+                  cp "$arch_dir"/libtheoraplay.so GltronMobileGame/lib/armeabi-v7a/ 2>/dev/null && echo "✅ Copied libtheoraplay.so for armv7" || echo "⚠️  libtheoraplay.so not found for armv7"
                   break
                 fi
               done
@@ -221,9 +252,78 @@ jobs:
           echo "FNA native libraries found in cache"
         fi
         
-        # Verify libraries exist
+        # Verify libraries exist and are valid
+        echo "=== VERIFYING FNA NATIVE LIBRARIES ==="
         echo "Checking for required native libraries..."
-        find GltronMobileGame/lib -name "*.so" -type f || echo "Warning: No .so files found"
+        
+        LIBS_FOUND=0
+        
+        # Check ARM64 libraries
+        if [ -f "GltronMobileGame/lib/arm64-v8a/libSDL2.so" ]; then
+          SIZE=$(stat -c%s "GltronMobileGame/lib/arm64-v8a/libSDL2.so" 2>/dev/null || echo "0")
+          if [ "$SIZE" -gt 1000 ]; then
+            echo "✅ ARM64 libSDL2.so found (${SIZE} bytes)"
+            LIBS_FOUND=$((LIBS_FOUND + 1))
+          else
+            echo "❌ ARM64 libSDL2.so is too small (${SIZE} bytes) - likely placeholder"
+          fi
+        else
+          echo "❌ ARM64 libSDL2.so not found"
+        fi
+        
+        if [ -f "GltronMobileGame/lib/arm64-v8a/libopenal.so" ]; then
+          SIZE=$(stat -c%s "GltronMobileGame/lib/arm64-v8a/libopenal.so" 2>/dev/null || echo "0")
+          if [ "$SIZE" -gt 1000 ]; then
+            echo "✅ ARM64 libopenal.so found (${SIZE} bytes)"
+            LIBS_FOUND=$((LIBS_FOUND + 1))
+          else
+            echo "❌ ARM64 libopenal.so is too small (${SIZE} bytes) - likely placeholder"
+          fi
+        else
+          echo "❌ ARM64 libopenal.so not found"
+        fi
+        
+        # Check ARMv7 libraries
+        if [ -f "GltronMobileGame/lib/armeabi-v7a/libSDL2.so" ]; then
+          SIZE=$(stat -c%s "GltronMobileGame/lib/armeabi-v7a/libSDL2.so" 2>/dev/null || echo "0")
+          if [ "$SIZE" -gt 1000 ]; then
+            echo "✅ ARMv7 libSDL2.so found (${SIZE} bytes)"
+            LIBS_FOUND=$((LIBS_FOUND + 1))
+          else
+            echo "❌ ARMv7 libSDL2.so is too small (${SIZE} bytes) - likely placeholder"
+          fi
+        else
+          echo "❌ ARMv7 libSDL2.so not found"
+        fi
+        
+        if [ -f "GltronMobileGame/lib/armeabi-v7a/libopenal.so" ]; then
+          SIZE=$(stat -c%s "GltronMobileGame/lib/armeabi-v7a/libopenal.so" 2>/dev/null || echo "0")
+          if [ "$SIZE" -gt 1000 ]; then
+            echo "✅ ARMv7 libopenal.so found (${SIZE} bytes)"
+            LIBS_FOUND=$((LIBS_FOUND + 1))
+          else
+            echo "❌ ARMv7 libopenal.so is too small (${SIZE} bytes) - likely placeholder"
+          fi
+        else
+          echo "❌ ARMv7 libopenal.so not found"
+        fi
+        
+        echo "=== LIBRARY VERIFICATION SUMMARY ==="
+        echo "Valid native libraries found: ${LIBS_FOUND}/4"
+        
+        if [ "$LIBS_FOUND" -eq 0 ]; then
+          echo "🚨 CRITICAL: No valid FNA native libraries found!"
+          echo "🚨 The APK will crash with 'FNA platform initialization failed'"
+          echo "🚨 This is expected behavior - real libraries are needed for FNA to work"
+        elif [ "$LIBS_FOUND" -lt 4 ]; then
+          echo "⚠️  WARNING: Some FNA native libraries are missing"
+          echo "⚠️  The APK may have limited functionality or crash on some devices"
+        else
+          echo "✅ All essential FNA native libraries are present"
+          echo "✅ The APK should initialize FNA successfully"
+        fi
+        
+        echo "=== END LIBRARY VERIFICATION ==="
 
     - name: Clean build artifacts
       run: |

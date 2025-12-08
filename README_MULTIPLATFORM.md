@@ -53,15 +53,20 @@ FNA Setup for Android
 FNA requires additional setup for Android development:
 
 1) Download FNA native libraries for Android
+   # Use the automated script (recommended):
+   ./scripts/download-fna-libs.sh
+   
+   # Or manually:
    # Create native libraries directory
    mkdir -p GltronMobileGame/lib/arm64-v8a
    mkdir -p GltronMobileGame/lib/armeabi-v7a
    
-   # Download FNA Android native libraries from:
-   # https://github.com/FNA-XNA/FNA/releases
+   # Download real FNA Android native libraries from:
+   # - SDL2: https://github.com/libsdl-org/SDL/releases
+   # - OpenAL: https://github.com/kcat/openal-soft/releases
    # Extract libSDL2.so, libopenal.so to the lib directories
 
-2) Set up FNA environment variables
+2) Set up FNA environment variables (handled automatically by the app)
    export FNA_PLATFORM_BACKEND=SDL2
    export FNA_AUDIO_BACKEND=OpenAL
    export FNA_GRAPHICS_BACKEND=OpenGL
@@ -83,16 +88,24 @@ Android Build Steps
 Option A: Development builds (recommended for testing)
 - Make scripts executable (once):
   chmod +x scripts/*.sh
+- Clean build artifacts (if needed):
+  ./scripts/clean-fna-build.sh
 - Set up FNA dependencies (first time only):
   ./scripts/setup-fna-deps.sh
+- Download FNA native libraries:
+  ./scripts/download-fna-libs.sh
 - Build debug APK:
   ./scripts/build-android.sh -c Debug
 - Build release APK:
   ./scripts/build-android.sh -c Release
 
 Option B: Production builds (for Google Play Store)
+- Clean build artifacts (if needed):
+  ./scripts/clean-fna-build.sh
 - Set up FNA dependencies (first time only):
   ./scripts/setup-fna-deps.sh
+- Download FNA native libraries:
+  ./scripts/download-fna-libs.sh
 - Create keystore for signing (one time only):
   ./scripts/create-keystore.sh
 - Build production APK and AAB (signed):
@@ -103,11 +116,15 @@ Option B: Production builds (for Google Play Store)
   ./scripts/sign-aab.sh
 
 Option C: Manual steps (advanced)
-1) Set up FNA dependencies:
+1) Clean build artifacts (if needed):
+   ./scripts/clean-fna-build.sh
+2) Set up FNA dependencies:
    ./scripts/setup-fna-deps.sh
-2) Build APK manually:
+3) Download FNA native libraries:
+   ./scripts/download-fna-libs.sh
+4) Build APK manually:
    dotnet build GltronMobileGame -c Release -f net9.0-android36.0
-3) For production, add signing parameters:
+5) For production, add signing parameters:
    dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net9.0-android36.0 \
      -p:AndroidPackageFormat=aab -p:AndroidKeyStore=true \
      -p:AndroidSigningKeyStore=gltron-release.keystore \
@@ -186,11 +203,17 @@ Troubleshooting
 - No APK/AAB after build
   • Check build output in GltronMobileGame/bin/<Config>/, review dotnet build logs for errors.
 - TypeInitializationException at runtime
-  • Ensure FNA native libraries are included in APK (check lib/ directories).
+  • Run ./scripts/download-fna-libs.sh to set up FNA native libraries.
+  • For full functionality, replace stub libraries with real SDL2/OpenAL libraries.
 - Content not found at runtime
   • FNA uses raw content files - ensure PNG/OGG/TTF files exist in Content/Assets/.
 - Production build signing errors
   • Verify keystore exists and passwords are correct.
+- Build cache issues or GUID mismatches
+  • Run ./scripts/clean-fna-build.sh to clean all build artifacts and caches.
+- FNA platform initialization failed
+  • Ensure FNA native libraries are properly installed with ./scripts/download-fna-libs.sh
+  • Check device compatibility (OpenGL ES 3.0, ARM64/ARMv7 architecture).
 
 Multiplatform Notes
 ==================
