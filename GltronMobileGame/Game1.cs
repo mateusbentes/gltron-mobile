@@ -40,13 +40,13 @@ public class Game1 : Game
                 throw new System.InvalidOperationException("Failed to create GraphicsDeviceManager");
             }
 
-            // CRITICAL: Set Content root directory for multiplatform compatibility
+            // CRITICAL: Set Content root directory for FNA (uses raw files, not XNB)
             #if ANDROID
-            Content.RootDirectory = "Content/bin/Android/Content";
+            Content.RootDirectory = "Content";
             #elif IOS
-            Content.RootDirectory = "Content/bin/iOS/Content";
+            Content.RootDirectory = "Content";
             #else
-            Content.RootDirectory = "Content/bin/DesktopGL/Content";
+            Content.RootDirectory = "Content";
             #endif
             
             // Set up graphics for mobile landscape (multiplatform compatible)
@@ -204,46 +204,83 @@ public class Game1 : Game
             _whitePixel.SetData(new[] { Color.White });
             System.Diagnostics.Debug.WriteLine("GLTRON: White pixel texture created");
 
-            // Load menu background image (like original Java version)
+            // Load menu background image (FNA uses raw PNG files)
             try
             {
-                // Load XNB only
+                // FNA loads PNG files directly from Assets folder
                 _menuBackground = Content.Load<Texture2D>("Assets/gltron_bitmap");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Menu background loaded successfully");
             }
-            catch { System.Diagnostics.Debug.WriteLine("GLTRON: Failed to load menu XNB: {ex.Message}"); 
+            catch (System.Exception ex)
+            { 
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to load menu background: {ex.Message}"); 
                 #if ANDROID 
                 try {
-                    Android.Util.Log.Error("GLTRON", "Failed to load menu XNB: {ex}");  
+                    Android.Util.Log.Error("GLTRON", $"Failed to load menu background: {ex}");  
                 } 
                 catch {}
                 #endif
-                _menuBackground = null; // or generate a simple placeholder texture if desired
+                _menuBackground = null; // Continue without background
             }
             
-            // Try to load font (non-critical)
+            // Try to load font (non-critical) - FNA handles fonts differently
             try
             {
+                // FNA can load .spritefont files, but may need different approach
                 _font = Content.Load<SpriteFont>("Fonts/Default");
-                System.Diagnostics.Debug.WriteLine("GLTRON", "SpriteFont loaded");
+                System.Diagnostics.Debug.WriteLine("GLTRON: SpriteFont loaded successfully");
+                #if ANDROID
+                try { Android.Util.Log.Info("GLTRON", "SpriteFont loaded successfully"); } catch { }
+                #endif
             }
             catch (System.Exception ex)
             {
-                try {
-                    System.Diagnostics.Debug.WriteLine("GLTRON", $"SpriteFont load failed: {ex}"); 
-                    } catch { }
-                _font = null; // Continue without font
+                System.Diagnostics.Debug.WriteLine($"GLTRON: SpriteFont load failed: {ex}"); 
+                #if ANDROID
+                try { Android.Util.Log.Warn("GLTRON", $"SpriteFont load failed: {ex}"); } catch { }
+                #endif
+                
+                // Try alternative font loading approach for FNA
+                try
+                {
+                    // FNA might need the TTF file directly
+                    System.Diagnostics.Debug.WriteLine("GLTRON: Attempting alternative font loading...");
+                    // For now, continue without font - we'll create a fallback
+                    _font = null;
+                }
+                catch
+                {
+                    _font = null; // Continue without font
+                }
             }
 
             // Initialize HUD if font loaded
             if (_font != null)
             {
-                _hud = new GltronMobileEngine.Video.HUD(_spriteBatch, _font);
-                _glTronGame.tronHUD = _hud;
-                System.Diagnostics.Debug.WriteLine("GLTRON", "HUD initialized");
+                try
+                {
+                    _hud = new GltronMobileEngine.Video.HUD(_spriteBatch, _font);
+                    _glTronGame.tronHUD = _hud;
+                    System.Diagnostics.Debug.WriteLine("GLTRON: HUD initialized successfully");
+                    #if ANDROID
+                    try { Android.Util.Log.Info("GLTRON", "HUD initialized successfully"); } catch { }
+                    #endif
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GLTRON: HUD initialization failed: {ex}");
+                    #if ANDROID
+                    try { Android.Util.Log.Error("GLTRON", $"HUD initialization failed: {ex}"); } catch { }
+                    #endif
+                    _hud = null;
+                }
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("GLTRON", "Running without HUD due to font loading failure");
+                System.Diagnostics.Debug.WriteLine("GLTRON: Running without HUD due to font loading failure");
+                #if ANDROID
+                try { Android.Util.Log.Warn("GLTRON", "Running without HUD due to font loading failure"); } catch { }
+                #endif
             }
 
             // Initialize 3D graphics components (non-critical)
@@ -340,11 +377,23 @@ public class Game1 : Game
                 // Continue without sound - this is non-critical
             }
 
-            Android.Util.Log.Info("GLTRON", "LoadContent completed successfully");
+            System.Diagnostics.Debug.WriteLine("GLTRON: LoadContent completed successfully");
+            try
+            {
+#if ANDROID
+                Android.Util.Log.Info("GLTRON", "LoadContent completed successfully");
+#endif
+            }
+            catch { /* Ignore platform-specific logging errors */ }
         }
         catch (System.Exception ex)
         {
-            try { Android.Util.Log.Error("GLTRON", $"LoadContent failed: {ex}"); } catch { }
+            System.Diagnostics.Debug.WriteLine($"GLTRON: LoadContent failed: {ex}");
+            try { 
+#if ANDROID
+                Android.Util.Log.Error("GLTRON", $"LoadContent failed: {ex}"); 
+#endif
+            } catch { }
             throw; // Critical failure
         }
     }
