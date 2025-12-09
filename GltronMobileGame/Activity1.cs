@@ -32,10 +32,63 @@ namespace gltron.org.gltronmobile
                 base.OnCreate(bundle);
                 Android.Util.Log.Info("GLTRON", "Activity.OnCreate completed");
 
-                Android.Util.Log.Info("GLTRON", "Step 1: Setting up Android context for MonoGame...");
+                Android.Util.Log.Info("GLTRON", "Step 1: Setting up Android environment...");
                 
-                // Set up Android context using reflection before creating Game instance
-                SetupMonoGameAndroidContext();
+                // Try multiple approaches to set the Android context
+                try
+                {
+                    // Approach 1: Try AndroidGamePlatform._currentActivity
+                    var platformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform, MonoGame.Framework");
+                    if (platformType != null)
+                    {
+                        Android.Util.Log.Info("GLTRON", "Found AndroidGamePlatform type");
+                        
+                        // Try different field names
+                        string[] fieldNames = { "_currentActivity", "currentActivity", "Activity", "_activity", "Context", "_context" };
+                        foreach (var fieldName in fieldNames)
+                        {
+                            var field = platformType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+                            if (field != null)
+                            {
+                                field.SetValue(null, this);
+                                Android.Util.Log.Info("GLTRON", $"Set {fieldName} field successfully");
+                                break;
+                            }
+                        }
+                        
+                        // Try properties too
+                        string[] propertyNames = { "CurrentActivity", "Activity", "Context" };
+                        foreach (var propName in propertyNames)
+                        {
+                            var prop = platformType.GetProperty(propName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+                            if (prop != null && prop.CanWrite)
+                            {
+                                prop.SetValue(null, this);
+                                Android.Util.Log.Info("GLTRON", $"Set {propName} property successfully");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Approach 2: Try setting Android.App.Application.Context
+                    if (Android.App.Application.Context == null)
+                    {
+                        Android.Util.Log.Info("GLTRON", "Application.Context is null, trying to set it");
+                        // This might not work, but worth trying
+                    }
+                    else
+                    {
+                        Android.Util.Log.Info("GLTRON", "Application.Context is available");
+                    }
+                    
+                    // Approach 3: Set current activity in a global way
+                    Java.Lang.JavaSystem.SetProperty("mono.android.activity", this.GetType().FullName);
+                    
+                }
+                catch (System.Exception ex)
+                {
+                    Android.Util.Log.Error("GLTRON", $"Setup failed: {ex.Message}");
+                }
                 
                 Android.Util.Log.Info("GLTRON", "Step 2: Creating Game1 instance...");
                 
@@ -43,22 +96,9 @@ namespace gltron.org.gltronmobile
                 _game = new Game1();
                 Android.Util.Log.Info("GLTRON", "Game1 instance created successfully");
                 
-                Android.Util.Log.Info("GLTRON", "Step 3: Getting game view from services...");
-                var gameView = _game.Services.GetService(typeof(Android.Views.View));
-                if (gameView == null)
-                {
-                    Android.Util.Log.Error("GLTRON", "ERROR: Game view service is null!");
-                    throw new System.InvalidOperationException("Game view service not available");
-                }
-                Android.Util.Log.Info("GLTRON", "Game view service obtained successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 4: Setting content view...");
-                SetContentView((Android.Views.View)gameView);
-                Android.Util.Log.Info("GLTRON", "Content view set successfully");
-                
-                Android.Util.Log.Info("GLTRON", "Step 5: Starting game loop...");
-                _game.RunOneFrame();
-                Android.Util.Log.Info("GLTRON", "Game loop started");
+                Android.Util.Log.Info("GLTRON", "Step 3: Running game...");
+                _game.Run();
+                Android.Util.Log.Info("GLTRON", "Game started successfully");
                 
                 Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
@@ -73,93 +113,7 @@ namespace gltron.org.gltronmobile
             }
         }
 
-        private void SetupMonoGameAndroidContext()
-        {
-            try
-            {
-                Android.Util.Log.Info("GLTRON", "Attempting to set Android context via reflection...");
-                
-                // Try multiple approaches to set the Android context
-                
-                // Approach 1: Look for AndroidGamePlatform static fields/properties
-                var androidGamePlatformType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGamePlatform");
-                if (androidGamePlatformType != null)
-                {
-                    Android.Util.Log.Info("GLTRON", "Found AndroidGamePlatform type");
-                    
-                    // Try to find Activity field/property
-                    var activityField = androidGamePlatformType.GetField("Activity", BindingFlags.Public | BindingFlags.Static);
-                    if (activityField != null)
-                    {
-                        activityField.SetValue(null, this);
-                        Android.Util.Log.Info("GLTRON", "Set Activity via AndroidGamePlatform.Activity field");
-                        return;
-                    }
-                    
-                    var activityProperty = androidGamePlatformType.GetProperty("Activity", BindingFlags.Public | BindingFlags.Static);
-                    if (activityProperty != null && activityProperty.CanWrite)
-                    {
-                        activityProperty.SetValue(null, this);
-                        Android.Util.Log.Info("GLTRON", "Set Activity via AndroidGamePlatform.Activity property");
-                        return;
-                    }
-                }
-                
-                // Approach 2: Look for Game class static fields/properties
-                var gameType = typeof(Microsoft.Xna.Framework.Game);
-                var gameActivityField = gameType.GetField("Activity", BindingFlags.Public | BindingFlags.Static);
-                if (gameActivityField != null)
-                {
-                    gameActivityField.SetValue(null, this);
-                    Android.Util.Log.Info("GLTRON", "Set Activity via Game.Activity field");
-                    return;
-                }
-                
-                var gameActivityProperty = gameType.GetProperty("Activity", BindingFlags.Public | BindingFlags.Static);
-                if (gameActivityProperty != null && gameActivityProperty.CanWrite)
-                {
-                    gameActivityProperty.SetValue(null, this);
-                    Android.Util.Log.Info("GLTRON", "Set Activity via Game.Activity property");
-                    return;
-                }
-                
-                // Approach 3: Look for any Android-related static context setters
-                var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-                foreach (var assembly in assemblies)
-                {
-                    if (assembly.FullName.Contains("MonoGame") || assembly.FullName.Contains("Microsoft.Xna.Framework"))
-                    {
-                        var types = assembly.GetTypes();
-                        foreach (var type in types)
-                        {
-                            if (type.Name.Contains("Android"))
-                            {
-                                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static);
-                                foreach (var method in methods)
-                                {
-                                    if (method.Name.Contains("SetActivity") || method.Name.Contains("Initialize"))
-                                    {
-                                        var parameters = method.GetParameters();
-                                        if (parameters.Length == 1 && parameters[0].ParameterType == typeof(Activity))
-                                        {
-                                            method.Invoke(null, new object[] { this });
-                                            Android.Util.Log.Info("GLTRON", $"Set Activity via {type.Name}.{method.Name}");
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                Android.Util.Log.Info("GLTRON", "No suitable method found to set Android context");
-            }
-            catch (System.Exception ex)
-            {
-                Android.Util.Log.Error("GLTRON", $"Error setting up Android context: {ex.Message}");
-            }
-        }
+
 
         private void ShowErrorScreen(System.Exception ex)
         {
