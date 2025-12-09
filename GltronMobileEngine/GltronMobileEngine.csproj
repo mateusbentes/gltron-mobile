@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net9.0-android</TargetFrameworks>
+    <TargetFrameworks>net8.0;net8.0-android</TargetFrameworks>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -8,17 +8,17 @@
     <AssemblyName>GltronMobileEngine</AssemblyName>
     
     <!-- Android-specific properties -->
-    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-android'">24.0</SupportedOSPlatformVersion>
-    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net9.0-android'">36.0</TargetPlatformVersion>
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android'">24.0</SupportedOSPlatformVersion>
+    <TargetPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android'">34.0</TargetPlatformVersion>
     
     <!-- MonoGame Platform Properties -->
-    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0'">DesktopGL</MonoGamePlatform>
-    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net9.0-android'">Android</MonoGamePlatform>
+    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net8.0'">DesktopGL</MonoGamePlatform>
+    <MonoGamePlatform Condition="'$(TargetFramework)' == 'net8.0-android'">Android</MonoGamePlatform>
   </PropertyGroup>
   <ItemGroup>
     <!-- Multiplatform MonoGame support -->
-    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.5-develop.13" Condition="'$(TargetFramework)' == 'net9.0-android'" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5-develop.13" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0-android'" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.2.1105" Condition="'$(TargetFramework)' == 'net8.0'" />
     <!-- Note: Content building is handled by the game projects, not the engine -->
   </ItemGroup>
   <ItemGroup>

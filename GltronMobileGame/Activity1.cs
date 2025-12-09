@@ -1,107 +1,122 @@
-using System;
 using Android.App;
+using Android.Content.PM;
 using Android.OS;
 using Android.Views;
 using Microsoft.Xna.Framework;
 using GltronMobileGame;
-using System.Reflection;
 
 namespace gltron.org.gltronmobile
 {
     [Activity(
-        Label = "GLTron Mobile",
+        Label = "@string/app_name",
+        Icon = "@drawable/Icon",
         MainLauncher = true,
-        Theme = "@android:style/Theme.NoTitleBar.Fullscreen",
-        ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape
+        AlwaysRetainTaskState = true,
+        LaunchMode = LaunchMode.SingleInstance,
+        ScreenOrientation = ScreenOrientation.SensorLandscape,
+        ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
+        Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
-    public class Activity1 : Activity
+    public class Activity1 : AndroidGameActivity
     {
         private Game1 _game;
-        private AndroidGameView _gameView;
 
-        protected override void OnCreate(Bundle? savedInstanceState)
+        protected override void OnCreate(Bundle bundle)
         {
-            base.OnCreate(savedInstanceState);
-
-            // Enable fullscreen and keep the screen on while playing.
-            Window?.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
-            Window?.SetFlags(WindowManagerFlags.KeepScreenOn, WindowManagerFlags.KeepScreenOn);
-
             try
             {
-                Android.Util.Log.Debug("GLTRON", "Trying MonoGame .NET 9 official approach...");
+                Android.Util.Log.Info("GLTRON", "=== MONOGAME GAME1 INITIALIZATION ===");
+                Android.Util.Log.Info("GLTRON", "Activity.OnCreate starting...");
                 
-                // Try the official MonoGame .NET 9 approach - let the game handle its own view creation
-                Android.Util.Log.Debug("GLTRON", "Creating Game1 and letting it handle Android integration...");
+                base.OnCreate(bundle);
+                Android.Util.Log.Info("GLTRON", "Activity.OnCreate completed");
+
+                Android.Util.Log.Info("GLTRON", "Step 1: Creating Game1 instance...");
                 
+                // Create the game instance
                 _game = new Game1();
-                Android.Util.Log.Debug("GLTRON", "Game1 created successfully!");
+                Android.Util.Log.Info("GLTRON", "Game1 instance created successfully");
                 
-                // Try to get the view that MonoGame should create automatically
-                Android.Util.Log.Debug("GLTRON", "Checking if MonoGame created a view automatically...");
-                var gameView = _game.Services.GetService(typeof(Android.Views.View)) as Android.Views.View;
+                Android.Util.Log.Info("GLTRON", "Step 2: Getting game view from services...");
+                var gameView = _game.Services.GetService(typeof(Android.Views.View));
+                if (gameView == null)
+                {
+                    Android.Util.Log.Error("GLTRON", "ERROR: Game view service is null!");
+                    throw new System.InvalidOperationException("Game view service not available");
+                }
+                Android.Util.Log.Info("GLTRON", "Game view service obtained successfully");
                 
-                if (gameView != null)
-                {
-                    Android.Util.Log.Debug("GLTRON", "SUCCESS: MonoGame created view automatically!");
-                    SetContentView(gameView);
-                    _game.Run();
-                }
-                else
-                {
-                    Android.Util.Log.Debug("GLTRON", "MonoGame didn't create view automatically, trying Run() directly...");
-                    // Some MonoGame versions handle view creation in Run()
-                    _game.Run();
-                }
+                Android.Util.Log.Info("GLTRON", "Step 3: Setting content view...");
+                SetContentView((Android.Views.View)gameView);
+                Android.Util.Log.Info("GLTRON", "Content view set successfully");
+                
+                Android.Util.Log.Info("GLTRON", "Step 4: Starting game loop...");
+                _game.RunOneFrame();
+                Android.Util.Log.Info("GLTRON", "Game loop started");
+                
+                Android.Util.Log.Info("GLTRON", "MonoGame initialized successfully!");
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                // If initialization fails, show a readable on-screen error instead of a silent crash.
+                Android.Util.Log.Error("GLTRON", "=== MONOGAME INITIALIZATION EXCEPTION ===");
+                Android.Util.Log.Error("GLTRON", $"EXCEPTION TYPE: {ex.GetType().FullName}");
+                Android.Util.Log.Error("GLTRON", $"EXCEPTION MESSAGE: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"EXCEPTION STACK: {ex.StackTrace}");
+                
                 ShowErrorScreen(ex);
             }
         }
 
-        /// <summary>
-        /// Displays a simple centered error message if the game fails to initialize.
-        /// This avoids black-screen crashes and gives immediate feedback to the user.
-        /// </summary>
-        private void ShowErrorScreen(Exception ex)
+        private void ShowErrorScreen(System.Exception ex)
         {
-            var errorView = new Android.Widget.TextView(this);
-            errorView.Text = $"GLTron Mobile - Initialization Error\n\n{ex}";
-            errorView.SetTextColor(Android.Graphics.Color.White);
-            errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
-            errorView.Gravity = GravityFlags.Center;
-            errorView.SetPadding(20, 20, 20, 20);
-
-            SetContentView(errorView);
+            try
+            {
+                var errorView = new Android.Widget.TextView(this);
+                errorView.Text = $"GLTron Mobile - Initialization Error\n\n" +
+                               $"Error Type: {ex.GetType().Name}\n" +
+                               $"Message: {ex.Message}\n\n" +
+                               $"Please restart the application.\n" +
+                               $"If the problem persists, try restarting your device.";
+                errorView.SetTextColor(Android.Graphics.Color.White);
+                errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
+                errorView.Gravity = Android.Views.GravityFlags.Center;
+                errorView.SetPadding(20, 20, 20, 20);
+                SetContentView(errorView);
+                Android.Util.Log.Info("GLTRON", "Error view displayed");
+            }
+            catch (System.Exception ex2)
+            {
+                Android.Util.Log.Error("GLTRON", $"Failed to show error view: {ex2}");
+            }
         }
 
         protected override void OnPause()
         {
+            Android.Util.Log.Info("GLTRON", "Activity1.OnPause");
             base.OnPause();
-
-            // Pause rendering + GL thread safely.
-            // This prevents crashes on home-button press or app minimization.
-            _gameView?.Pause();
         }
 
         protected override void OnResume()
         {
+            Android.Util.Log.Info("GLTRON", "Activity1.OnResume");
             base.OnResume();
-
-            // Resume rendering + GL thread.
-            // This restores the MonoGame frame loop on returning to the app.
-            _gameView?.Resume();
         }
 
         protected override void OnDestroy()
         {
+            Android.Util.Log.Info("GLTRON", "Activity1.OnDestroy");
+            
+            try
+            {
+                _game?.Dispose();
+                _game = null;
+            }
+            catch (System.Exception ex)
+            {
+                Android.Util.Log.Error("GLTRON", $"Error disposing game: {ex}");
+            }
+            
             base.OnDestroy();
-
-            _gameView = null;
-            _game?.Dispose();
-            _game = null;
         }
     }
 }

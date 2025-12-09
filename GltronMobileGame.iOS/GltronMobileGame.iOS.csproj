@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-ios</TargetFramework>
+    <TargetFramework>net8.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <RootNamespace>GltronMobileGame</RootNamespace>
@@ -19,8 +19,8 @@
 
   <!-- MonoGame packages -->
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.5-develop.13" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5-develop.13" />
+    <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
   </ItemGroup>
 
   <!-- Shared Engine -->
