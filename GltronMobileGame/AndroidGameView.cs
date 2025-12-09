@@ -34,16 +34,14 @@ namespace GltronMobileGame
             {
                 try
                 {
-                    // Initialize the game's graphics
-                    _game.Initialize();
-                    _game.LoadContent();
+                    // The game will initialize itself when we call RunOneFrame
+                    // We just need to set up the OpenGL context here
+                    Android.Util.Log.Debug("GLTRON", "OpenGL surface created, game will initialize on first frame");
                     _isInitialized = true;
-                    
-                    Android.Util.Log.Debug("GLTRON", "Game initialized successfully");
                 }
                 catch (Exception ex)
                 {
-                    Android.Util.Log.Error("GLTRON", $"Game initialization failed: {ex.Message}");
+                    Android.Util.Log.Error("GLTRON", $"Surface creation failed: {ex.Message}");
                 }
             }
         }
@@ -75,12 +73,12 @@ namespace GltronMobileGame
             {
                 try
                 {
-                    // Run one frame of the game
-                    _game.Tick();
+                    // Run one frame of the game - this will handle initialization automatically
+                    _game.RunOneFrame();
                 }
                 catch (Exception ex)
                 {
-                    Android.Util.Log.Error("GLTRON", $"Game tick failed: {ex.Message}");
+                    Android.Util.Log.Error("GLTRON", $"Game frame failed: {ex.Message}");
                 }
             }
         }
