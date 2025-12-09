@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Build the FNA Android project
+# Build the solution (Engine + Android Game) for the new architecture
 # Usage: ./scripts/build-android.sh [-c Debug|Release] [-p ProjectDir] [-f TargetFramework]
-# Defaults: -c Release, -p GltronMobileGame, -f net9.0-android36.0
+# Defaults: -c Release, -p GltronMobileGame, -f net8.0-android
 
 set -euo pipefail
 
 CONFIG="Release"
 PROJ_DIR="GltronMobileGame"
-TFM="net9.0-android36.0"
+TFM="net8.0-android"
 
 while getopts ":c:p:f:" opt; do
   case $opt in
@@ -32,38 +32,31 @@ else
   echo "Using Android-only solution"
 fi
 
-# Check FNA dependencies
-echo "Checking FNA dependencies..."
-if [ ! -f "GltronMobileGame/FNA/lib/SDL2-CS/src/SDL2.cs" ]; then
-  echo "FNA dependencies missing. Please run the setup script or CI will handle this."
-  echo "Continuing with build - dependencies should be available..."
-else
-  echo "FNA dependencies found"
-fi
-
-# Restore solution (includes FNA project reference)
+# Restore solution
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
 
-# FNA uses raw content files - no MGCB build needed
-echo "FNA: Using raw content files (no MGCB processing required)"
-echo "Content files will be packaged directly from Content/ directory"
+# Build content if MGCB present
+if [ -f "$PROJ_DIR/Content/Content.mgcb" ]; then
+  echo "Building content (Android platform)..."
+  
+  CONTENT_FILE="$PROJ_DIR/Content/Content.mgcb"
+  OUT_DIR="$PROJ_DIR/Content/bin/Android/Content"
+  OBJ_DIR="$PROJ_DIR/Content/obj/Android"
 
-# Build FNA solution (engine + game) - Android targets only
-echo "Building FNA solution for Android..."
+  mkdir -p "$OUT_DIR" "$OBJ_DIR"
+
+  mgcb -r /@:"$CONTENT_FILE" /platform:Android /outputDir:"$OUT_DIR" /intermediateDir:"$OBJ_DIR"
+
+  echo "Content built. (not synchronizing Assets)"
+fi
+
+# Build via solution (engine + game)
+echo "Building solution..."
 dotnet build "$SOLUTION_FILE" -c "$CONFIG"
 
-# Build the FNA Android project
-echo "Building FNA Android project (TFM: $TFM)..."
+# Optionally also build the game project for a specific TFM if needed
+echo "Building Android project (explicit TFM: $TFM)..."
 dotnet build "$PROJ_DIR" -c "$CONFIG" -f "$TFM"
 
-echo ""
-echo "🎉 FNA Android build completed!"
-echo ""
-echo "📱 To deploy:"
-echo "   adb install -r \"$(find \"$PROJ_DIR/bin/$CONFIG\" -type f -name '*.apk' -o -name '*.aab' 2>/dev/null | head -n1)\""
-echo ""
-echo "✅ FNA features enabled:"
-echo "   • Direct activity management (no AndroidGameActivity)"
-echo "   • Raw content loading (no XNB files)"
-echo "   • Better .NET 9 compatibility"
+echo "Done. To deploy, use your IDE or: adb install -r \"$(find \"$PROJ_DIR/bin/$CONFIG\" -type f -name '*.apk' -o -name '*.aab' 2>/dev/null | head -n1)\""

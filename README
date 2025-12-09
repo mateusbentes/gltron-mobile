@@ -89,15 +89,15 @@ BUILD REQUIREMENTS
 ==================
 
 For Android:
-- .NET 9 SDK
-- Android SDK (API 24-36, targeting API 36)
+- .NET 8 SDK
+- Android SDK (API 24-34, targeting API 34)
 - Android workload: dotnet workload install android
 - MonoGame 3.8.1.303 framework
 - MonoGame templates and MGCB tool
 
 For iOS (macOS only):
 - macOS with Xcode
-- .NET 9 SDK with iOS workload: dotnet workload install ios
+- .NET 8 SDK with iOS workload: dotnet workload install ios
 - Apple Developer account (for device deployment)
 
 COMPATIBILITY NOTES
@@ -105,7 +105,7 @@ COMPATIBILITY NOTES
 
 MonoGame Framework:
 - Version: 3.8.2.1105 (Latest stable)
-- Android Target: API 34 (Android 14) - full compatibility
+- Android Target: API 36 (Android 16) - full compatibility
 - Minimum Android: API 24 (Android 7.0)
 - Note: Updated MonoGame version supports latest Android APIs
 
@@ -123,7 +123,7 @@ Target Devices:
 - iOS simulators
 
 Verified Compatibility:
-- MonoGame 3.8.2.1105 with Android API 36 (Android 16)
+- MonoGame 3.8.2.1105 with Android API 34 (Android 14)
 - Full support for latest Android versions
 
 Build Verification:

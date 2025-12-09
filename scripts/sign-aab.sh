@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# GLTron Mobile FNA - Android App Bundle (AAB) Signing Script
+# GLTron Mobile - Android App Bundle (AAB) Signing Script
 # Builds and signs AAB for Google Play Store distribution
 
 set -e  # Exit on any error
@@ -10,7 +10,7 @@ KEYSTORE_NAME="gltron-release.keystore"
 KEY_ALIAS="gltron-release-key"
 PROJECT_FILE="GltronMobileGame/GltronAndroid.csproj"
 BUILD_CONFIG="Release"
-TARGET_FRAMEWORK="net9.0-android36.0"
+TARGET_FRAMEWORK="net8.0-android"
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,8 +19,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}📱 GLTron Mobile FNA - AAB Signing Script${NC}"
-echo "================================================"
+echo -e "${BLUE}📱 GLTron Mobile - AAB Signing Script${NC}"
+echo "============================================="
 echo ""
 
 # Navigate to project root (one level up from scripts)
@@ -71,25 +71,14 @@ if [ -z "$KEY_PASSWORD" ]; then
 fi
 
 echo ""
-# Ensure FNA dependencies are available
-echo -e "${BLUE}🔧 Checking FNA dependencies...${NC}"
-if [ ! -f "GltronMobileGame/FNA/lib/SDL2-CS/src/SDL2.cs" ]; then
-  echo "FNA dependencies missing, setting up..."
-  ./scripts/setup-fna-deps.sh
-fi
-
 echo -e "${BLUE}🧹 Cleaning previous builds...${NC}"
 dotnet clean "$PROJECT_FILE" -c "$BUILD_CONFIG" --verbosity quiet
 
-# Restore packages
-echo -e "${BLUE}📦 Restoring packages...${NC}"
-dotnet restore GltronMobile.sln --verbosity quiet
-
-echo -e "${BLUE}🔨 Building signed FNA Android App Bundle (AAB)...${NC}"
+echo -e "${BLUE}🔨 Building signed Android App Bundle (AAB)...${NC}"
 echo "This may take a few minutes..."
 echo ""
 
-# Build the signed AAB with FNA optimizations
+# Build the signed AAB
 dotnet publish "$PROJECT_FILE" \
     -c "$BUILD_CONFIG" \
     -f "$TARGET_FRAMEWORK" \
@@ -99,15 +88,6 @@ dotnet publish "$PROJECT_FILE" \
     -p:AndroidSigningKeyAlias="$KEY_ALIAS" \
     -p:AndroidSigningKeyPass="$KEY_PASSWORD" \
     -p:AndroidSigningStorePass="$KEYSTORE_PASSWORD" \
-    -p:AndroidUseAapt2=true \
-    -p:AndroidCreatePackagePerAbi=false \
-    -p:EmbedAssembliesIntoApk=true \
-    -p:AndroidLinkMode=SdkOnly \
-    -p:AndroidEnableProguard=true \
-    -p:AndroidUseSharedRuntime=false \
-    -p:AndroidStripILAfterAOT=true \
-    -p:PublishTrimmed=true \
-    -p:TrimMode=partial \
     --verbosity normal
 
 if [ $? -eq 0 ]; then
@@ -132,13 +112,7 @@ if [ $? -eq 0 ]; then
             echo ""
         fi
         
-        echo -e "${GREEN}🚀 FNA AAB Ready for Google Play Store!${NC}"
-        echo ""
-        echo -e "${BLUE}🎮 FNA Features Included:${NC}"
-        echo "• XNA4-compatible framework"
-        echo "• Native SDL2/OpenAL integration"
-        echo "• Raw content loading (no XNB files)"
-        echo "• Optimized for mobile performance"
+        echo -e "${GREEN}🚀 Ready for Google Play Store!${NC}"
         echo ""
         echo -e "${YELLOW}📋 Next Steps:${NC}"
         echo "1. 🌐 Go to Google Play Console (play.google.com/console)"
@@ -146,10 +120,9 @@ if [ $? -eq 0 ]; then
         echo "3. 📝 Fill in store listing details"
         echo "4. 🎯 Submit for review"
         echo ""
-        echo -e "${BLUE}💡 FNA Production Tips:${NC}"
-        echo "• AAB includes optimized FNA runtime"
-        echo "• Native libraries are automatically included"
-        echo "• Content files are packaged as raw assets"
+        echo -e "${BLUE}💡 Tips:${NC}"
+        echo "• AAB files are smaller and more efficient than APKs"
+        echo "• Google Play will generate optimized APKs for each device"
         echo "• Keep your keystore safe for future updates"
         
     else

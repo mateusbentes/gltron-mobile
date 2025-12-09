@@ -19,8 +19,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔐 GLTron Mobile FNA - Android Keystore Creator${NC}"
-echo "====================================================="
+echo -e "${BLUE}🔐 GLTron Mobile - Android Keystore Creator${NC}"
+echo "=================================================="
 echo ""
 
 # Check if keytool is available
@@ -89,10 +89,9 @@ if [ $? -eq 0 ]; then
     echo "4. 🚫 Never commit this keystore to version control"
     echo "5. 🔐 Store passwords in a secure password manager"
     echo ""
-    echo -e "${GREEN}📋 Next Steps for FNA Production:${NC}"
-    echo "1. Run: ./scripts/build-production-fna.sh to build production APK/AAB"
-    echo "2. Run: ./scripts/sign-aab.sh to create signed AAB"
-    echo "3. Upload the signed AAB to Google Play Console"
+    echo -e "${GREEN}📋 Next Steps:${NC}"
+    echo "1. Run: ./scripts/sign-aab.sh to create signed AAB"
+    echo "2. Upload the signed AAB to Google Play Console"
     echo ""
     
     # Create a .gitignore entry if it doesn't exist

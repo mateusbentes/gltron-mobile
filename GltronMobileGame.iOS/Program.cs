@@ -13,14 +13,6 @@ namespace GltronMobileGame
         {
             try
             {
-                FNAHelper.LogInfo("=== FNA iOS APPLICATION STARTING ===");
-                
-                // Setup FNA environment for iOS
-                FNAHelper.SetupFNAEnvironment();
-                
-                // Verify native frameworks are available
-                FNAHelper.LogInfo("Checking iOS framework availability...");
-                
                 System.Diagnostics.Debug.WriteLine("GLTRON: iOS - Creating Game1 instance...");
                 game = new Game1();
                 
@@ -29,28 +21,17 @@ namespace GltronMobileGame
                     throw new InvalidOperationException("Game1 instance creation returned null");
                 }
                 
-                FNAHelper.LogInfo("iOS - Starting FNA game loop...");
+                System.Diagnostics.Debug.WriteLine("GLTRON: iOS - Starting game...");
                 game.Run();
-                
-                FNAHelper.LogInfo("FNA iOS Application initialized successfully!");
             }
             catch (Exception ex)
             {
-                FNAHelper.LogError("=== FNA iOS INITIALIZATION EXCEPTION ===");
-                FNAHelper.LogError($"EXCEPTION TYPE: {ex.GetType().FullName}");
-                FNAHelper.LogError($"EXCEPTION MESSAGE: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    FNAHelper.LogError($"INNER EXCEPTION: {ex.InnerException.GetType().FullName}");
-                    FNAHelper.LogError($"INNER MESSAGE: {ex.InnerException.Message}");
-                }
-                FNAHelper.LogError($"EXCEPTION STACK: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"GLTRON: iOS - Game initialization failed: {ex}");
                 
                 // Show error alert on iOS
-                var errorMessage = GetDetailedErrorMessage(ex);
                 var alert = UIAlertController.Create(
-                    "GLTron Mobile - FNA Error", 
-                    $"FNA initialization failed:\n{ex.Message}\n\n{errorMessage}\n\nDevice: {UIDevice.CurrentDevice.Model}\niOS: {UIDevice.CurrentDevice.SystemVersion}", 
+                    "GLTron Mobile - Error", 
+                    $"Game initialization failed:\n{ex.Message}\n\nPlease restart the application.", 
                     UIAlertControllerStyle.Alert
                 );
                 alert.AddAction(UIAlertAction.Create("OK", UIAlertActionStyle.Default, null));
@@ -61,47 +42,6 @@ namespace GltronMobileGame
                 rootViewController?.PresentViewController(alert, true, null);
                 
                 throw;
-            }
-        }
-
-        private static string GetDetailedErrorMessage(Exception ex)
-        {
-            if (ex is System.TypeInitializationException)
-            {
-                return "FNA Platform Initialization Failed:\n" +
-                       "• SDL2 framework missing or incompatible\n" +
-                       "• OpenAL framework missing\n" +
-                       "• Metal/OpenGL ES not supported\n" +
-                       "• iOS framework architecture mismatch";
-            }
-            else if (ex.Message.Contains("SDL"))
-            {
-                return "SDL2 Framework Issue:\n" +
-                       "• SDL2.framework not found in app bundle\n" +
-                       "• Incompatible SDL2 version for iOS\n" +
-                       "• Missing ARM64 framework";
-            }
-            else if (ex.Message.Contains("OpenAL") || ex.Message.Contains("Audio"))
-            {
-                return "Audio System Issue:\n" +
-                       "• OpenAL framework not found\n" +
-                       "• Audio permissions missing\n" +
-                       "• iOS audio hardware not supported";
-            }
-            else if (ex.Message.Contains("Metal") || ex.Message.Contains("OpenGL") || ex.Message.Contains("Graphics"))
-            {
-                return "Graphics System Issue:\n" +
-                       "• Metal not supported on device\n" +
-                       "• OpenGL ES not available\n" +
-                       "• Graphics driver incompatible";
-            }
-            else
-            {
-                return "FNA iOS Requirements:\n" +
-                       "• iOS 12.0 or later\n" +
-                       "• SDL2.framework in app bundle\n" +
-                       "• OpenAL framework support\n" +
-                       "• Metal or OpenGL ES support";
             }
         }
 

@@ -105,10 +105,8 @@ echo "  ✓ Found $AUDIO_COUNT/3 audio files"
 # 6) Check Activity1.cs configuration
 echo "6. Checking Activity configuration..."
 if [ -f "GltronMobileGame/Activity1.cs" ]; then
-    if grep -q "public class Activity1 : Activity" "GltronMobileGame/Activity1.cs"; then
-        echo "  ✓ Activity1 properly configured (direct Activity management)"
-    elif grep -q "AndroidGameActivity" "GltronMobileGame/Activity1.cs"; then
-        echo "  ✓ Activity1 properly configured (AndroidGameActivity)"
+    if grep -q "AndroidGameActivity" "GltronMobileGame/Activity1.cs"; then
+        echo "  ✓ Activity1 properly configured"
     else
         echo "  ❌ Activity1 not properly configured"
     fi

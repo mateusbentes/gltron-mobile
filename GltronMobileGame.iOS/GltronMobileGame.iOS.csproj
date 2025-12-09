@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-ios</TargetFramework>
+    <TargetFramework>net8.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <RootNamespace>GltronMobileGame</RootNamespace>
@@ -8,29 +8,19 @@
 
     <!-- iOS app metadata -->
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
-    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
     <ApplicationId>gltron.org.gltronmobile.ios</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
-    <!-- FNA Configuration -->
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);FNA</DefineConstants>
-    <!-- Disable SDK auto-generated assembly info to avoid conflicts with FNA -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- MonoGame -->
+    <MonoGamePlatform>iOS</MonoGamePlatform>
   </PropertyGroup>
 
-  <!-- Explicitly include our game files -->
+  <!-- MonoGame packages -->
   <ItemGroup>
-    <Compile Include="..\GltronMobileGame\*.cs" />
-    <Compile Include="..\GltronMobileGame\Video\*.cs" />
-    <Compile Include="..\GltronMobileGame\Sound\*.cs" />
-  </ItemGroup>
-
-  <!-- Reference FNA as a proper project dependency -->
-  <ItemGroup>
-    <ProjectReference Include="..\GltronMobileGame\FNA\FNA.NetStandard.csproj" />
+    <PackageReference Include="MonoGame.Framework.iOS" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
   </ItemGroup>
 
   <!-- Shared Engine -->
@@ -38,62 +28,28 @@
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
   </ItemGroup>
 
-  <!-- Game files are now explicitly included above with FNA -->
-
-  <!-- FNA Content (raw files, not XNBs) -->
+  <!-- Share all .cs of the game -->
   <ItemGroup>
-    <BundleResource Include="..\GltronMobileGame\Content\**\*.*"
+    <Compile Include="..\GltronMobileGame\**\*.cs" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Use default MGCB pipeline -->
+  <ItemGroup>
+    <MonoGameContentReference Include="..\GltronMobileGame\Content\Content.mgcb" />
+  </ItemGroup>
+
+  <!-- XNBs generated for iOS -->
+  <ItemGroup>
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.xnb"
                     Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- FNA iOS Native Frameworks -->
+  <!-- Also bundle original compressed music files for MediaPlayer (mp3/m4a) -->
   <ItemGroup>
-    <!-- SDL2 Framework (required) -->
-    <NativeReference Include="Frameworks\SDL2.framework" Condition="Exists('Frameworks\SDL2.framework')">
-      <Kind>Framework</Kind>
-      <Frameworks>SDL2</Frameworks>
-    </NativeReference>
-    
-    <!-- OpenAL Framework (required for audio) -->
-    <NativeReference Include="Frameworks\OpenAL.framework" Condition="Exists('Frameworks\OpenAL.framework')">
-      <Kind>Framework</Kind>
-      <Frameworks>OpenAL</Frameworks>
-    </NativeReference>
-    
-    <!-- Theoraplay Framework (optional for video) -->
-    <NativeReference Include="Frameworks\Theoraplay.framework" Condition="Exists('Frameworks\Theoraplay.framework')">
-      <Kind>Framework</Kind>
-      <Frameworks>Theoraplay</Frameworks>
-    </NativeReference>
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.mp3"
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
+    <BundleResource Include="..\GltronMobileGame\Content\bin\iOS\Content\**\*.m4a"
+                    Link="Content\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
-  
-  <!-- iOS-specific FNA configuration -->
-  <PropertyGroup>
-    <MtouchArch>ARM64</MtouchArch>
-    <MtouchLink>SdkOnly</MtouchLink>
-    <MtouchDebug Condition="'$(Configuration)' == 'Debug'">true</MtouchDebug>
-    <MtouchDebug Condition="'$(Configuration)' == 'Release'">false</MtouchDebug>
-    <CodesignKey>iPhone Developer</CodesignKey>
-    <IOSDebuggerPort>10000</IOSDebuggerPort>
-    
-    <!-- FNA iOS-specific settings (already set above) -->
-    <MtouchUseLlvm>true</MtouchUseLlvm>
-    <MtouchFloat32>true</MtouchFloat32>
-    
-    <!-- Enable bitcode for App Store -->
-    <MtouchEnableBitcode Condition="'$(Configuration)' == 'Release'">true</MtouchEnableBitcode>
-    <MtouchEnableBitcode Condition="'$(Configuration)' == 'Debug'">false</MtouchEnableBitcode>
-  </PropertyGroup>
-  
-  <!-- iOS Framework fallbacks for missing FNA frameworks -->
-  <PropertyGroup Condition="!Exists('Frameworks\SDL2.framework') OR !Exists('Frameworks\OpenAL.framework')">
-    <_FNAFrameworksMissing>true</_FNAFrameworksMissing>
-  </PropertyGroup>
-  
-  <!-- Warning for missing frameworks -->
-  <Target Name="WarnMissingFrameworks" BeforeTargets="Build" Condition="'$(_FNAFrameworksMissing)' == 'true'">
-    <Warning Text="⚠️ FNA iOS frameworks missing! Download SDL2.framework and OpenAL.framework to GltronMobileGame.iOS/Frameworks/ for full functionality." />
-    <Message Text="📝 iOS will use system frameworks as fallback, but functionality may be limited." Importance="high" />
-  </Target>
 
 </Project>

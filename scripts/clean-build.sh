@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Clean FNA Android/iOS project build artifacts
+# Clean MonoGame Android project build artifacts
 # Usage: ./scripts/clean-build.sh [-p ProjectDir] [-a] [-v]
 # Options:
 #   -p ProjectDir  : Specify project directory (default: GltronMobileGame)
@@ -55,9 +55,16 @@ clean_project() {
             rm -rf "$project_path/obj"
         fi
         
-        # FNA uses raw content files - no Content/bin or Content/obj to clean
-        # Content files remain in their original locations
-        log "  FNA: Content files are raw (no build artifacts to clean)"
+        # Remove Content build artifacts
+        if [ -d "$project_path/Content/bin" ]; then
+            log "  Removing Content/bin directory..."
+            rm -rf "$project_path/Content/bin"
+        fi
+        
+        if [ -d "$project_path/Content/obj" ]; then
+            log "  Removing Content/obj directory..."
+            rm -rf "$project_path/Content/obj"
+        fi
         
         # Remove Android-specific artifacts
         if [ -d "$project_path/Resources/bin" ]; then
@@ -110,15 +117,10 @@ find . -name "*.tmp" -o -name "*.temp" -o -name "*~" 2>/dev/null | while read -r
     rm -f "$file"
 done
 
-echo "✓ FNA build clean complete!"
-echo ""
-echo "📝 FNA Notes:"
-echo "• Raw content files in Content/ are preserved (no build artifacts)"
-echo "• FNA source files in FNA/ directory are preserved"
+echo "✓ Build clean complete!"
 echo ""
 echo "To rebuild, run:"
-echo "  ./scripts/build-android.sh -c Release    # Android"
-echo "  ./scripts/build-ios.sh -c Release        # iOS (macOS only)"
+echo "  ./scripts/build-android.sh -c Release"
 echo ""
 echo "To clean all projects next time, use:"
 echo "  ./scripts/clean-build.sh -a -v"

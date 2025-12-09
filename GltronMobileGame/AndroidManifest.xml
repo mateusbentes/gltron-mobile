@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="gltron.org.gltronmobile" android:versionCode="2" android:versionName="2.0">
   <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />
-  
-  <!-- OpenGL ES support with fallback compatibility -->
-  <!-- Prefer ES 3.0 but allow ES 2.0 fallback for broader device support -->
-  <uses-feature android:glEsVersion="0x00030000" android:required="false" />
   <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-  
-  <!-- FNA permissions -->
   <uses-permission android:name="android.permission.WAKE_LOCK" />
-  <uses-permission android:name="android.permission.VIBRATE" />
-  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
   <application 
     android:label="GLTron Mobile" 
     android:icon="@drawable/icon"

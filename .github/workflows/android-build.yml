@@ -1,4 +1,4 @@
-name: FNA Android Build
+name: Android Debug Build
 
 on:
   push:
@@ -16,93 +16,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup FNA dependencies
-      run: |
-        echo "Setting up FNA dependencies..."
-        
-        # First, ensure FNA source code is available
-        if [ ! -d "GltronMobileGame/FNA" ] || [ ! -f "GltronMobileGame/FNA/FNA.NetStandard.csproj" ]; then
-          echo "📥 FNA source not found, downloading..."
-          cd GltronMobileGame
-          git clone https://github.com/FNA-XNA/FNA.git
-          cd ..
-        else
-          echo "✅ FNA source already available"
-        fi
-        
-        cd GltronMobileGame/FNA
-        
-        # Always ensure lib directory structure exists
-        mkdir -p lib/SDL2-CS/src
-        mkdir -p lib/FAudio/csharp
-        mkdir -p lib/Theorafile/csharp
-        mkdir -p lib/SDL3-CS/SDL3
-        
-        # Download FNA C# bindings (always refresh in CI)
-        echo "Downloading FNA C# bindings..."
-        
-        # Download SDL2-CS
-        echo "Downloading SDL2-CS..."
-        if curl -fsSL --retry 3 --retry-delay 2 -o lib/SDL2-CS/src/SDL2.cs https://raw.githubusercontent.com/flibitijibibo/SDL2-CS/master/src/SDL2.cs; then
-          echo "✅ SDL2-CS downloaded successfully"
-        else
-          echo "❌ SDL2-CS download failed, creating functional placeholder"
-          echo 'namespace SDL2' > lib/SDL2-CS/src/SDL2.cs
-          echo '{' >> lib/SDL2-CS/src/SDL2.cs
-          echo '    public static class SDL' >> lib/SDL2-CS/src/SDL2.cs
-          echo '    {' >> lib/SDL2-CS/src/SDL2.cs
-          echo '        public const string HINT_ORIENTATIONS = "SDL_IOS_ORIENTATIONS";' >> lib/SDL2-CS/src/SDL2.cs
-          echo '    }' >> lib/SDL2-CS/src/SDL2.cs
-          echo '}' >> lib/SDL2-CS/src/SDL2.cs
-        fi
-        
-        # Download FAudio
-        echo "Downloading FAudio..."
-        if curl -fsSL --retry 3 --retry-delay 2 -o lib/FAudio/csharp/FAudio.cs https://raw.githubusercontent.com/FNA-XNA/FAudio/master/csharp/FAudio.cs; then
-          echo "✅ FAudio downloaded successfully"
-        else
-          echo "❌ FAudio download failed, creating functional placeholder"
-          echo 'namespace FAudio' > lib/FAudio/csharp/FAudio.cs
-          echo '{' >> lib/FAudio/csharp/FAudio.cs
-          echo '    public static class FAudio' >> lib/FAudio/csharp/FAudio.cs
-          echo '    {' >> lib/FAudio/csharp/FAudio.cs
-          echo '        public const uint FAUDIO_DEFAULT_CHANNELS = 0;' >> lib/FAudio/csharp/FAudio.cs
-          echo '    }' >> lib/FAudio/csharp/FAudio.cs
-          echo '}' >> lib/FAudio/csharp/FAudio.cs
-        fi
-        
-        # Download Theorafile
-        echo "Downloading Theorafile..."
-        if curl -fsSL --retry 3 --retry-delay 2 -o lib/Theorafile/csharp/Theorafile.cs https://raw.githubusercontent.com/FNA-XNA/Theorafile/master/csharp/Theorafile.cs; then
-          echo "✅ Theorafile downloaded successfully"
-        else
-          echo "❌ Theorafile download failed, creating functional placeholder"
-          echo 'namespace Theorafile { public static class Theorafile { public const int THEORAFILE_DEFAULT_BUFFER_SIZE = 4096; } }' > lib/Theorafile/csharp/Theorafile.cs
-        fi
-        
-        # Download SDL3-CS (legacy)
-        echo "Downloading SDL3-CS..."
-        if curl -fsSL --retry 3 --retry-delay 2 -o lib/SDL3-CS/SDL3/SDL3.Legacy.cs https://raw.githubusercontent.com/flibitijibibo/SDL3-CS/main/SDL3/SDL3.Legacy.cs; then
-          echo "✅ SDL3-CS downloaded successfully"
-        else
-          echo "❌ SDL3-CS download failed, creating functional placeholder"
-          echo 'namespace SDL3 { public static class SDL { public const string HINT_ORIENTATIONS = "SDL_IOS_ORIENTATIONS"; } }' > lib/SDL3-CS/SDL3/SDL3.Legacy.cs
-        fi
-        
-        echo "✅ FNA dependencies setup completed"
-        
-        # Verify files exist and have content
-        echo "Verifying FNA dependency files..."
-        ls -la lib/SDL2-CS/src/SDL2.cs lib/FAudio/csharp/FAudio.cs lib/Theorafile/csharp/Theorafile.cs lib/SDL3-CS/SDL3/SDL3.Legacy.cs
-        
-        # Show file sizes to ensure they're not empty
-        echo "File sizes:"
-        wc -l lib/SDL2-CS/src/SDL2.cs lib/FAudio/csharp/FAudio.cs lib/Theorafile/csharp/Theorafile.cs lib/SDL3-CS/SDL3/SDL3.Legacy.cs
-
-    - name: Setup .NET
+    - name: Setup .NET 8
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 8.0.x
 
     - name: Setup Java JDK
       uses: actions/setup-java@v4
@@ -121,137 +38,33 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
-    - name: Cache FNA native libraries
-      uses: actions/cache@v3
-      with:
-        path: GltronMobileGame/lib
-        key: ${{ runner.os }}-fna-natives-v2-${{ hashFiles('scripts/compile-fna-libs.sh') }}
-        restore-keys: |
-          ${{ runner.os }}-fna-natives-v2-
-          ${{ runner.os }}-fna-natives-
-
-    - name: Setup FNA Native Libraries
-      run: |
-        echo "Setting up FNA native libraries for Android CI..."
-        
-        # Check if libraries already exist (from cache)
-        if [ ! -f "GltronMobileGame/lib/arm64-v8a/libSDL2.so" ] || [ ! -f "GltronMobileGame/lib/arm64-v8a/libopenal.so" ]; then
-          echo "Native libraries not found in cache, setting up..."
-          
-          # Set Android NDK environment for CI
-          export ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME
-          echo "Using Android NDK: $ANDROID_NDK_ROOT"
-          
-          # Make scripts executable
-          chmod +x scripts/compile-real-fna-libs.sh
-          chmod +x scripts/verify-native-libs.sh
-          
-          # Run our improved native library setup
-          if timeout 300 ./scripts/compile-real-fna-libs.sh; then
-            echo "✅ Native library setup completed successfully"
-          else
-            echo "⚠️ Native library setup timed out or failed, but continuing..."
-            echo "This may result in a non-functional APK, but build will complete for testing"
-          fi
-        else
-          echo "✅ FNA native libraries found in cache"
-        fi
-        
-        # Verify libraries using our verification script
-        echo "=== VERIFYING FNA NATIVE LIBRARIES ==="
-        if ./scripts/verify-native-libs.sh; then
-          echo "✅ All native libraries verified successfully"
-        else
-          echo "⚠️ Some native library issues detected, but continuing build"
-          echo "The APK may have limited functionality without proper libraries"
-        fi
-        echo "=== END LIBRARY VERIFICATION ==="
-
-    - name: Clean build artifacts
-      run: |
-        echo "Cleaning build artifacts to avoid GUID mismatches..."
-        # Clean all bin and obj directories
-        find . -name "bin" -type d -exec rm -rf {} + 2>/dev/null || true
-        find . -name "obj" -type d -exec rm -rf {} + 2>/dev/null || true
-        
-        # Clean NuGet cache
-        dotnet nuget locals all --clear
-        
-        echo "Clean completed"
-
     - name: Restore dependencies
-      run: |
-        # Restore individual projects for Android build (avoid iOS dependencies on Linux)
-        echo "Restoring FNA project..."
-        dotnet restore GltronMobileGame/FNA/FNA.NetStandard.csproj
-        
-        echo "Restoring Engine project..."
-        dotnet restore GltronMobileEngine/GltronMobileEngine.csproj
-        
-        echo "Restoring Android project..."
-        dotnet restore GltronMobileGame/GltronAndroid.csproj
-
-    - name: Verify FNA Build Environment
-      run: |
-        echo "Verifying FNA build environment..."
-        
-        # Verify FNA project exists
-        if [ ! -f "GltronMobileGame/FNA/FNA.NetStandard.csproj" ]; then
-          echo "❌ FNA project file not found!"
-          exit 1
-        fi
-        
-        # Check if FNA project can be built
-        echo "Testing FNA project build..."
-        dotnet build GltronMobileGame/FNA/FNA.NetStandard.csproj -c Debug --verbosity normal
-        
-        # Check if engine project can be built
-        echo "Testing engine project build..."
-        dotnet build GltronMobileEngine/GltronMobileEngine.csproj -c Debug --verbosity normal
+      run: dotnet restore GltronMobileGame/GltronAndroid.csproj
 
     - name: Build Debug APK
       run: |
-        echo "Building FNA Android Debug APK..."
-        ./scripts/build-android.sh -c Debug
-        
-        # Find the generated APK
-        find GltronMobileGame/bin/Debug -name "*.apk" -type f
+        dotnet publish GltronMobileGame/GltronAndroid.csproj \
+          -c Debug \
+          -f net8.0-android \
+          --no-restore
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: gltron-mobile-fna-debug-apk
-        path: GltronMobileGame/bin/Debug/**/*.apk
+        name: gltron-mobile-debug-apk
+        path: GltronMobileGame/bin/Debug/net8.0-android/publish/*.apk
         retention-days: 30
 
     - name: Build Release APK (unsigned)
       run: |
-        echo "Building FNA Android Release APK..."
-        # Use dotnet publish for proper APK generation
-        dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net9.0-android36.0
-        
-        # Find the generated APK
-        find GltronMobileGame/bin/Release -name "*.apk" -type f
+        dotnet publish GltronMobileGame/GltronAndroid.csproj \
+          -c Release \
+          -f net8.0-android \
+          --no-restore
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: gltron-mobile-fna-release-apk
-        path: GltronMobileGame/bin/Release/**/*.apk
+        name: gltron-mobile-release-apk
+        path: GltronMobileGame/bin/Release/net8.0-android/publish/*.apk
         retention-days: 30
-
-    - name: Build Summary
-      run: |
-        echo "🎉 FNA Android build completed!"
-        echo ""
-        echo "📱 Generated APKs:"
-        find GltronMobileGame/bin -name "*.apk" -type f -exec ls -lh {} \; || echo "No APKs found"
-        echo ""
-        echo "✅ FNA features enabled:"
-        echo "   • Direct activity management (no AndroidGameActivity)"
-        echo "   • Raw content loading (no XNB files)"
-        echo "   • Better .NET 9 compatibility"
-        echo "   • Native SDL2/OpenAL integration with proper architecture"
-        echo "   • OpenGL ES 2.0/3.0 fallback compatibility"
-        echo "   • Enhanced error handling and diagnostics"
-        echo "   • Automatic native library verification"

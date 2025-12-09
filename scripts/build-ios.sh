@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the FNA iOS project for macOS
+# Build the iOS project for macOS
 # Usage: ./scripts/build-ios.sh [-c Debug|Release] [-p Platform] [-t Target]
 # Defaults: -c Release, -p iPhone, -t GltronMobileGame.iOS
 # Platform options: iPhone (device), iPhoneSimulator (simulator)
@@ -9,7 +9,7 @@ set -euo pipefail
 CONFIG="Release"
 PLATFORM="iPhone"
 PROJ_DIR="GltronMobileGame.iOS"
-TFM="net9.0-ios"
+TFM="net8.0-ios"
 
 while getopts ":c:p:t:" opt; do
   case $opt in
@@ -57,28 +57,30 @@ if [ ! -f "$SOLUTION_FILE" ]; then
   exit 1
 fi
 
-# Check FNA dependencies
-echo "Checking FNA dependencies..."
-if [ ! -f "GltronMobileGame/FNA/lib/SDL2-CS/src/SDL2.cs" ]; then
-  echo "FNA dependencies missing. Please run the setup script or CI will handle this."
-  echo "Continuing with build - dependencies should be available..."
-else
-  echo "FNA dependencies found"
-fi
-
-# Restore solution (includes FNA project reference)
+# Restore solution
 echo "Restoring solution..."
 dotnet restore "$SOLUTION_FILE"
 
-# FNA uses raw content files - no MGCB build needed
-echo "FNA: Using raw content files (no MGCB processing required)"
-echo "Content files will be bundled directly from Content/ directory"
+# Build content
+if [ -f "$PROJ_DIR/Content/Content.mgcb" ]; then
+  echo "Building content (iOS platform)..."
 
-echo "Building FNA solution..."
+  CONTENT_FILE="$PROJ_DIR/Content/Content.mgcb"
+  OUT_DIR="$PROJ_DIR/Content/bin/iOS/Content"
+  OBJ_DIR="$PROJ_DIR/Content/obj/iOS"
+
+  mkdir -p "$OUT_DIR" "$OBJ_DIR"
+
+  mgcb -r /@:"$CONTENT_FILE" /platform:iOS /outputDir:"$OUT_DIR" /intermediateDir:"$OBJ_DIR"
+
+  echo "Content built. (not synchronizing Assets)"
+fi
+
+echo "Building solution..."
 dotnet build "$SOLUTION_FILE" -c "$CONFIG"
 
-# Build FNA iOS project with specific platform
-echo "Building FNA iOS project for $PLATFORM..."
+# Build iOS project with specific platform
+echo "Building iOS project for $PLATFORM..."
 if [[ "$PLATFORM" == "iPhoneSimulator" ]]; then
   dotnet build "$PROJ_DIR" -c "$CONFIG" -f "$TFM" /p:Platform=iPhoneSimulator
 else
@@ -87,7 +89,7 @@ fi
 
 # Find and report the output
 echo ""
-echo "🎉 FNA iOS build completed!"
+echo "Build complete!"
 
 # Look for IPA or app bundle
 OUTPUT_DIR="$PROJ_DIR/bin/$CONFIG/$TFM"
@@ -131,11 +133,4 @@ else
 fi
 
 echo ""
-echo "📝 iOS Deployment Notes:"
-echo "• iOS deployment requires proper Apple Developer certificates and provisioning profiles"
-echo "• FNA iOS frameworks (SDL2, OpenAL, Theoraplay) must be in Frameworks/ directory"
-echo ""
-echo "✅ FNA iOS features enabled:"
-echo "• Raw content loading (no XNB files)"
-echo "• Better .NET 9 compatibility"
-echo "• Same XNA/MonoGame API compatibility"
+echo "Note: iOS deployment requires proper Apple Developer certificates and provisioning profiles."
