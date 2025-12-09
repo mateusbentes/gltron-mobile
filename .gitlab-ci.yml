@@ -1,5 +1,4 @@
 stages:
-  - debug
   - build
 
 variables:
@@ -35,60 +34,16 @@ cache:
   paths:
     - ~/.nuget/packages/
 
-debug_files:
-  stage: debug
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  variables:
-    GIT_STRATEGY: clone
-    GIT_DEPTH: 1
-  script:
-    - echo "=== COMPLETE FILE STRUCTURE DEBUG ==="
-    - echo "Current working directory:"
-    - pwd
-    - echo "CI_PROJECT_DIR variable:"
-    - echo $CI_PROJECT_DIR
-    - echo "Environment variables:"
-    - env | grep -E "(CI_|GITLAB_|GIT_)" | sort
-    - echo "Root directory contents:"
-    - ls -la
-    - echo "All .csproj files in project:"
-    - find . -name "*.csproj" -type f || echo "No .csproj files found"
-    - echo "All directories:"
-    - find . -type d -maxdepth 2
-    - echo "GltronMobileGame directory check:"
-    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
-    - echo "Specific file check:"
-    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
-    - echo "Git status:"
-    - git status || echo "Git not available"
-    - echo "Android SDK location check:"
-    - ls -la $ANDROID_HOME || echo "Android SDK not found at $ANDROID_HOME"
-    - echo "=== END DEBUG ==="
 
 build_debug:
   stage: build
-  needs: ["debug_files"]
   image: mcr.microsoft.com/dotnet/sdk:8.0
   timeout: 30m
   retry: 1
-  variables:
-    GIT_STRATEGY: clone
-    GIT_DEPTH: 1
   script:
-    - echo "=== DEBUGGING FILE STRUCTURE ==="
-    - pwd
-    - echo "Root directory contents:"
-    - ls -la
-    - echo "Looking for .csproj files:"
-    - find . -name "*.csproj" -type f
-    - echo "Looking for GltronMobileGame directory:"
-    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
-    - echo "Checking if GltronAndroid.csproj exists:"
-    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
-    - echo "=== END DEBUGGING ==="
-    - echo "Restoring dependencies"
+    - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "Building Debug APK"
+    - echo "🐛 Building Debug APK"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
@@ -99,28 +54,13 @@ build_debug:
 
 build_release:
   stage: build
-  needs: ["debug_files"]
   image: mcr.microsoft.com/dotnet/sdk:8.0
   timeout: 30m
   retry: 1
-  variables:
-    GIT_STRATEGY: clone
-    GIT_DEPTH: 1
   script:
-    - echo "=== DEBUGGING FILE STRUCTURE ==="
-    - pwd
-    - echo "Root directory contents:"
-    - ls -la
-    - echo "Looking for .csproj files:"
-    - find . -name "*.csproj" -type f
-    - echo "Looking for GltronMobileGame directory:"
-    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
-    - echo "Checking if GltronAndroid.csproj exists:"
-    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
-    - echo "=== END DEBUGGING ==="
-    - echo "Restoring dependencies"
+    - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "Building Release APK"
+    - echo "🚀 Building Release APK"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
