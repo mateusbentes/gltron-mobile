@@ -13,6 +13,7 @@ variables:
 before_script:
   - apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl
   - dotnet --info
+  - echo "Installing Android SDK to $ANDROID_HOME"
   - mkdir -p $ANDROID_HOME
   - cd $ANDROID_HOME
   - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
@@ -24,6 +25,9 @@ before_script:
   - export PATH=$ANDROID_HOME/platform-tools:$PATH
   - yes | sdkmanager --licenses || true
   - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+  - echo "Returning to project directory"
+  - cd $CI_PROJECT_DIR
+  - echo "Installing .NET Android workload"
   - dotnet workload install android
 
 cache:
@@ -39,7 +43,10 @@ debug_files:
     GIT_DEPTH: 1
   script:
     - echo "=== COMPLETE FILE STRUCTURE DEBUG ==="
+    - echo "Current working directory:"
     - pwd
+    - echo "CI_PROJECT_DIR variable:"
+    - echo $CI_PROJECT_DIR
     - echo "Environment variables:"
     - env | grep -E "(CI_|GITLAB_|GIT_)" | sort
     - echo "Root directory contents:"
@@ -54,6 +61,8 @@ debug_files:
     - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
     - echo "Git status:"
     - git status || echo "Git not available"
+    - echo "Android SDK location check:"
+    - ls -la $ANDROID_HOME || echo "Android SDK not found at $ANDROID_HOME"
     - echo "=== END DEBUG ==="
 
 build_debug:
