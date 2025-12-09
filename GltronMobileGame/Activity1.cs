@@ -73,9 +73,6 @@ namespace gltron.org.gltronmobile
                         
                         SetContentView(_gameView);
                         
-                        // Register the view in game services
-                        _game.Services.AddService(typeof(View), _gameView);
-                        
                         Android.Util.Log.Debug("GLTRON", "AndroidGameView set as content view");
                         
                         // Note: We don't call _game.Run() here because our AndroidGameView

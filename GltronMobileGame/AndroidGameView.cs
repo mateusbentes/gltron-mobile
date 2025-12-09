@@ -22,8 +22,12 @@ namespace GltronMobileGame
             SetEGLContextClientVersion(2);
             SetRenderer(this);
             
-            // Only render when explicitly requested
+            // Always render continuously for a game
             RenderMode = Rendermode.Continuously;
+            
+            // IMPORTANT: Register view so MonoGame can create GraphicsDevice
+            _game.Services.AddService(typeof(View), this);
+            _game.Services.AddService(typeof(AndroidGameView), this);
         }
 
         public void OnSurfaceCreated(IGL10 gl, Javax.Microedition.Khronos.Egl.EGLConfig config)
@@ -34,14 +38,18 @@ namespace GltronMobileGame
             {
                 try
                 {
-                    // The game will initialize itself when we call RunOneFrame
-                    // We just need to set up the OpenGL context here
-                    Android.Util.Log.Debug("GLTRON", "OpenGL surface created, game will initialize on first frame");
+                    Android.Util.Log.Debug("GLTRON", "Initializing MonoGame with first RunOneFrame call");
                     _isInitialized = true;
+                    
+                    // First RunOneFrame initializes Game + GraphicsDevice
+                    _game.RunOneFrame();
+                    
+                    Android.Util.Log.Debug("GLTRON", "MonoGame initialized successfully");
                 }
                 catch (Exception ex)
                 {
-                    Android.Util.Log.Error("GLTRON", $"Surface creation failed: {ex.Message}");
+                    Android.Util.Log.Error("GLTRON", $"MonoGame initialization failed: {ex.Message}");
+                    Android.Util.Log.Error("GLTRON", $"Stack trace: {ex.StackTrace}");
                 }
             }
         }
@@ -69,17 +77,18 @@ namespace GltronMobileGame
 
         public void OnDrawFrame(IGL10 gl)
         {
-            if (_isInitialized && _game != null)
+            try
             {
-                try
+                if (_isInitialized && _game != null)
                 {
-                    // Run one frame of the game - this will handle initialization automatically
+                    // Run one frame of the game
                     _game.RunOneFrame();
                 }
-                catch (Exception ex)
-                {
-                    Android.Util.Log.Error("GLTRON", $"Game frame failed: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                Android.Util.Log.Error("GLTRON", $"Game frame failed: {ex.Message}");
+                Android.Util.Log.Error("GLTRON", $"Stack trace: {ex.StackTrace}");
             }
         }
 
