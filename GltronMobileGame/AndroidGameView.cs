@@ -25,9 +25,13 @@ namespace GltronMobileGame
             // Always render continuously for a game
             RenderMode = Rendermode.Continuously;
             
-            // IMPORTANT: Register view so MonoGame can create GraphicsDevice
-            _game.Services.AddService(typeof(View), this);
-            _game.Services.AddService(typeof(AndroidGameView), this);
+            // Only register services if game is not null
+            if (_game != null)
+            {
+                // IMPORTANT: Register view so MonoGame can create GraphicsDevice
+                _game.Services.AddService(typeof(View), this);
+                _game.Services.AddService(typeof(AndroidGameView), this);
+            }
         }
 
         public void OnSurfaceCreated(IGL10 gl, Javax.Microedition.Khronos.Egl.EGLConfig config)
@@ -38,6 +42,19 @@ namespace GltronMobileGame
             {
                 try
                 {
+                    // If game is null, create it now in the OpenGL context
+                    if (_game == null)
+                    {
+                        Android.Util.Log.Debug("GLTRON", "Creating Game1 in OpenGL context...");
+                        _game = new GltronMobileGame.Game1();
+                        
+                        // Register services now that we have both game and OpenGL context
+                        _game.Services.AddService(typeof(View), this);
+                        _game.Services.AddService(typeof(AndroidGameView), this);
+                        
+                        Android.Util.Log.Debug("GLTRON", "Game1 created successfully in OpenGL context");
+                    }
+                    
                     Android.Util.Log.Debug("GLTRON", "Initializing MonoGame with first RunOneFrame call");
                     _isInitialized = true;
                     
@@ -106,6 +123,16 @@ namespace GltronMobileGame
         public void Resume()
         {
             OnResume();
+        }
+
+        public void SetGame(Game game)
+        {
+            _game = game;
+            if (_game != null)
+            {
+                _game.Services.AddService(typeof(View), this);
+                _game.Services.AddService(typeof(AndroidGameView), this);
+            }
         }
     }
 }
