@@ -16,10 +16,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup .NET 8
+    - name: Setup .NET 9
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
 
     - name: Setup Java JDK
       uses: actions/setup-java@v4
@@ -45,26 +45,26 @@ jobs:
       run: |
         dotnet publish GltronMobileGame/GltronAndroid.csproj \
           -c Debug \
-          -f net8.0-android \
+          -f net9.0-android \
           --no-restore
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: gltron-mobile-debug-apk
-        path: GltronMobileGame/bin/Debug/net8.0-android/publish/*.apk
+        path: GltronMobileGame/bin/Debug/net9.0-android/publish/*.apk
         retention-days: 30
 
     - name: Build Release APK (unsigned)
       run: |
         dotnet publish GltronMobileGame/GltronAndroid.csproj \
           -c Release \
-          -f net8.0-android \
+          -f net9.0-android \
           --no-restore
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
         name: gltron-mobile-release-apk
-        path: GltronMobileGame/bin/Release/net8.0-android/publish/*.apk
+        path: GltronMobileGame/bin/Release/net9.0-android/publish/*.apk
         retention-days: 30
