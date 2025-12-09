@@ -17,7 +17,7 @@ namespace gltron.org.gltronmobile
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
-    public class Activity1 : AndroidGameActivity
+    public class Activity1 : Activity
     {
         private Game1 _game;
 
