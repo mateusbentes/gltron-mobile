@@ -3,13 +3,33 @@ stages:
 
 variables:
   ANDROID_HOME: "/usr/local/share/android-sdk"
+  ANDROID_SDK_ROOT: "/usr/local/share/android-sdk"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
 
 # Global before_script runs for every job
 before_script:
-  - apt-get update && apt-get install -y openjdk-17-jdk unzip wget
+  - apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl
   - dotnet --info
+  
+  # Install Android SDK
+  - mkdir -p $ANDROID_HOME
+  - cd $ANDROID_HOME
+  - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+  - unzip -q commandlinetools-linux-11076708_latest.zip
+  - mkdir -p cmdline-tools/latest
+  - mv cmdline-tools/* cmdline-tools/latest/ || true
+  - rm commandlinetools-linux-11076708_latest.zip
+  
+  # Set up Android SDK path
+  - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+  - export PATH=$ANDROID_HOME/platform-tools:$PATH
+  
+  # Accept licenses and install required SDK components
+  - yes | sdkmanager --licenses || true
+  - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+  
+  # Install .NET Android workload
   - dotnet workload install android
 
 # Cache NuGet packages to speed up builds
@@ -21,11 +41,14 @@ cache:
 build_debug:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0
+  timeout: 30m
+  retry: 1
   script:
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "🐛 Building Debug APK"
-    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal
+    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-debug-${CI_COMMIT_SHORT_SHA}"
     paths:
@@ -35,11 +58,14 @@ build_debug:
 build_release:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0
+  timeout: 30m
+  retry: 1
   script:
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
     - echo "🚀 Building Release APK"
-    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal
+    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-release-${CI_COMMIT_SHORT_SHA}"
     paths:
