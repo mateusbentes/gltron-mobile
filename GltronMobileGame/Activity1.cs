@@ -33,9 +33,7 @@ namespace gltron.org.gltronmobile
                 // so the Activity is responsible for providing a GL surface and driving the frame updates.
                 _game = new Game1();
 
-                // Create our custom AndroidGameView wrapper.
-                // This class creates a GLSurfaceView and uses its render thread to call RunOneFrame(),
-                // becoming the primary driver of the MonoGame update/draw loop.
+                // Este é o fluxo correto no .NET 9
                 _gameView = new AndroidGameView(this, _game);
 
                 // Attach the custom view to the Activity.
@@ -56,14 +54,11 @@ namespace gltron.org.gltronmobile
         /// </summary>
         private void ShowErrorScreen(Exception ex)
         {
-            var errorView = new Android.Widget.TextView(this)
-            {
-                Text = $"GLTron Mobile - Initialization Error\n\n{ex}",
-                Gravity = GravityFlags.Center
-            };
-
+            var errorView = new Android.Widget.TextView(this);
+            errorView.Text = $"GLTron Mobile - Initialization Error\n\n{ex}";
             errorView.SetTextColor(Android.Graphics.Color.White);
             errorView.SetBackgroundColor(Android.Graphics.Color.DarkRed);
+            errorView.Gravity = GravityFlags.Center;
             errorView.SetPadding(20, 20, 20, 20);
 
             SetContentView(errorView);
@@ -91,13 +86,9 @@ namespace gltron.org.gltronmobile
         {
             base.OnDestroy();
 
-            // When the Activity is destroyed, dispose the Game instance.
-            // DO NOT manually dispose the AndroidGameView or underlying GL surface;
-            // Android handles teardown of GLSurfaceView and EGL contexts automatically.
+            _gameView = null;
             _game?.Dispose();
             _game = null;
-
-            _gameView = null; // Allow GC cleanup
         }
     }
 }
