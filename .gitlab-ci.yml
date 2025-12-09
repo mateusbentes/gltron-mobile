@@ -1,4 +1,5 @@
 stages:
+  - debug
   - build
 
 variables:
@@ -28,8 +29,29 @@ cache:
   paths:
     - ~/.nuget/packages/
 
+debug_files:
+  stage: debug
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - echo "=== COMPLETE FILE STRUCTURE DEBUG ==="
+    - pwd
+    - echo "Root directory contents:"
+    - ls -la
+    - echo "All .csproj files in project:"
+    - find . -name "*.csproj" -type f || echo "No .csproj files found"
+    - echo "All directories:"
+    - find . -type d -maxdepth 2
+    - echo "GltronMobileGame directory check:"
+    - ls -la GltronMobileGame/ || echo "GltronMobileGame directory not found"
+    - echo "Specific file check:"
+    - ls -la GltronMobileGame/GltronAndroid.csproj || echo "GltronAndroid.csproj not found"
+    - echo "Git status:"
+    - git status || echo "Git not available"
+    - echo "=== END DEBUG ==="
+
 build_debug:
   stage: build
+  needs: ["debug_files"]
   image: mcr.microsoft.com/dotnet/sdk:8.0
   timeout: 30m
   retry: 1
@@ -58,6 +80,7 @@ build_debug:
 
 build_release:
   stage: build
+  needs: ["debug_files"]
   image: mcr.microsoft.com/dotnet/sdk:8.0
   timeout: 30m
   retry: 1
