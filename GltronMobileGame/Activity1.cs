@@ -62,10 +62,46 @@ namespace gltron.org.gltronmobile
                 else
                 {
                     Android.Util.Log.Debug("GLTRON", "EXPECTED: No view available from services - MonoGame .NET 9 behavior");
-                    Android.Util.Log.Debug("GLTRON", "Will need to implement manual AndroidGameView creation");
+                    Android.Util.Log.Debug("GLTRON", "Creating AndroidGameView manually");
                     
-                    // For now, just try running the game to see what happens
-                    _game.Run();
+                    // Create AndroidGameView manually for MonoGame .NET 9
+                    try
+                    {
+                        // Try to find and create AndroidGameView
+                        var androidGameViewType = System.Type.GetType("Microsoft.Xna.Framework.AndroidGameView, MonoGame.Framework");
+                        if (androidGameViewType != null)
+                        {
+                            Android.Util.Log.Debug("GLTRON", "Found AndroidGameView type, creating instance");
+                            
+                            // Create AndroidGameView with this activity as context
+                            var androidGameView = System.Activator.CreateInstance(androidGameViewType, this) as View;
+                            if (androidGameView != null)
+                            {
+                                Android.Util.Log.Debug("GLTRON", "AndroidGameView created successfully");
+                                SetContentView(androidGameView);
+                                
+                                // Set the game view in the game's services
+                                _game.Services.AddService(typeof(View), androidGameView);
+                                
+                                _game.Run();
+                            }
+                            else
+                            {
+                                Android.Util.Log.Error("GLTRON", "Failed to create AndroidGameView instance");
+                                throw new InvalidOperationException("Could not create AndroidGameView");
+                            }
+                        }
+                        else
+                        {
+                            Android.Util.Log.Error("GLTRON", "AndroidGameView type not found");
+                            throw new InvalidOperationException("AndroidGameView type not available");
+                        }
+                    }
+                    catch (Exception viewEx)
+                    {
+                        Android.Util.Log.Error("GLTRON", $"Failed to create AndroidGameView: {viewEx.Message}");
+                        throw new InvalidOperationException($"MonoGame AndroidGameView creation failed: {viewEx.Message}", viewEx);
+                    }
                 }
             }
             catch (Exception ex)
