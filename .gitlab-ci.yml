@@ -262,10 +262,18 @@ validate_apk_release:
         exit 1
       fi
 
-nosimus_ai_false_positive_test:
+ai_test_false_positives:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: ["nosimus_ai_false_positive_test"]
+  needs:
+    - job: "build_debug"
+      artifacts: true
+    - job: "build_release"
+      artifacts: true
+    - job: "validate_apk_debug"
+      artifacts: false
+    - job: "validate_apk_release"
+      artifacts: false
   script:
     - echo "=== NOSIMUS AI FALSE POSITIVE DETECTION TEST ==="
     - echo "Testing if NosimusAI.TestSuite.DotNet can detect false positives in our pipeline..."
@@ -316,7 +324,7 @@ nosimus_ai_false_positive_test:
 ai_test_recommendations:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: ["nosimus_ai_false_positive_test"]
+  needs: ["ai_test_false_positives"]
   script:
     - echo "=== ACTUAL AI ANALYSIS FROM NosimusAI.TestSuite.DotNet ==="
     - echo "Checking if NosimusAI.TestSuite.DotNet is available..."
