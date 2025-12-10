@@ -265,7 +265,7 @@ validate_apk_release:
 nosimus_ai_false_positive_test:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: ["ai_test_false_positives"]
+  needs: ["nosimus_ai_false_positive_test"]
   script:
     - echo "=== NOSIMUS AI FALSE POSITIVE DETECTION TEST ==="
     - echo "Testing if NosimusAI.TestSuite.DotNet can detect false positives in our pipeline..."
@@ -289,16 +289,19 @@ nosimus_ai_false_positive_test:
     - nosimus-ai --version || echo "NosimusAI command not available after installation attempt"
     - nosimus-ai test-false-positives --input-log ./pipeline.log || echo "NosimusAI false positive test not available"
     - echo ""
-    - echo "Step 4 - Alternative: Check if repository documentation exists"
+    - echo "Step 4 - Alternative:" 
+    - echo "Check if repository documentation exists"
     - curl -s https://raw.githubusercontent.com/Nosimus/NosimusAI.TestSuite.DotNet/main/README.md | head -20 || echo "No README found"
     - echo ""
     - echo "=== CONCLUSION ==="
-    - echo "RESULT: NosimusAI.TestSuite.DotNet appears to be either:"
+    - echo "RESULT:"
+    - echo "NosimusAI.TestSuite.DotNet appears to be either:"
     - echo "1. Not yet published as a NuGet package"
     - echo "2. Not available on the specified GitHub repository"
     - echo "3. Still in development phase"
     - echo ""
-    - echo "RECOMMENDATION: To actually use NosimusAI for false positive detection:"
+    - echo "RECOMMENDATION:" 
+    - echo "To actually use NosimusAI for false positive detection:"
     - echo "- Verify the correct repository URL"
     - echo "- Check if it's published on NuGet"
     - echo "- Contact the maintainer for installation instructions"
@@ -313,7 +316,7 @@ nosimus_ai_false_positive_test:
 ai_test_recommendations:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: ["ai_test_false_positives"]
+  needs: ["nosimus_ai_false_positive_test"]
   script:
     - echo "=== ACTUAL AI ANALYSIS FROM NosimusAI.TestSuite.DotNet ==="
     - echo "Checking if NosimusAI.TestSuite.DotNet is available..."
