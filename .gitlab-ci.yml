@@ -46,7 +46,7 @@ cache:
 
 build_debug:
   stage: build
-  image: mcr.microsoft.com/dotnet/sdk:8.0-jammy
+  image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   timeout: 30m
   retry: 1
   script:
@@ -62,7 +62,8 @@ build_debug:
     - echo "Installing missing Android dependencies"
     - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -v:normal || echo "InstallAndroidDependencies failed, continuing..."
     - echo "Building Debug APK"
-    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME -p:EnableMGCBItems=false || echo "Build with MGCB failed, trying without content building..."
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME -p:EnableMGCBItems=false -p:UseMonoGamePipeline=false
   artifacts:
     name: "gltron-mobile-debug-${CI_COMMIT_SHORT_SHA}"
     paths:
@@ -71,7 +72,7 @@ build_debug:
 
 build_release:
   stage: build
-  image: mcr.microsoft.com/dotnet/sdk:8.0-jammy
+  image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   timeout: 30m
   retry: 1
   script:
@@ -87,7 +88,8 @@ build_release:
     - echo "Installing missing Android dependencies"
     - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -v:normal || echo "InstallAndroidDependencies failed, continuing..."
     - echo "Building Release APK"
-    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME -p:EnableMGCBItems=false || echo "Build with MGCB failed, trying without content building..."
+    - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME -p:EnableMGCBItems=false -p:UseMonoGamePipeline=false
   artifacts:
     name: "gltron-mobile-release-${CI_COMMIT_SHORT_SHA}"
     paths:
