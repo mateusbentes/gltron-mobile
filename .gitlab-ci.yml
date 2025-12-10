@@ -10,7 +10,7 @@ variables:
   GIT_DEPTH: 0
 
 before_script:
-  - apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl
+  - apt-get update && apt-get install -y openjdk-17-jdk unzip wget curl libc6-dev
   - dotnet --info
   - echo "Installing Android SDK to $ANDROID_HOME"
   - mkdir -p $ANDROID_HOME
@@ -46,10 +46,12 @@ cache:
 
 build_debug:
   stage: build
-  image: mcr.microsoft.com/dotnet/sdk:8.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0-jammy
   timeout: 30m
   retry: 1
   script:
+    - echo "Checking GLIBC version"
+    - ldd --version
     - echo "Restoring dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
@@ -69,10 +71,12 @@ build_debug:
 
 build_release:
   stage: build
-  image: mcr.microsoft.com/dotnet/sdk:8.0
+  image: mcr.microsoft.com/dotnet/sdk:8.0-jammy
   timeout: 30m
   retry: 1
   script:
+    - echo "Checking GLIBC version"
+    - ldd --version
     - echo "Restoring dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
