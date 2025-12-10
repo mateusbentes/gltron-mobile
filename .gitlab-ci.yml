@@ -103,7 +103,9 @@ test_apk_debug:
   needs: ["build_debug"]
   script:
     - echo "Testing Debug APK"
-    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH
+    - echo "Available aapt versions:"
+    - ls -la $ANDROID_HOME/build-tools/*/aapt* || echo "No aapt found"
     - echo "Finding APK files..."
     - find GltronMobileGame/bin/Debug -name "*.apk" -type f
     - APK_FILE=$(find GltronMobileGame/bin/Debug -name "*.apk" -type f | head -1)
@@ -117,6 +119,8 @@ test_apk_debug:
         aapt dump badging "$APK_FILE" | head -20 || echo "aapt analysis failed"
         echo "APK contents:"
         aapt list "$APK_FILE" | head -20 || echo "aapt list failed"
+        echo "Alternative APK analysis with unzip:"
+        unzip -l "$APK_FILE" | head -20 || echo "unzip analysis failed"
         echo "Debug APK validation completed"
       else
         echo "No APK file found"
@@ -129,7 +133,9 @@ test_apk_release:
   needs: ["build_release"]
   script:
     - echo "Testing Release APK"
-    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH
+    - echo "Available aapt versions:"
+    - ls -la $ANDROID_HOME/build-tools/*/aapt* || echo "No aapt found"
     - echo "Finding APK files..."
     - find GltronMobileGame/bin/Release -name "*.apk" -type f
     - APK_FILE=$(find GltronMobileGame/bin/Release -name "*.apk" -type f | head -1)
@@ -143,10 +149,12 @@ test_apk_release:
         aapt dump badging "$APK_FILE" | head -20 || echo "aapt analysis failed"
         echo "APK contents:"
         aapt list "$APK_FILE" | head -20 || echo "aapt list failed"
+        echo "Alternative APK analysis with unzip:"
+        unzip -l "$APK_FILE" | head -20 || echo "unzip analysis failed"
         echo "Checking for required libraries:"
-        aapt list "$APK_FILE" | grep -E "\.(so|dll)$" || echo "No native libraries found"
+        unzip -l "$APK_FILE" | grep -E "\.(so|dll)$" || echo "No native libraries found"
         echo "Checking for game assets:"
-        aapt list "$APK_FILE" | grep -E "\.(png|jpg|ogg|mp3|xnb)$" | head -10 || echo "No game assets found"
+        unzip -l "$APK_FILE" | grep -E "\.(png|jpg|ogg|mp3|xnb)$" | head -10 || echo "No game assets found"
         echo "Release APK validation completed"
       else
         echo "No APK file found"
