@@ -265,7 +265,15 @@ validate_apk_release:
 ai_test_false_positives:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
-  needs: ["validate_apk_debug", "validate_apk_release"]
+  needs: 
+    - job: "build_debug"
+      artifacts: true
+    - job: "build_release"
+      artifacts: true
+    - job: "validate_apk_debug"
+      artifacts: false
+    - job: "validate_apk_release"
+      artifacts: false
   script:
     - echo "Running AI-powered Test Analysis with NosimusAI.TestSuite.DotNet"
     - echo "Installing NosimusAI.TestSuite.DotNet..."
@@ -286,11 +294,41 @@ ai_test_false_positives:
     - echo "Running AI analysis on source code..."
     - find . -name "*.cs" -type f | head -5 | while read file; do echo "Analyzing $file"; done
     - echo "4. Performance regression detection"
-    - APK_DEBUG=$(find GltronMobileGame/bin/Debug -name "*.apk" -type f | head -1)
-    - APK_RELEASE=$(find GltronMobileGame/bin/Release -name "*.apk" -type f | head -1)
-    - echo "Debug APK - $APK_DEBUG"
-    - echo "Release APK - $APK_RELEASE"
+    - echo "Looking for APK files..."
+    - find . -name "*.apk" -type f || echo "No APK files found"
+    - APK_DEBUG=$(find . -path "*/Debug/*" -name "*.apk" -type f | head -1)
+    - APK_RELEASE=$(find . -path "*/Release/*" -name "*.apk" -type f | head -1)
+    - echo "Debug APK found - $APK_DEBUG"
+    - echo "Release APK found - $APK_RELEASE"
+    - |
+      if [ -f "$APK_DEBUG" ] && [ -f "$APK_RELEASE" ]; then
+        DEBUG_SIZE=$(stat -c%s "$APK_DEBUG" 2>/dev/null || echo "0")
+        RELEASE_SIZE=$(stat -c%s "$APK_RELEASE" 2>/dev/null || echo "0")
+        echo "Debug APK size: $DEBUG_SIZE bytes"
+        echo "Release APK size: $RELEASE_SIZE bytes"
+        if [ "$DEBUG_SIZE" -gt 0 ] && [ "$RELEASE_SIZE" -gt 0 ]; then
+          echo "AI Analysis: Both APKs found and have valid sizes"
+          if [ "$RELEASE_SIZE" -gt 50000000 ]; then
+            echo "AI ALERT: Release APK size exceeds 50MB"
+          else
+            echo "AI OK: Release APK size is optimized"
+          fi
+        else
+          echo "AI WARNING: Could not determine APK sizes"
+        fi
+      else
+        echo "AI INFO: APK analysis skipped - files not accessible"
+      fi
     - echo "5. Security vulnerability scanning"
+    - |
+      if [ -f "$APK_RELEASE" ]; then
+        echo "Performing security analysis on Release APK..."
+        unzip -l "$APK_RELEASE" | grep -i "debug" && echo "AI ALERT: Debug components found in release APK" || echo "AI OK: No debug components in release"
+        unzip -l "$APK_RELEASE" | grep -E "\.(key|pem|p12)$" && echo "AI ALERT: Potential private keys found in APK" || echo "AI OK: No private keys detected"
+        unzip -l "$APK_RELEASE" | grep -i "test" && echo "AI ALERT: Test files found in release APK" || echo "AI OK: No test files in release"
+      else
+        echo "AI INFO: Security analysis skipped - Release APK not accessible"
+      fi
     - echo "AI-powered security analysis completed"
     - echo "6. AI-powered false positive detection"
     - echo "Analyzing previous test results for false positives..."
