@@ -23,7 +23,12 @@ before_script:
   - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
   - export PATH=$ANDROID_HOME/platform-tools:$PATH
   - yes | sdkmanager --licenses || true
+  - echo "Installing Android SDK components..."
   - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+  - echo "Attempting to install Android API 36..."
+  - sdkmanager "platforms;android-36" "build-tools;36.0.0" || echo "Android API 36 not available, using API 34"
+  - echo "Available platforms:"
+  - sdkmanager --list | grep "platforms;android-" | head -10
   - echo "Returning to project directory"
   - cd $CI_PROJECT_DIR
   - echo "Installing .NET Android workload"
@@ -43,8 +48,10 @@ build_debug:
   script:
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🐛 Building Debug APK"
+    - echo "🔧 Installing missing Android dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME || echo "InstallAndroidDependencies failed, continuing..."
+    - echo "🐛 Building Debug APK"
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-debug-${CI_COMMIT_SHORT_SHA}"
@@ -60,8 +67,10 @@ build_release:
   script:
     - echo "🔄 Restoring dependencies"
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🚀 Building Release APK"
+    - echo "🔧 Installing missing Android dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+    - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME || echo "InstallAndroidDependencies failed, continuing..."
+    - echo "🚀 Building Release APK"
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore --verbosity minimal -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-release-${CI_COMMIT_SHORT_SHA}"
