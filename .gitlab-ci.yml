@@ -44,23 +44,22 @@ cache:
   paths:
     - ~/.nuget/packages/
 
-
 build_debug:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:8.0
   timeout: 30m
   retry: 1
   script:
-    - echo "🔄 Restoring dependencies"
+    - echo "Restoring dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🔧 Verifying Android SDK setup"
-    - echo "ANDROID_HOME: $ANDROID_HOME"
+    - echo "Verifying Android SDK setup"
+    - echo "ANDROID_HOME is $ANDROID_HOME"
     - echo "Android platforms available:"
     - ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
-    - echo "🔧 Installing missing Android dependencies"
+    - echo "Installing missing Android dependencies"
     - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -v:normal || echo "InstallAndroidDependencies failed, continuing..."
-    - echo "🐛 Building Debug APK"
+    - echo "Building Debug APK"
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Debug -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-debug-${CI_COMMIT_SHORT_SHA}"
@@ -74,16 +73,16 @@ build_release:
   timeout: 30m
   retry: 1
   script:
-    - echo "🔄 Restoring dependencies"
+    - echo "Restoring dependencies"
     - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
     - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - echo "🔧 Verifying Android SDK setup"
-    - echo "ANDROID_HOME: $ANDROID_HOME"
+    - echo "Verifying Android SDK setup"
+    - echo "ANDROID_HOME is $ANDROID_HOME"
     - echo "Android platforms available:"
     - ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
-    - echo "🔧 Installing missing Android dependencies"
+    - echo "Installing missing Android dependencies"
     - dotnet build GltronMobileGame/GltronAndroid.csproj -t:InstallAndroidDependencies -f net8.0-android -p:AndroidSdkDirectory=$ANDROID_HOME -v:normal || echo "InstallAndroidDependencies failed, continuing..."
-    - echo "🚀 Building Release APK"
+    - echo "Building Release APK"
     - dotnet publish GltronMobileGame/GltronAndroid.csproj -c Release -f net8.0-android --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME
   artifacts:
     name: "gltron-mobile-release-${CI_COMMIT_SHORT_SHA}"
