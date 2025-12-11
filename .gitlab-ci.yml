@@ -85,7 +85,8 @@ optimize_pipeline:
     - echo "- Workflow rules limit pipeline runs"
     - echo "- Shallow git clone for faster checkout"
     - echo "- Appropriate runner sizes for each job"
-    - echo "Estimated compute minute savings: 60-80%"
+    - echo "Estimated compute minute savings:"
+    - echo " 60-80%"
     - echo "=== OPTIMIZATION COMPLETED ==="
   allow_failure: true
 
