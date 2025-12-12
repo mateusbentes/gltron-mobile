@@ -16,8 +16,8 @@
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>3</ApplicationVersion>
-    <ApplicationDisplayVersion>3.0</ApplicationDisplayVersion>
+    <ApplicationVersion>4</ApplicationVersion>
+    <ApplicationDisplayVersion>4.0</ApplicationDisplayVersion>
     
     <!-- MonoGame Content Pipeline Configuration -->
     <MonoGamePlatform>Android</MonoGamePlatform>
