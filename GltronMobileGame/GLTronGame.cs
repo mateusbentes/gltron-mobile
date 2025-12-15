@@ -342,8 +342,11 @@ namespace GltronMobileGame
                     Players = new Player[MAX_PLAYERS];
                 }
 
-                // Initialize players with detailed logging
-                LogInfo($"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players (like original GLTron)");
+                // CRITICAL FIX: Clear all existing trails before creating new players
+                ClearAllPlayerTrails();
+
+                // Initialize players with safe spawn positions
+                LogInfo($"GLTronGame.initialiseGame: Creating {mCurrentPlayers} players with safe spawn positions");
                 for (int player = 0; player < mCurrentPlayers; player++)
                 {
                     try
@@ -356,6 +359,9 @@ namespace GltronMobileGame
                             LogError($"GLTronGame.initialiseGame: Player {player} creation returned null!");
                             continue;
                         }
+
+                        // CRITICAL FIX: Set safe spawn position
+                        SetSafeSpawnPosition(player);
 
                         Players[player].setSpeed(6.0f); // Slower initial speed for better control
 
@@ -657,10 +663,17 @@ namespace GltronMobileGame
             {
                 SoundManager.Instance.StopEngine();
                 
-                // Reinitialize all players
+                // CRITICAL FIX: Clear all trails first
+                ClearAllPlayerTrails();
+                
+                // Reinitialize all players with safe spawn positions
                 for (int plyr = 0; plyr < mCurrentPlayers; plyr++)
                 {
                     Players[plyr] = new Player(plyr, mCurrentGridSize);
+                    
+                    // CRITICAL FIX: Set safe spawn position
+                    SetSafeSpawnPosition(plyr);
+                    
                     Players[plyr].setSpeed(6.0f);
                 }
                 
@@ -692,7 +705,7 @@ namespace GltronMobileGame
                 tronHUD?.DisplayInstr(false);
                 try { SoundManager.Instance.PlayEngine(0.3f, true); } catch { }
                 
-                LogInfo("Game reset completed - new round started with camera reset");
+                LogInfo("Game reset completed - new round started with safe spawn positions and camera reset");
             }
             catch (System.Exception ex)
             {
@@ -823,6 +836,140 @@ namespace GltronMobileGame
             catch (System.Exception ex)
             {
                 LogError($"CheckWinLoseConditions failed: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// CRITICAL FIX: Clear all player trails for clean game restart
+        /// </summary>
+        private void ClearAllPlayerTrails()
+        {
+            try
+            {
+                LogInfo("Clearing all player trails for clean restart");
+                
+                for (int i = 0; i < mCurrentPlayers; i++)
+                {
+                    if (Players[i] != null)
+                    {
+                        Players[i].ClearAllTrails();
+                    }
+                }
+                
+                LogInfo("All player trails cleared successfully");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"ClearAllPlayerTrails failed: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// CRITICAL FIX: Set safe spawn position for a player, avoiding existing trails
+        /// </summary>
+        private void SetSafeSpawnPosition(int playerIndex)
+        {
+            try
+            {
+                if (Players[playerIndex] == null) return;
+                
+                // Define alternative spawn positions for each player
+                var alternativePositions = new float[,]
+                {
+                    // Player 0 alternatives
+                    { 0.5f, 0.25f }, { 0.4f, 0.3f }, { 0.6f, 0.2f }, { 0.3f, 0.4f }, { 0.7f, 0.3f },
+                    // Player 1 alternatives  
+                    { 0.75f, 0.5f }, { 0.7f, 0.6f }, { 0.8f, 0.4f }, { 0.6f, 0.7f }, { 0.9f, 0.5f },
+                    // Player 2 alternatives
+                    { 0.5f, 0.4f }, { 0.4f, 0.5f }, { 0.6f, 0.3f }, { 0.3f, 0.6f }, { 0.7f, 0.4f },
+                    // Player 3 alternatives
+                    { 0.25f, 0.5f }, { 0.2f, 0.6f }, { 0.3f, 0.4f }, { 0.1f, 0.7f }, { 0.4f, 0.6f },
+                    // Player 4 alternatives
+                    { 0.25f, 0.25f }, { 0.2f, 0.3f }, { 0.3f, 0.2f }, { 0.1f, 0.4f }, { 0.4f, 0.1f },
+                    // Player 5 alternatives
+                    { 0.65f, 0.35f }, { 0.6f, 0.4f }, { 0.7f, 0.3f }, { 0.5f, 0.5f }, { 0.8f, 0.2f }
+                };
+                
+                const int positionsPerPlayer = 5;
+                const float minDistanceBetweenPlayers = 15.0f; // Minimum distance between players
+                const float safeRadius = 5.0f; // Safe radius around spawn point
+                
+                // Try each alternative position for this player
+                for (int attempt = 0; attempt < positionsPerPlayer; attempt++)
+                {
+                    int posIndex = playerIndex * positionsPerPlayer + attempt;
+                    if (posIndex >= alternativePositions.GetLength(0)) break;
+                    
+                    float testX = alternativePositions[posIndex, 0] * mCurrentGridSize;
+                    float testY = alternativePositions[posIndex, 1] * mCurrentGridSize;
+                    
+                    // Check if position is safe
+                    if (IsSpawnPositionSafe(testX, testY, playerIndex, minDistanceBetweenPlayers, safeRadius))
+                    {
+                        Players[playerIndex].SetSafeSpawnPosition(testX, testY, mCurrentGridSize);
+                        LogInfo($"Player {playerIndex} assigned safe spawn position: ({testX:F1}, {testY:F1}) on attempt {attempt + 1}");
+                        return;
+                    }
+                }
+                
+                // If no safe position found, use fallback position in center area
+                float fallbackX = mCurrentGridSize * (0.3f + (playerIndex * 0.1f));
+                float fallbackY = mCurrentGridSize * (0.3f + ((playerIndex % 2) * 0.4f));
+                Players[playerIndex].SetSafeSpawnPosition(fallbackX, fallbackY, mCurrentGridSize);
+                LogWarn($"Player {playerIndex} using fallback spawn position: ({fallbackX:F1}, {fallbackY:F1})");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"SetSafeSpawnPosition failed for player {playerIndex}: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// Check if a spawn position is safe (no trail collisions, minimum distance from other players)
+        /// </summary>
+        private bool IsSpawnPositionSafe(float x, float y, int currentPlayerIndex, float minPlayerDistance, float safeRadius)
+        {
+            try
+            {
+                // Check bounds
+                if (x < safeRadius || y < safeRadius || 
+                    x > mCurrentGridSize - safeRadius || y > mCurrentGridSize - safeRadius)
+                {
+                    return false;
+                }
+                
+                // Check distance from other players
+                for (int i = 0; i < currentPlayerIndex; i++)
+                {
+                    if (Players[i] == null) continue;
+                    
+                    float otherX = Players[i].getXpos();
+                    float otherY = Players[i].getYpos();
+                    float distance = (float)Math.Sqrt((x - otherX) * (x - otherX) + (y - otherY) * (y - otherY));
+                    
+                    if (distance < minPlayerDistance)
+                    {
+                        return false; // Too close to another player
+                    }
+                }
+                
+                // Check collision with existing trails
+                for (int i = 0; i < currentPlayerIndex; i++)
+                {
+                    if (Players[i] == null) continue;
+                    
+                    if (Players[i].CheckPositionCollision(x, y, safeRadius))
+                    {
+                        return false; // Collides with existing trail
+                    }
+                }
+                
+                return true; // Position is safe
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"IsSpawnPositionSafe failed: {ex}");
+                return false; // Assume unsafe on error
             }
         }
     }

@@ -1,0 +1,26 @@
+GLTron Mobile is a 3D light cycle racing game inspired by the classic TRON movie. Race against AI opponents on a digital grid, leaving light trails behind you while avoiding walls and other players' trails.
+
+<b>Features:</b>
+• Classic GLTron gameplay with modern mobile controls
+• 3D graphics with procedural and FBX model support
+• Multiple camera modes (follow and bird's eye view)
+• Recognizer (floating probe) with original GLTron movement
+• Touch controls optimized for mobile devices
+• Keyboard support for desktop/hybrid use
+• Sound effects and background music
+• Multiple AI difficulty levels
+• Score tracking and win/lose detection
+
+<b>Controls:</b>
+• Touch: Tap left/right side of screen to turn
+• Swipe: Swipe left/right for turning
+• Keyboard: Arrow keys or A/D for turning, Space/Enter to start
+• Top-left corner: Toggle recognizer on/off
+• Top-right corner: Switch camera modes
+
+<b>Gameplay:</b>
+Navigate your light cycle around the arena while avoiding walls and light trails. Each player leaves a permanent trail behind them - if you hit a wall or trail, you crash and lose the round. The last player standing wins!
+
+Based on the original GLTron by Andreas Umbach, this mobile adaptation brings the classic light cycle experience to Android devices with modern graphics and intuitive touch controls.
+
+The game is completely free and open source, with no ads or in-app purchases.

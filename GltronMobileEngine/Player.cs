@@ -88,6 +88,8 @@ namespace GltronMobileEngine
 
             Trails[0] = new Segment();
             trailOffset = 0;
+            
+            // CRITICAL FIX: Use safe spawn position (will be set by SetSafeSpawnPosition)
             Trails[trailOffset].vStart.v[0] = START_POS[player_number, 0] * gridSize;
             Trails[trailOffset].vStart.v[1] = START_POS[player_number, 1] * gridSize;
             // CRITICAL FIX: Start with tiny visible trail segment for immediate visibility
@@ -497,6 +499,139 @@ namespace GltronMobileEngine
                 // TODO: Add to HUD console when available
             }
             catch { /* Ignore logging errors */ }
+        }
+        
+        /// <summary>
+        /// CRITICAL FIX: Set a safe spawn position that doesn't collide with existing trails
+        /// </summary>
+        public void SetSafeSpawnPosition(float x, float y, float gridSize)
+        {
+            try
+            {
+                // Update the starting position
+                Trails[trailOffset].vStart.v[0] = x;
+                Trails[trailOffset].vStart.v[1] = y;
+                
+                // Reset trail direction based on current direction
+                Trails[trailOffset].vDirection.v[0] = 0.01f * DIRS_X[Direction];
+                Trails[trailOffset].vDirection.v[1] = 0.01f * DIRS_Y[Direction];
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} spawn position set to ({x:F1}, {y:F1})");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: SetSafeSpawnPosition error: {ex}");
+            }
+        }
+        
+        /// <summary>
+        /// CRITICAL FIX: Check if a position collides with this player's trails
+        /// </summary>
+        public bool CheckPositionCollision(float x, float y, float safeRadius = 3.0f)
+        {
+            try
+            {
+                if (trailHeight <= 0.0f) return false; // No collision if trail is gone
+                
+                // Check collision with all trail segments
+                for (int i = 0; i <= trailOffset; i++)
+                {
+                    if (Trails[i] == null) continue;
+                    
+                    // Get trail segment endpoints
+                    float segStartX = Trails[i].vStart.v[0];
+                    float segStartY = Trails[i].vStart.v[1];
+                    float segEndX = segStartX + Trails[i].vDirection.v[0];
+                    float segEndY = segStartY + Trails[i].vDirection.v[1];
+                    
+                    // Calculate distance from point to line segment
+                    float distance = DistancePointToLineSegment(x, y, segStartX, segStartY, segEndX, segEndY);
+                    
+                    if (distance < safeRadius)
+                    {
+                        return true; // Collision detected
+                    }
+                }
+                
+                return false; // No collision
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: CheckPositionCollision error: {ex}");
+                return true; // Assume collision on error for safety
+            }
+        }
+        
+        /// <summary>
+        /// Calculate distance from point to line segment
+        /// </summary>
+        private float DistancePointToLineSegment(float px, float py, float x1, float y1, float x2, float y2)
+        {
+            try
+            {
+                float dx = x2 - x1;
+                float dy = y2 - y1;
+                float lengthSquared = dx * dx + dy * dy;
+                
+                if (lengthSquared < 0.001f) // Very short segment, treat as point
+                {
+                    dx = px - x1;
+                    dy = py - y1;
+                    return (float)Math.Sqrt(dx * dx + dy * dy);
+                }
+                
+                // Calculate projection parameter
+                float t = ((px - x1) * dx + (py - y1) * dy) / lengthSquared;
+                t = Math.Max(0, Math.Min(1, t)); // Clamp to segment
+                
+                // Find closest point on segment
+                float closestX = x1 + t * dx;
+                float closestY = y1 + t * dy;
+                
+                // Calculate distance
+                dx = px - closestX;
+                dy = py - closestY;
+                return (float)Math.Sqrt(dx * dx + dy * dy);
+            }
+            catch
+            {
+                return 0.0f; // Return 0 on error (no collision)
+            }
+        }
+        
+        /// <summary>
+        /// CRITICAL FIX: Clear all trails for clean restart
+        /// </summary>
+        public void ClearAllTrails()
+        {
+            try
+            {
+                trailOffset = 0;
+                trailHeight = TRAIL_HEIGHT;
+                
+                // Clear all trail segments
+                for (int i = 0; i < Trails.Length; i++)
+                {
+                    if (Trails[i] != null)
+                    {
+                        Trails[i].vDirection.v[0] = 0.0f;
+                        Trails[i].vDirection.v[1] = 0.0f;
+                    }
+                }
+                
+                // Reset first trail segment
+                if (Trails[0] != null)
+                {
+                    Trails[0].vDirection.v[0] = 0.01f * DIRS_X[Direction];
+                    Trails[0].vDirection.v[1] = 0.01f * DIRS_Y[Direction];
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"GLTRON: Player {Player_num} trails cleared");
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GLTRON: ClearAllTrails error: {ex}");
+            }
         }
 
     }

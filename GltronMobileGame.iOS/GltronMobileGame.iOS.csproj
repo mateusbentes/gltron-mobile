@@ -10,8 +10,8 @@
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
     <ApplicationId>gltron.org.gltronmobile.ios</ApplicationId>
-    <ApplicationDisplayVersion>4.0</ApplicationDisplayVersion>
-    <ApplicationVersion>4</ApplicationVersion>
+    <ApplicationDisplayVersion>5.0</ApplicationDisplayVersion>
+    <ApplicationVersion>5</ApplicationVersion>
 
     <!-- MonoGame -->
     <MonoGamePlatform>iOS</MonoGamePlatform>
