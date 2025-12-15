@@ -678,4 +678,4 @@ ai_powered_analysis:
       - snyk-code-results.sarif
       - snyk-reports/
     expire_in: 7 days
-    allow_failure: true
+  allow_failure: true
