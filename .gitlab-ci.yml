@@ -338,115 +338,100 @@ ai_powered_analysis:
     - job: "validate_apk_release"
       artifacts: false
   script:
-    - echo "=== AI-POWERED FALSE POSITIVE DETECTION ==="
+    - echo "=== AI-POWERED CODEQL FALSE POSITIVE DETECTION ==="
     - echo ""
-    - echo "1. SONARQUBE STATIC ANALYSIS"
-    - echo "Installing SonarScanner for .NET..."
-    - dotnet tool install --global dotnet-sonarscanner || echo "SonarScanner installation failed"
-    - echo "Setting up SonarQube analysis..."
-    - export PATH="$PATH:/root/.dotnet/tools"
-    - echo "Creating SonarQube configuration..."
-    - echo "sonar.projectKey=gltron-mobile" > sonar-project.properties
-    - echo "sonar.projectName=GLTron Mobile" >> sonar-project.properties
-    - echo "sonar.projectVersion=1.0" >> sonar-project.properties
-    - echo "sonar.sources=GltronMobileEngine,GltronMobileGame" >> sonar-project.properties
-    - echo "sonar.exclusions=**/bin/**,**/obj/**,**/packages/**" >> sonar-project.properties
-    - echo "sonar.language=cs" >> sonar-project.properties
-    - echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
-    - echo "Starting SonarQube analysis for gltron-mobile project..."
-    - echo "Attempting SonarCloud connection (requires valid token)..."
-    - dotnet sonarscanner begin /k:"gltron-mobile" /n:"GLTron Mobile" /v:"1.0" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="${SONAR_TOKEN:-demo-token}" || echo "SonarCloud failed - running local analysis instead"
-    - echo "Running LOCAL SonarQube analysis (no cloud upload)..."
-    - dotnet sonarscanner begin /k:"gltron-mobile-local" /n:"GLTron Mobile Local" /v:"1.0" || echo "Local SonarQube analysis started"
-    - echo "Building projects for analysis..."
-    - dotnet restore GltronMobileEngine/GltronMobileEngine.csproj
-    - dotnet build GltronMobileEngine/GltronMobileEngine.csproj --no-restore
-    - dotnet restore GltronMobileGame/GltronAndroid.csproj
-    - dotnet build GltronMobileGame/GltronAndroid.csproj --no-restore -p:AndroidSdkDirectory=$ANDROID_HOME || echo "Android build for analysis failed"
-    - echo "Ending SonarQube analysis..."
-    - dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN:-demo-token}" || echo "SonarCloud upload failed - local analysis completed"
-    - echo "Checking for local SonarQube results..."
-    - find . -name "*.xml" -path "*sonar*" | head -5 || echo "No SonarQube result files found"
-    - echo "=== REAL SONARQUBE ANALYSIS RESULTS ==="
-    - echo "SonarQube directory structure:"
-    - find .sonarqube -type f | head -15 || echo "No .sonarqube directory"
+    - echo "1. INSTALLING CODEQL CLI"
+    - echo "Downloading CodeQL CLI..."
+    - wget -q https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+    - unzip -q codeql-linux64.zip
+    - export PATH="$PWD/codeql:$PATH"
+    - echo "CodeQL version:"
+    - ./codeql/codeql --version
     - echo ""
-    - echo "REAL SonarQube scanner output:"
-    - find . -name "sonar-scanner.log" -exec tail -30 {} \; || echo "No scanner log found"
+    - echo "2. CREATING CODEQL DATABASE"
+    - echo "Creating C# database for analysis..."
+    - ./codeql/codeql database create csharp-database --language=csharp --source-root=. --command="dotnet build GltronMobileEngine/GltronMobileEngine.csproj --no-restore"
+    - echo "Database creation completed"
+    - ls -la csharp-database/
     - echo ""
-    - echo "REAL analysis files generated:"
-    - find . -name "*sonar*" -type f | while read file; do echo "- $file ($(stat -c%s "$file" 2>/dev/null || echo "0") bytes)"; done
+    - echo "3. RUNNING CODEQL ANALYSIS"
+    - echo "Running standard C# security queries..."
+    - ./codeql/codeql database analyze csharp-database --format=sarif-latest --output=codeql-results.sarif csharp-security-and-quality.qls
+    - echo "Analysis completed"
     - echo ""
-    - echo "REAL code analysis results:"
-    - find .sonarqube -name "*.json" -exec echo "JSON report {}" \; -exec head -10 {} \; 2>/dev/null || echo "No JSON reports found"
-    - echo "=== END REAL SONARQUBE RESULTS ==="
+    - echo "4. AI-POWERED FALSE POSITIVE DETECTION"
+    - echo "Running custom false positive analyzer..."
+    - chmod +x scripts/codeql-false-positive-analyzer.py
+    - python3 scripts/codeql-false-positive-analyzer.py codeql-results.sarif
     - echo ""
-    - echo "2. CUSTOM AI PATTERN ANALYSIS"
-    - echo "Analyzing common .NET Android false positives..."
-    - echo "=== APK ANALYSIS ==="
+    - echo "5. GAME-SPECIFIC PATTERN ANALYSIS"
+    - echo "Analyzing APK for game-specific false positives..."
     - APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
-    - echo "APK files found $APK_COUNT"
-    - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "System.Diagnostics.Debug" || echo "0")
-    - echo "Debug libraries $DEBUG_LIBS (normal .NET runtime)"
-    - NATIVE_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep -c "\.so$" || echo "0")
-    - echo "Native libraries $NATIVE_LIBS"
-    - echo "=== APK ANALYSIS COMPLETE ==="
-    - echo "REAL ANALYSIS VERDICT:"
-    - DEBUG_LIBS=$(find . -name "*.apk" -exec unzip -l {} \; | grep "System.Diagnostics.Debug" | wc -l)
-    - echo "- System.Diagnostics.Debug libraries found $DEBUG_LIBS"
-    - echo "- Analysis This is normal .NET runtime (FALSE POSITIVE if flagged as debug symbols)"
+    - echo "APK files found: $APK_COUNT"
+    - |
+      if [ $APK_COUNT -gt 0 ]; then
+        echo "Analyzing APK contents for false positive patterns..."
+        APK_FILE=$(find . -name "*.apk" -type f | head -1)
+        
+        # Check for common false positive patterns in game APKs
+        DEBUG_LIBS=$(unzip -l "$APK_FILE" | grep -c "System.Diagnostics" || echo "0")
+        MONOGAME_LIBS=$(unzip -l "$APK_FILE" | grep -c "MonoGame" || echo "0")
+        OPENGL_LIBS=$(unzip -l "$APK_FILE" | grep -c "OpenTK\|OpenGL" || echo "0")
+        GAME_ASSETS=$(unzip -l "$APK_FILE" | grep -c "\\.xnb$\|\\.ogg$\|\\.png$" || echo "0")
+        
+        echo "=== APK FALSE POSITIVE ANALYSIS ==="
+        echo "Debug libraries: $DEBUG_LIBS (Expected: Normal .NET runtime)"
+        echo "MonoGame libraries: $MONOGAME_LIBS (Expected: Game framework)"
+        echo "OpenGL libraries: $OPENGL_LIBS (Expected: Graphics rendering)"
+        echo "Game assets: $GAME_ASSETS (Expected: Game content)"
+        
+        # Determine if common false positives are present
+        if [ $DEBUG_LIBS -gt 0 ]; then
+          echo "✓ FALSE POSITIVE: Debug symbols detected (Normal for .NET Android apps)"
+        fi
+        
+        if [ $MONOGAME_LIBS -gt 0 ]; then
+          echo "✓ FALSE POSITIVE: MonoGame framework detected (Expected for game)"
+        fi
+        
+        if [ $OPENGL_LIBS -gt 0 ]; then
+          echo "✓ FALSE POSITIVE: OpenGL libraries detected (Required for 3D graphics)"
+        fi
+        
+        echo "=== APK ANALYSIS COMPLETE ==="
+      fi
     - echo ""
-    - echo "REAL AAPT tool status:"
-    - aapt version 2>/dev/null && echo "- AAPT is available" || echo "- AAPT not available (using unzip fallback - EXPECTED)"
+    - echo "6. CODEQL DETAILED RESULTS"
+    - echo "CodeQL database info:"
+    - ./codeql/codeql database info csharp-database
     - echo ""
-    - echo "REAL GLIBC version check:"
-    - ldd --version | head -1
-    - echo "- GLIBC version is sufficient for .NET 8.0 (no warnings expected)"
-    - echo ""
-    - echo "3. GITHUB CODEQL SEMANTIC ANALYSIS"
-    - echo "Installing CodeQL for deep code analysis..."
-    - wget https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip || echo "CodeQL download failed"
-    - unzip -q codeql-linux64.zip || echo "CodeQL extraction failed"
-    - echo "=== CODEQL EXECUTION LOGS ==="
-    - ./codeql/codeql --version && echo "CodeQL version check successful" || echo "CodeQL not available"
-    - echo "Attempting CodeQL database creation..."
-    - ./codeql/codeql database create csharp-database --language=csharp --source-root=. --command="dotnet build GltronMobileEngine/GltronMobileEngine.csproj" 2>&1 | head -20 || echo "CodeQL database creation failed"
-    - echo "Checking CodeQL database..."
-    - ls -la csharp-database/ 2>/dev/null || echo "No CodeQL database created"
-    - echo "=== END CODEQL LOGS ==="
+    - echo "SARIF results summary:"
+    - |
+      if [ -f "codeql-results.sarif" ]; then
+        echo "SARIF file size: $(stat -c%s codeql-results.sarif) bytes"
+        echo "Results preview:"
+        head -50 codeql-results.sarif
+      else
+        echo "No SARIF results generated"
+      fi
     - echo ""
     - echo "=== AI ANALYSIS SUMMARY ==="
-    - echo "SONARQUBE ANALYSIS RESULTS:"
-    - echo "Checking actual SonarQube output..."
-    - ls -la .sonarqube/ 2>/dev/null || echo "No .sonarqube directory found"
-    - find . -name "sonar-report.json" -o -name "*.sarif" | head -3 || echo "No detailed reports found"
-    - echo "=== DETAILED ANALYSIS RESULTS ==="
-    - echo "Checking build output for analysis results..."
-    - find . -name "*.log" -path "*sonar*" -exec echo "=== {} ===" \; -exec tail -20 {} \; 2>/dev/null || echo "No detailed logs found"
+    - echo "✅ CodeQL semantic analysis - Professional code analysis engine"
+    - echo "✅ Custom false positive detection - Game-specific pattern recognition"
+    - echo "✅ APK content analysis - Android app validation"
+    - echo "✅ C# game code patterns - MonoGame/OpenGL awareness"
     - echo ""
-    - echo "Checking for code issues found:"
-    - grep -r "issue\|warning\|error" .sonarqube/ 2>/dev/null | head -10 || echo "No issues file found"
+    - echo "RECOMMENDATION:"
+    - echo "- CodeQL provides high-quality semantic analysis"
+    - echo "- False positive detection identifies common game development patterns"
+    - echo "- Analysis is tailored for C# Android game development"
+    - echo "- Results should be reviewed for actual security issues vs framework patterns"
     - echo ""
-    - echo "Checking MSBuild analysis output:"
-    - find . -name "*.binlog" -o -name "*.trx" | head -3 || echo "No MSBuild logs found"
-    - echo ""
-    - echo "LOCAL ANALYSIS STATUS"
-    - echo "- Static code analysis $([ -d .sonarqube ] && echo 'COMPLETED' || echo 'PARTIAL')"
-    - echo "- C# syntax validation $(dotnet build --version > /dev/null 2>&1 && echo 'COMPLETED' || echo 'FAILED')"
-    - echo "- Basic quality metrics $(find . -name "*sonar*" | wc -l) files generated"
-    - echo "- Security pattern detection $(grep -r "security\|vulnerability" .sonarqube/ 2>/dev/null | wc -l) patterns checked"
-    - echo ""
-    - echo "NOTE - For full SonarCloud dashboard, add SONAR_TOKEN variable to GitLab CI/CD settings"
-    - echo ""
-    - echo "✅ SonarScanner - Professional code quality analysis"
-    - echo "✅ Custom AI patterns - Identifies .NET Android false positives"
-    - echo "✅ CodeQL - GitHub's semantic code analysis"
-    - echo ""
-    - echo "FALSE POSITIVES IDENTIFIED"
-    - echo "- System.Diagnostics.Debug.dll.so (Normal .NET runtime)"
-    - echo "- AAPT analysis failures (Expected in CI, fallback works)"
-    - echo "- GLIBC version warnings (Resolved by Ubuntu Noble)"
-    - echo ""
-    - echo "RECOMMENDATION - Current build is healthy, alerts are false positives"
-    - echo "=== END AI ANALYSIS ==="
+    - echo "=== END AI-POWERED CODEQL ANALYSIS ==="
+  artifacts:
+    name: "codeql-analysis-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - codeql-results.sarif
+      - csharp-database/
+    expire_in: 7 days
   allow_failure: true
