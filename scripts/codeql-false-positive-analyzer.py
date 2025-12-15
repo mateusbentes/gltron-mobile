@@ -77,8 +77,10 @@ class CodeQLFalsePositiveAnalyzer:
                 sarif_data = json.load(f)
         except FileNotFoundError:
             return {"error": "SARIF file not found", "total_issues": 0}
-        except json.JSONDecodeError:
-            return {"error": "Invalid SARIF format", "total_issues": 0}
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid SARIF format: {e}", "total_issues": 0}
+        except Exception as e:
+            return {"error": f"Unexpected error reading SARIF: {e}", "total_issues": 0}
         
         analysis_results = {
             "total_issues": 0,
@@ -90,6 +92,17 @@ class CodeQLFalsePositiveAnalyzer:
         }
         
         runs = sarif_data.get('runs', [])
+        
+        if not runs:
+            return {
+                "total_issues": 0,
+                "false_positives": 0,
+                "valid_issues": 0,
+                "false_positive_details": [],
+                "valid_issue_details": [],
+                "pattern_matches": {},
+                "info": "No analysis runs found in SARIF file"
+            }
         
         for run in runs:
             results = run.get('results', [])
@@ -178,6 +191,26 @@ class CodeQLFalsePositiveAnalyzer:
         
         if "error" in results:
             return f"Analysis Error: {results['error']}"
+        
+        if "info" in results:
+            report = []
+            report.append("=== AI-POWERED CODEQL FALSE POSITIVE ANALYSIS ===")
+            report.append("")
+            report.append(f"ℹ️  INFO: {results['info']}")
+            report.append("")
+            report.append("📊 ANALYSIS SUMMARY:")
+            report.append("   No issues found - this could indicate:")
+            report.append("   • Clean code with no detectable issues")
+            report.append("   • CodeQL analysis didn't run completely")
+            report.append("   • Project structure not fully compatible")
+            report.append("")
+            report.append("💡 RECOMMENDATIONS:")
+            report.append("   • Check CodeQL database creation logs")
+            report.append("   • Verify project builds successfully")
+            report.append("   • Consider running analysis locally for debugging")
+            report.append("")
+            report.append("=== END ANALYSIS ===")
+            return "\n".join(report)
         
         report = []
         report.append("=== AI-POWERED CODEQL FALSE POSITIVE ANALYSIS ===")
