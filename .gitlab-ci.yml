@@ -367,7 +367,7 @@ ai_powered_analysis:
     - echo "5. GAME-SPECIFIC PATTERN ANALYSIS"
     - echo "Analyzing APK for game-specific false positives..."
     - APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
-    - echo "APK files found: $APK_COUNT"
+    - echo "APK files found $APK_COUNT"
     - |
       if [ $APK_COUNT -gt 0 ]; then
         echo "Analyzing APK contents for false positive patterns..."
