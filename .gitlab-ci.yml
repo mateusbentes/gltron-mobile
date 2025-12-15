@@ -337,7 +337,7 @@ ai_powered_analysis:
     - job: "validate_apk_debug"
       artifacts: false
     - job: "validate_apk_release"
-      artifacts: 
+      artifacts: false
   
   script:
     - echo "=== AI-POWERED SNYK CODE ANALYSIS ==="
@@ -378,97 +378,97 @@ ai_powered_analysis:
         python3 -c "
         import json
         demo_results = {
-        'runs': [
-        {
-        'tool': {
-        'driver': {
-        'name': 'SnykCode',
-        'version': '1.0.0-demo',
-        'informationUri': 'https://snyk.io/product/snyk-code/'
-        }
-        },
-        'results': [
-        {
-        'ruleId': 'csharp/PT/1001',
-        'level': 'note',
-        'message': {
-        'text': 'Unused variable detected in game loop - AI identified as MonoGame framework pattern'
-        },
-        'locations': [
-        {
-        'physicalLocation': {
-        'artifactLocation': {
-        'uri': 'GltronMobileEngine/Game1.cs'
-        },
-        'region': {
-        'startLine': 45
-        }
-        }
-        }
-        ],
-        'properties': {
-        'ai_confidence': 0.95,
-        'false_positive_likelihood': 'high',
-        'framework_pattern': 'monogame',
-        'ai_reasoning': 'Variable appears in Update/Draw method typical of game frameworks'
-        }
-        },
-        {
-        'ruleId': 'csharp/PT/2001',
-        'level': 'warning',
-        'message': {
-        'text': 'Resource disposal pattern - AI detected OpenGL resource management'
-        },
-        'locations': [
-        {
-        'physicalLocation': {
-        'artifactLocation': {
-        'uri': 'GltronMobileEngine/Video/GraphicsScaler.cs'
-        },
-        'region': {
-        'startLine': 78
-        }
-        }
-        }
-        ],
-        'properties': {
-        'ai_confidence': 0.92,
-        'false_positive_likelihood': 'high',
-        'framework_pattern': 'opengl',
-        'ai_reasoning': 'Graphics resources typically managed by driver in game engines'
-        }
-        },
-        {
-        'ruleId': 'csharp/PT/3001',
-        'level': 'error',
-        'message': {
-        'text': 'Potential input validation issue - AI recommends review'
-        },
-        'locations': [
-        {
-        'physicalLocation': {
-        'artifactLocation': {
-        'uri': 'GltronMobileEngine/Player.cs'
-        },
-        'region': {
-        'startLine': 123
-        }
-        }
-        }
-        ],
-        'properties': {
-        'ai_confidence': 0.78,
-        'false_positive_likelihood': 'low',
-        'security_issue': True,
-        'ai_reasoning': 'User input handling requires validation in game context'
-        }
-        }
-        ]
-        }
-        ]
+            'runs': [
+                {
+                    'tool': {
+                        'driver': {
+                            'name': 'SnykCode',
+                            'version': '1.0.0-demo',
+                            'informationUri': 'https://snyk.io/product/snyk-code/'
+                        }
+                    },
+                    'results': [
+                        {
+                            'ruleId': 'csharp/PT/1001',
+                            'level': 'note',
+                            'message': {
+                                'text': 'Unused variable detected in game loop - AI identified as MonoGame framework pattern'
+                            },
+                            'locations': [
+                                {
+                                    'physicalLocation': {
+                                        'artifactLocation': {
+                                            'uri': 'GltronMobileEngine/Game1.cs'
+                                        },
+                                        'region': {
+                                            'startLine': 45
+                                        }
+                                    }
+                                }
+                            ],
+                            'properties': {
+                                'ai_confidence': 0.95,
+                                'false_positive_likelihood': 'high',
+                                'framework_pattern': 'monogame',
+                                'ai_reasoning': 'Variable appears in Update/Draw method typical of game frameworks'
+                            }
+                        },
+                        {
+                            'ruleId': 'csharp/PT/2001',
+                            'level': 'warning',
+                            'message': {
+                                'text': 'Resource disposal pattern - AI detected OpenGL resource management'
+                            },
+                            'locations': [
+                                {
+                                    'physicalLocation': {
+                                        'artifactLocation': {
+                                            'uri': 'GltronMobileEngine/Video/GraphicsScaler.cs'
+                                        },
+                                        'region': {
+                                            'startLine': 78
+                                        }
+                                    }
+                                }
+                            ],
+                            'properties': {
+                                'ai_confidence': 0.92,
+                                'false_positive_likelihood': 'high',
+                                'framework_pattern': 'opengl',
+                                'ai_reasoning': 'Graphics resources typically managed by driver in game engines'
+                            }
+                        },
+                        {
+                            'ruleId': 'csharp/PT/3001',
+                            'level': 'error',
+                            'message': {
+                                'text': 'Potential input validation issue - AI recommends review'
+                            },
+                            'locations': [
+                                {
+                                    'physicalLocation': {
+                                        'artifactLocation': {
+                                            'uri': 'GltronMobileEngine/Player.cs'
+                                        },
+                                        'region': {
+                                            'startLine': 123
+                                        }
+                                    }
+                                }
+                            ],
+                            'properties': {
+                                'ai_confidence': 0.78,
+                                'false_positive_likelihood': 'low',
+                                'security_issue': True,
+                                'ai_reasoning': 'User input handling requires validation in game context'
+                            }
+                        }
+                    ]
+                }
+            ]
         }
         with open('snyk-code-results.json', 'w') as f:
-        json.dump(demo_results, f, indent=2)
+            json.dump(demo_results, f, indent=2)
         print('Demo AI results created successfully')
         "
         # Create demo SARIF results
@@ -485,29 +485,29 @@ ai_powered_analysis:
         TOTAL_ISSUES=$(cat snyk-code-results.json | python3 -c "
         import json, sys
         try:
-        data = json.load(sys.stdin)
-        runs = data.get('runs', [])
-        total = 0
-        for run in runs:
-        total += len(run.get('results', []))
-        print(total)
+            data = json.load(sys.stdin)
+            runs = data.get('runs', [])
+            total = 0
+            for run in runs:
+                total += len(run.get('results', []))
+            print(total)
         except:
-        print('0')
+            print('0')
         " 2>/dev/null || echo "0")
         FALSE_POSITIVES=$(cat snyk-code-results.json | python3 -c "
         import json, sys
         try:
-        data = json.load(sys.stdin)
-        runs = data.get('runs', [])
-        fp_count = 0
-        for run in runs:
-        for result in run.get('results', []):
-        props = result.get('properties', {})
-        if props.get('false_positive_likelihood') == 'high':
-        fp_count += 1
-        print(fp_count)
+            data = json.load(sys.stdin)
+            runs = data.get('runs', [])
+            fp_count = 0
+            for run in runs:
+                for result in run.get('results', []):
+                    props = result.get('properties', {})
+                    if props.get('false_positive_likelihood') == 'high':
+                        fp_count += 1
+            print(fp_count)
         except:
-        print('0')
+            print('0')
         " 2>/dev/null || echo "0")
         VALID_ISSUES=$((TOTAL_ISSUES - FALSE_POSITIVES))
         echo "📊 SNYK AI ANALYSIS SUMMARY:"
@@ -524,35 +524,35 @@ ai_powered_analysis:
         cat snyk-code-results.json | python3 -c "
         import json, sys
         try:
-        data = json.load(sys.stdin)
-        runs = data.get('runs', [])
-        for run in runs:
-        for result in run.get('results', []):
-        props = result.get('properties', {})
-        rule_id = result.get('ruleId', 'unknown')
-        message = result.get('message', {}).get('text', '')
-        confidence = props.get('ai_confidence', 0)
-        fp_likelihood = props.get('false_positive_likelihood', 'unknown')
-        framework = props.get('framework_pattern', '')
-        reasoning = props.get('ai_reasoning', '')
-        if fp_likelihood == 'high':
-        print(f'   ❌ FALSE POSITIVE: {rule_id}')
-        print(f'      Issue: {message[:60]}...')
-        print(f'      AI Confidence: {confidence:.2f}')
-        if framework:
-        print(f'      Framework: {framework}')
-        if reasoning:
-        print(f'      AI Reasoning: {reasoning}')
-        print()
-        elif props.get('security_issue'):
-        print(f'   🔴 SECURITY ISSUE: {rule_id}')
-        print(f'      Description: {message[:60]}...')
-        print(f'      AI Confidence: {confidence:.2f}')
-        if reasoning:
-        print(f'      AI Reasoning: {reasoning}')
-        print()
+            data = json.load(sys.stdin)
+            runs = data.get('runs', [])
+            for run in runs:
+                for result in run.get('results', []):
+                    props = result.get('properties', {})
+                    rule_id = result.get('ruleId', 'unknown')
+                    message = result.get('message', {}).get('text', '')
+                    confidence = props.get('ai_confidence', 0)
+                    fp_likelihood = props.get('false_positive_likelihood', 'unknown')
+                    framework = props.get('framework_pattern', '')
+                    reasoning = props.get('ai_reasoning', '')
+                    if fp_likelihood == 'high':
+                        print(f'   ❌ FALSE POSITIVE: {rule_id}')
+                        print(f'      Issue: {message[:60]}...')
+                        print(f'      AI Confidence: {confidence:.2f}')
+                        if framework:
+                            print(f'      Framework: {framework}')
+                        if reasoning:
+                            print(f'      AI Reasoning: {reasoning}')
+                        print()
+                    elif props.get('security_issue'):
+                        print(f'   🔴 SECURITY ISSUE: {rule_id}')
+                        print(f'      Description: {message[:60]}...')
+                        print(f'      AI Confidence: {confidence:.2f}')
+                        if reasoning:
+                            print(f'      AI Reasoning: {reasoning}')
+                        print()
         except Exception as e:
-        print(f'   Error processing AI insights: {e}')
+            print(f'   Error processing AI insights: {e}')
         " 2>/dev/null || echo "   Unable to extract detailed AI insights"
         echo "=== END SNYK AI ANALYSIS ==="
       else
