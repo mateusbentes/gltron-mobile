@@ -321,7 +321,8 @@ validate_apk_release:
         echo "No APK file found"
         exit 1
       fi
-ai_powered_analysis:
+
+aai_powered_analysis:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
   tags:
@@ -332,19 +333,17 @@ ai_powered_analysis:
       artifacts: true
     - job: build_release
       artifacts: true
-    - job: "validate_apk_debug"
+    - job: validate_apk_debug
       artifacts: false
-    - job: "validate_apk_release"
+    - job: validate_apk_release
       artifacts: false
 
   script:
     - echo "=== AI-ASSISTED SNYK CODE ANALYSIS ==="
 
-    - echo "Installing dependencies..."
     - apt-get update
     - apt-get install -y curl unzip python3
 
-    - echo "Installing Snyk CLI..."
     - curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
     - chmod +x snyk
     - mv snyk /usr/local/bin/
@@ -352,77 +351,49 @@ ai_powered_analysis:
 
     - |
       if [ -n "$SNYK_TOKEN" ]; then
-        echo "Using SNYK_TOKEN from CI variables"
         export SNYK_TOKEN="$SNYK_TOKEN"
       else
-        echo "⚠️  No SNYK_TOKEN provided – running limited analysis"
+        echo "⚠️ No SNYK_TOKEN provided"
       fi
 
-    - echo "Running Snyk Code (ML-assisted static analysis)..."
     - snyk code test --sarif --sarif-file-output=snyk-code-results.sarif . || true
 
-    - echo "Generating AI-powered analysis summary..."
+    - echo "Generating analysis summary..."
     - |
       if [ -f snyk-code-results.sarif ]; then
-        echo "=== SNYK AI ANALYSIS RESULTS ==="
-        echo ""
+        echo "=== SNYK ANALYSIS RESULTS ==="
 
-        # ---- Findings count (POSIX-safe) ----
-        python3 << 'EOF'
+        cat << 'EOF' | python3
 import json
 
 try:
     with open("snyk-code-results.sarif") as f:
         data = json.load(f)
-
     results = data.get("runs", [{}])[0].get("results", [])
     print(f"📊 Total findings: {len(results)}")
 except Exception:
     print("📊 Total findings: 0")
 EOF
 
-        echo ""
-        echo "   AI-powered vulnerability detection: ACTIVE"
-        echo "   Machine learning analysis: COMPLETED"
-        echo ""
-
-        # ---- APK analysis ----
-        APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
+        APK_COUNT=$(find . -name "*.apk" | wc -l)
         if [ "$APK_COUNT" -gt 0 ]; then
-          APK_FILE=$(find . -name "*.apk" -type f | head -1)
+          APK_FILE=$(find . -name "*.apk" | head -1)
 
-          MONOGAME_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "MonoGame" || true)
-          ANDROID_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "Xamarin.Android\|Android.Runtime" || true)
-          OPENGL_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "OpenTK\|OpenGL" || true)
-          DOTNET_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "System\." || true)
-          GAME_ASSETS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "\.xnb$\|\.ogg$\|\.png$" || true)
+          MONOGAME_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c MonoGame || true)
+          ANDROID_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c Android || true)
 
-          echo "🤖 AI COMPREHENSIVE ANALYSIS VERDICT:"
-          echo "   Application Type: C# Android Game"
-          echo "   Framework Stack: MonoGame + .NET + Android"
-          echo "   Graphics Capability: OpenGL/3D rendering enabled"
-          echo "   Platform Target: Android mobile devices"
-          echo "   Analysis note: High false-positive rate expected"
-          echo ""
-
-          echo "🎮 DETECTED COMPONENTS:"
-          echo "   • MonoGame framework: $MONOGAME_LIBS"
-          echo "   • Android runtime: $ANDROID_LIBS"
-          echo "   • OpenGL graphics: $OPENGL_LIBS"
-          echo "   • .NET libraries: $DOTNET_LIBS"
-          echo "   • Game assets: $GAME_ASSETS"
-          echo ""
+          echo "Detected game framework patterns:"
+          echo "• MonoGame libs: $MONOGAME_LIBS"
+          echo "• Android runtime libs: $ANDROID_LIBS"
+          echo "Note: Static analysis may produce false positives"
         fi
-
-        echo "=== END SNYK AI ANALYSIS ==="
       else
-        echo "⚠️  No SARIF results found"
+        echo "⚠️ No SARIF results generated"
       fi
 
     - echo "=== ANALYSIS COMPLETE ==="
 
   artifacts:
-    name: "snyk-analysis-${CI_COMMIT_SHORT_SHA}"
     paths:
       - snyk-code-results.sarif
     expire_in: 7 days
