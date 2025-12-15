@@ -321,7 +321,6 @@ validate_apk_release:
         echo "No APK file found"
         exit 1
       fi
-
 ai_powered_analysis:
   stage: ai_analysis
   image: mcr.microsoft.com/dotnet/sdk:8.0-noble
@@ -337,6 +336,7 @@ ai_powered_analysis:
       artifacts: false
     - job: "validate_apk_release"
       artifacts: false
+
   script:
     - echo "=== AI-ASSISTED SNYK CODE ANALYSIS ==="
 
@@ -366,103 +366,57 @@ ai_powered_analysis:
       if [ -f snyk-code-results.sarif ]; then
         echo "=== SNYK AI ANALYSIS RESULTS ==="
         echo ""
-        
-        # Extract findings count
-        TOTAL_FINDINGS=$(python3 -c "
+
+        # ---- Findings count (POSIX-safe) ----
+        python3 << 'EOF'
 import json
+
 try:
-    with open('snyk-code-results.sarif') as f:
+    with open("snyk-code-results.sarif") as f:
         data = json.load(f)
-    results = data.get('runs', [{}])[0].get('results', [])
-    print(len(results))
-except:
-    print('0')
-")
-        
-        echo "📊 SNYK AI ANALYSIS SUMMARY:"
-        echo "   Total findings: $TOTAL_FINDINGS"
+
+    results = data.get("runs", [{}])[0].get("results", [])
+    print(f"📊 Total findings: {len(results)}")
+except Exception:
+    print("📊 Total findings: 0")
+EOF
+
+        echo ""
         echo "   AI-powered vulnerability detection: ACTIVE"
         echo "   Machine learning analysis: COMPLETED"
         echo ""
-        
-        # Analyze APK for game patterns
+
+        # ---- APK analysis ----
         APK_COUNT=$(find . -name "*.apk" -type f | wc -l)
-        if [ $APK_COUNT -gt 0 ]; then
+        if [ "$APK_COUNT" -gt 0 ]; then
           APK_FILE=$(find . -name "*.apk" -type f | head -1)
-          
-          # AI pattern detection
-          MONOGAME_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "MonoGame" || echo "0")
-          ANDROID_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "Xamarin.Android\|Android.Runtime" || echo "0")
-          OPENGL_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "OpenTK\|OpenGL" || echo "0")
-          DOTNET_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "System\." || echo "0")
-          GAME_ASSETS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "\\.xnb$\|\\.ogg$\|\\.png$" || echo "0")
-          
+
+          MONOGAME_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "MonoGame" || true)
+          ANDROID_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "Xamarin.Android\|Android.Runtime" || true)
+          OPENGL_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "OpenTK\|OpenGL" || true)
+          DOTNET_LIBS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "System\." || true)
+          GAME_ASSETS=$(unzip -l "$APK_FILE" 2>/dev/null | grep -c "\.xnb$\|\.ogg$\|\.png$" || true)
+
           echo "🤖 AI COMPREHENSIVE ANALYSIS VERDICT:"
-          echo "   Application Type: C# Android Game (AI Confidence: 96%)"
-          echo "   Framework Stack: MonoGame + .NET 8.0 + Android"
+          echo "   Application Type: C# Android Game"
+          echo "   Framework Stack: MonoGame + .NET + Android"
           echo "   Graphics Capability: OpenGL/3D rendering enabled"
           echo "   Platform Target: Android mobile devices"
-          echo "   AI Recommendation: Expect high false positive rate for static analysis"
-          echo "   AI Suggestion: Focus on security issues, ignore framework patterns"
+          echo "   Analysis note: High false-positive rate expected"
           echo ""
-          
-          echo "🎮 AI DETECTED COMPONENTS:"
-          echo "   • MonoGame framework: $MONOGAME_LIBS components"
-          echo "   • Android runtime: $ANDROID_LIBS components"
-          echo "   • OpenGL graphics: $OPENGL_LIBS components"
-          echo "   • .NET libraries: $DOTNET_LIBS components"
-          echo "   • Game assets: $GAME_ASSETS files"
+
+          echo "🎮 DETECTED COMPONENTS:"
+          echo "   • MonoGame framework: $MONOGAME_LIBS"
+          echo "   • Android runtime: $ANDROID_LIBS"
+          echo "   • OpenGL graphics: $OPENGL_LIBS"
+          echo "   • .NET libraries: $DOTNET_LIBS"
+          echo "   • Game assets: $GAME_ASSETS"
           echo ""
         fi
-        
-        echo "🔍 MACHINE LEARNING INSIGHTS:"
-        echo "   • AI trained on 10M+ C# repositories for context awareness"
-        echo "   • Deep learning models recognize game development patterns"
-        echo "   • Neural networks provide confidence scoring for vulnerabilities"
-        echo "   • Continuous learning improves false positive detection over time"
-        echo ""
-        
-        echo "📈 AI-POWERED CONTINUOUS IMPROVEMENT:"
-        echo "   • Machine learning adapts to project-specific coding patterns"
-        echo "   • AI feedback loop reduces false positives with each analysis"
-        echo "   • Intelligent prioritization focuses on high-confidence security issues"
-        echo "   • Automated pattern recognition evolves with framework updates"
-        echo ""
-        
-        echo "🚀 AI RECOMMENDATIONS:"
-        echo "   • Add SNYK_TOKEN to GitLab CI/CD variables for enhanced AI analysis"
-        echo "   • Review findings with AI context awareness for game development"
-        echo "   • Trust AI pattern recognition for framework-specific false positives"
-        echo "   • Leverage machine learning insights for security prioritization"
-        echo ""
-        
+
         echo "=== END SNYK AI ANALYSIS ==="
       else
-        echo "=== SNYK AI ANALYSIS RESULTS ==="
-        echo ""
-        echo "⚠️  No SARIF results found - running in demo mode"
-        echo ""
-        echo "🤖 AI COMPREHENSIVE ANALYSIS VERDICT:"
-        echo "   Application Type: C# Android Game (AI Confidence: 96%)"
-        echo "   Framework Stack: MonoGame + .NET 8.0 + Android"
-        echo "   Graphics Capability: OpenGL/3D rendering enabled"
-        echo "   Platform Target: Android mobile devices"
-        echo "   AI Recommendation: Add SNYK_TOKEN for full AI analysis"
-        echo "   AI Suggestion: Enable machine learning-powered vulnerability detection"
-        echo ""
-        echo "🔍 MACHINE LEARNING INSIGHTS:"
-        echo "   • AI trained on 10M+ C# repositories for context awareness"
-        echo "   • Deep learning models recognize game development patterns"
-        echo "   • Neural networks provide confidence scoring for vulnerabilities"
-        echo "   • Continuous learning improves false positive detection over time"
-        echo ""
-        echo "📈 AI-POWERED CONTINUOUS IMPROVEMENT:"
-        echo "   • Machine learning adapts to project-specific coding patterns"
-        echo "   • AI feedback loop reduces false positives with each analysis"
-        echo "   • Intelligent prioritization focuses on high-confidence security issues"
-        echo "   • Automated pattern recognition evolves with framework updates"
-        echo ""
-        echo "=== END SNYK AI ANALYSIS ==="
+        echo "⚠️  No SARIF results found"
       fi
 
     - echo "=== ANALYSIS COMPLETE ==="
