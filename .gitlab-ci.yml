@@ -375,7 +375,6 @@ ai_powered_analysis:
         mkdir -p snyk-reports
         # Create demo JSON results with AI insights
         echo "Creating demo Snyk AI analysis results..."
-        - |
         python3 - << 'EOF'
         import json
         demo_results = {
