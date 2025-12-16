@@ -375,7 +375,7 @@ ai_powered_analysis:
         mkdir -p snyk-reports
         # Create demo JSON results with AI insights
         echo "Creating demo Snyk AI analysis results..."
-        python3 - << 'EOF'
+        python3 -c "
         import json
         demo_results = {
             'runs': [
@@ -470,7 +470,7 @@ ai_powered_analysis:
         with open('snyk-code-results.json', 'w') as f:
             json.dump(demo_results, f, indent=2)
         print('Demo AI results created successfully')
-        EOF
+        "
         # Create demo SARIF results
         cp snyk-code-results.json snyk-code-results.sarif
         echo "✅ Demo Snyk AI analysis created"
