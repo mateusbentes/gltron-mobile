@@ -473,38 +473,59 @@ ai_powered_analysis:
     - |
       if [ -f "snyk-code-results.json" ]; then
         echo "=== SNYK AI ANALYSIS RESULTS ==="
-        # Extract AI insights from Snyk results using shell commands
-        TOTAL_ISSUES=$(grep -c "\"ruleId\":" snyk-code-results.json)
-        FALSE_POSITIVES=$(grep -c "\"false_positive_likelihood\": \"high\"" snyk-code-results.json)
-        VALID_ISSUES=$((TOTAL_ISSUES - FALSE_POSITIVES))
-        echo "📊 SNYK AI ANALYSIS SUMMARY:"
-        echo "   Total issues found: $TOTAL_ISSUES"
-        echo "   AI-detected false positives: $FALSE_POSITIVES"
-        echo "   Valid security issues: $VALID_ISSUES"
-        if [ $TOTAL_ISSUES -gt 0 ]; then
-          FP_RATE=$((FALSE_POSITIVES * 100 / TOTAL_ISSUES))
-          echo "   False positive rate: ${FP_RATE}%"
+        # Extract AI insights from Snyk results
+        if [ -n "$SNYK_TOKEN" ] && [ "$SNYK_TOKEN" != "demo-token" ]; then
+          echo "📊 REAL SNYK AI ANALYSIS SUMMARY:"
+          # For real results, we'll just show the count of issues
+          TOTAL_ISSUES=$(grep -c "\"ruleId\":" snyk-code-results.json)
+          FALSE_POSITIVES=$(grep -c "\"false_positive_likelihood\": \"high\"" snyk-code-results.json)
+          VALID_ISSUES=$((TOTAL_ISSUES - FALSE_POSITIVES))
+          echo "   Total issues found: $TOTAL_ISSUES"
+          echo "   AI-detected false positives: $FALSE_POSITIVES"
+          echo "   Valid security issues: $VALID_ISSUES"
+          if [ $TOTAL_ISSUES -gt 0 ]; then
+            FP_RATE=$((FALSE_POSITIVES * 100 / TOTAL_ISSUES))
+            echo "   False positive rate: ${FP_RATE}%"
+          fi
+          echo ""
+          echo "🤖 AI-POWERED INSIGHTS:"
+          # For real results, we'll just show a message about real analysis
+          echo "   Real Snyk AI analysis results are available in the JSON/SARIF files"
+          echo "   For detailed insights, please review the generated reports"
+        else
+          echo "📊 DEMO SNYK AI ANALYSIS SUMMARY:"
+          # Extract AI insights from Snyk results using shell commands
+          TOTAL_ISSUES=$(grep -c "\"ruleId\":" snyk-code-results.json)
+          FALSE_POSITIVES=$(grep -c "\"false_positive_likelihood\": \"high\"" snyk-code-results.json)
+          VALID_ISSUES=$((TOTAL_ISSUES - FALSE_POSITIVES))
+          echo "   Total issues found: $TOTAL_ISSUES"
+          echo "   AI-detected false positives: $FALSE_POSITIVES"
+          echo "   Valid security issues: $VALID_ISSUES"
+          if [ $TOTAL_ISSUES -gt 0 ]; then
+            FP_RATE=$((FALSE_POSITIVES * 100 / TOTAL_ISSUES))
+            echo "   False positive rate: ${FP_RATE}%"
+          fi
+          echo ""
+          echo "🤖 AI-POWERED INSIGHTS:"
+          # Extract detailed AI insights using shell commands
+          echo "   ❌ FALSE POSITIVE: csharp/PT/1001"
+          echo "      Issue: Unused variable detected in game loop - AI identified as MonoGame framework pattern..."
+          echo "      AI Confidence: 0.95"
+          echo "      Framework: monogame"
+          echo "      AI Reasoning: Variable appears in Update/Draw method typical of game frameworks"
+          echo ""
+          echo "   ❌ FALSE POSITIVE: csharp/PT/2001"
+          echo "      Issue: Resource disposal pattern - AI detected OpenGL resource management..."
+          echo "      AI Confidence: 0.92"
+          echo "      Framework: opengl"
+          echo "      AI Reasoning: Graphics resources typically managed by driver in game engines"
+          echo ""
+          echo "   🔴 SECURITY ISSUE: csharp/PT/3001"
+          echo "      Description: Potential input validation issue - AI recommends review..."
+          echo "      AI Confidence: 0.78"
+          echo "      AI Reasoning: User input handling requires validation in game context"
+          echo ""
         fi
-        echo ""
-        echo "🤖 AI-POWERED INSIGHTS:"
-        # Extract detailed AI insights using shell commands
-        echo "   ❌ FALSE POSITIVE: csharp/PT/1001"
-        echo "      Issue: Unused variable detected in game loop - AI identified as MonoGame framework pattern..."
-        echo "      AI Confidence: 0.95"
-        echo "      Framework: monogame"
-        echo "      AI Reasoning: Variable appears in Update/Draw method typical of game frameworks"
-        echo ""
-        echo "   ❌ FALSE POSITIVE: csharp/PT/2001"
-        echo "      Issue: Resource disposal pattern - AI detected OpenGL resource management..."
-        echo "      AI Confidence: 0.92"
-        echo "      Framework: opengl"
-        echo "      AI Reasoning: Graphics resources typically managed by driver in game engines"
-        echo ""
-        echo "   🔴 SECURITY ISSUE: csharp/PT/3001"
-        echo "      Description: Potential input validation issue - AI recommends review..."
-        echo "      AI Confidence: 0.78"
-        echo "      AI Reasoning: User input handling requires validation in game context"
-        echo ""
         echo "=== END SNYK AI ANALYSIS ==="
       else
         echo "No Snyk results found"
