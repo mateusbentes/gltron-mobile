@@ -13,6 +13,7 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 - .NET SDK installed (same as used by the solution)
 - `dotnet` available in PATH (or set `DOTNET=/home/mateus/dotnet/dotnet`)
 - `adb` available in PATH
+- Android SDK path set via `ANDROID_SDK_ROOT` or `ANDROID_HOME` (or `-PandroidSdkDir=/path/to/sdk`)
 
 ### iOS (Xcode)
 - macOS with Xcode (latest stable)

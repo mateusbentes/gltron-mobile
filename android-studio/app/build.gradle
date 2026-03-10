@@ -58,6 +58,14 @@ if (!dotnetPath) {
 
 def dotnetCmd = dotnetPath ?: "dotnet"
 
+def androidSdkDir = project.hasProperty("androidSdkDir") ? project.property("androidSdkDir") : (System.getenv("ANDROID_SDK_ROOT") ?: System.getenv("ANDROID_HOME"))
+if (!androidSdkDir) {
+    def defaultSdk = "/home/mateus/Android/Sdk"
+    if (file(defaultSdk).exists()) {
+        androidSdkDir = defaultSdk
+    }
+}
+
 tasks.register("dotnetBuildAndroid", Exec) {
     doFirst {
         if (dotnetPath) {
@@ -72,8 +80,11 @@ tasks.register("dotnetBuildAndroid", Exec) {
                 throw new GradleException("dotnet not found in PATH. Install .NET SDK or set DOTNET env or -PdotnetPath=/path/to/dotnet")
             }
         }
+        if (!androidSdkDir || !file(androidSdkDir).exists()) {
+            throw new GradleException("Android SDK not found. Set ANDROID_SDK_ROOT/ANDROID_HOME or -PandroidSdkDir=/path/to/sdk")
+        }
     }
-    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug"
+    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug", "/p:AndroidSdkDirectory=${androidSdkDir}"
 }
 
 tasks.register("installDotnetApk", Exec) {
