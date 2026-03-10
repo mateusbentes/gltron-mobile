@@ -3,5 +3,7 @@
     <!-- Default Android SDK path for local builds -->
     <AndroidSdkDirectory Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkDirectory>
     <AndroidSdkDirectory Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkDirectory>
+    <AndroidSdkRoot Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkRoot>
+    <AndroidSdkRoot Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkRoot>
   </PropertyGroup>
 </Project>
