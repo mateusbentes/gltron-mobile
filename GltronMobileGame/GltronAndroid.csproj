@@ -6,12 +6,12 @@
   <PropertyGroup>
     <TargetFramework>net8.0-android</TargetFramework>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
-    <TargetAndroidVersion>36</TargetAndroidVersion>
+    <TargetAndroidVersion>35</TargetAndroidVersion>
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
-    <AndroidTargetFrameworkVersion>v36.0</AndroidTargetFrameworkVersion>
-    <AndroidTargetSdkVersion>36</AndroidTargetSdkVersion>
-    <TargetFrameworkVersion>v36.0</TargetFrameworkVersion>
-    <AndroidCompileSdkVersion>36</AndroidCompileSdkVersion>
+    <AndroidTargetFrameworkVersion>v35.0</AndroidTargetFrameworkVersion>
+    <AndroidTargetSdkVersion>35</AndroidTargetSdkVersion>
+    <TargetFrameworkVersion>v35.0</TargetFrameworkVersion>
+    <AndroidCompileSdkVersion>35</AndroidCompileSdkVersion>
     <AndroidUseIntermediateDesignerFile>false</AndroidUseIntermediateDesignerFile>
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>

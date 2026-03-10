@@ -32,8 +32,7 @@ This document outlines the F-Droid metadata structure and requirements for GLTro
 - **License**: GPL-3.0
 - **Categories**: Games
 - **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 36 (Android 13)
-## 📱 Screenshots Needed
+- **Target SDK**: 35 (Android 14)
 
 To complete F-Droid submission, capture these screenshots:
 
