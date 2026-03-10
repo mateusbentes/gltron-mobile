@@ -28,12 +28,11 @@ This document outlines the F-Droid metadata structure and requirements for GLTro
 
 ### App Information:
 - **Package Name**: `gltron.org.gltronmobile`
-- **Version**: 6.0 (versionCode: 6)
+- **Version**: 7.0 (versionCode: 7)
 - **License**: GPL-3.0
 - **Categories**: Games
 - **Min SDK**: 24 (Android 7.0)
 - **Target SDK**: 35 (Android 14)
-
 To complete F-Droid submission, capture these screenshots:
 
 1. **Main Menu** - Show title, "Tap to Start", keyboard controls info
