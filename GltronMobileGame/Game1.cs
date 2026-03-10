@@ -1188,29 +1188,28 @@ public class Game1 : Game
             // Only process horizontal swipes for turning
             if (horizontalComponent > verticalComponent)
             {
-                // CRITICAL FIX: Invert swipe direction to match user expectation
                 if (swipeVector.X > 0)
                 {
-                    // Swipe right = turn left (INVERTED)
-                    ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
+                    // Swipe right = turn right
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
                     
                     try
                     {
 #if ANDROID
-                        Android.Util.Log.Debug("GLTRON", "Swipe RIGHT detected -> TURN_LEFT (inverted)");
+                        Android.Util.Log.Debug("GLTRON", "Swipe RIGHT detected -> TURN_RIGHT");
 #endif
                     }
                     catch { }
                 }
                 else
                 {
-                    // Swipe left = turn right (INVERTED)
-                    ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
+                    // Swipe left = turn left
+                    ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
                     
                     try
                     {
 #if ANDROID
-                        Android.Util.Log.Debug("GLTRON", "Swipe LEFT detected -> TURN_RIGHT (inverted)");
+                        Android.Util.Log.Debug("GLTRON", "Swipe LEFT detected -> TURN_LEFT");
 #endif
                     }
                     catch { }
