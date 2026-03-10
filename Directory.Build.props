@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Default Android SDK path for local builds -->
-    <AndroidSdkDirectory>/home/mateus/Android/Sdk</AndroidSdkDirectory>
+    <AndroidSdkDirectory Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkDirectory>
+    <AndroidSdkDirectory Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkDirectory>
   </PropertyGroup>
 </Project>

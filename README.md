@@ -11,9 +11,9 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 - Android SDK 34+
 - JDK 11
 - .NET SDK installed (same as used by the solution)
-- `dotnet` available in PATH (or set `DOTNET=/home/mateus/dotnet/dotnet`)
+- `dotnet` available in PATH
 - `adb` available in PATH
-- Android SDK path set via `ANDROID_SDK_ROOT` or `ANDROID_HOME` (or `-PandroidSdkDir=/path/to/sdk`)
+- Android SDK path set via `ANDROID_SDK_ROOT` or `ANDROID_HOME`
 
 ### iOS (Xcode)
 - macOS with Xcode (latest stable)
@@ -24,8 +24,8 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 Add this to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
 
 ```bash
-export DOTNET=/home/mateus/dotnet/dotnet
-export PATH="/home/mateus/dotnet:$PATH"
+export DOTNET=/path/to/dotnet
+export PATH="/path/to:$PATH"
 ```
 
 Then reload your shell:
