@@ -86,6 +86,12 @@ tasks.register("dotnetBuildAndroid", Exec) {
     }
     environment "ANDROID_SDK_ROOT", androidSdkDir
     environment "ANDROID_HOME", androidSdkDir
+    if (dotnetPath) {
+        def dotnetDir = new File(dotnetPath).getParent()
+        if (dotnetDir) {
+            environment "PATH", "${dotnetDir}:${System.getenv('PATH')}"
+        }
+    }
     workingDir "$rootDir/.."
     commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug", "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}"
     standardOutput = new ByteArrayOutputStream()
