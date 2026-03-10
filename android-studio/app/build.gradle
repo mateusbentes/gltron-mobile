@@ -120,7 +120,7 @@ tasks.register("installDotnetApk", Exec) {
 
 tasks.register("launchDotnetApk", Exec) {
     dependsOn("installDotnetApk")
-    commandLine "adb", "shell", "am", "start", "-n", "gltron.org.gltronmobile/gltron.org.gltronmobile.Activity1"
+    commandLine "adb", "shell", "am", "start", "-n", "gltron.org.gltronmobile/.Activity1"
 }
 
 tasks.named("preBuild") {
