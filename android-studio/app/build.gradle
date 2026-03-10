@@ -33,5 +33,21 @@ android {
 }
 
 dependencies {
-    // Placeholder: MonoGame Android bindings would be added here
+    // MonoGame runtime & compiled C# assemblies are packaged via the sync steps below.
+}
+
+// --- MonoGame bridge (best-effort) ---
+// This task pulls compiled Android assets (XNB) and .NET assemblies into assets/
+// so the Java bootstrap can find them at runtime if you wire the Mono runtime.
+
+tasks.register("syncMonoGameAssets", Copy) {
+    def srcXnb = file("$rootDir/../GltronMobileGame/Content/bin/Android/Content")
+    def srcBins = file("$rootDir/../GltronMobileGame/bin/Debug/net8.0-android")
+    from(srcXnb) { into "Content" }
+    from(srcBins) { include "*.dll" }
+    into "$projectDir/src/main/assets"
+}
+
+tasks.named("preBuild") {
+    dependsOn("syncMonoGameAssets")
 }
