@@ -49,6 +49,13 @@ tasks.register("syncMonoGameAssets", Copy) {
 }
 
 def dotnetPath = project.hasProperty("dotnetPath") ? project.property("dotnetPath") : System.getenv("DOTNET")
+if (!dotnetPath) {
+    def defaultDotnet = "/home/mateus/dotnet/dotnet"
+    if (file(defaultDotnet).exists()) {
+        dotnetPath = defaultDotnet
+    }
+}
+
 def dotnetCmd = dotnetPath ?: "dotnet"
 
 tasks.register("dotnetBuildAndroid", Exec) {
