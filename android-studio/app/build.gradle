@@ -59,6 +59,12 @@ if (!dotnetPath) {
 def dotnetCmd = dotnetPath ?: "dotnet"
 
 def androidSdkDir = project.hasProperty("androidSdkDir") ? project.property("androidSdkDir") : (System.getenv("ANDROID_SDK_ROOT") ?: System.getenv("ANDROID_HOME"))
+if (!androidSdkDir) {
+    def homeSdk = System.getenv("HOME") ? "${System.getenv('HOME')}/Android/Sdk" : null
+    if (homeSdk && file(homeSdk).exists()) {
+        androidSdkDir = homeSdk
+    }
+}
 
 tasks.register("dotnetBuildAndroid", Exec) {
     doFirst {
