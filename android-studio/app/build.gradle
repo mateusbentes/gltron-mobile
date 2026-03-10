@@ -81,6 +81,11 @@ tasks.register("installDotnetApk", Exec) {
     commandLine "adb", "install", "-r", "$rootDir/../GltronMobileGame/bin/Debug/net8.0-android/gltron.org.gltronmobile.apk"
 }
 
+tasks.register("launchDotnetApk", Exec) {
+    dependsOn("installDotnetApk")
+    commandLine "adb", "shell", "am", "start", "-n", "gltron.org.gltronmobile/gltron.org.gltronmobile.Activity1"
+}
+
 tasks.named("preBuild") {
     dependsOn("syncMonoGameAssets")
 }

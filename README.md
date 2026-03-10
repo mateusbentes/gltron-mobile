@@ -11,7 +11,7 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 - Android SDK 34+
 - JDK 11
 - .NET SDK installed (same as used by the solution)
-- `dotnet` available in PATH **or** set `DOTNET=/home/mateus/dotnet/dotnet`
+- `dotnet` available in PATH (or set `DOTNET=/home/mateus/dotnet/dotnet`)
 - `adb` available in PATH
 
 ### iOS (Xcode)
@@ -41,6 +41,7 @@ This will:
 - Run `dotnet build GltronMobileGame/GltronAndroid.csproj -c Debug`
 - Sync XNB/assemblies into `android-studio/app/src/main/assets`
 - Install the generated APK via `adb install -r`
+- Launch the real MonoGame activity via `adb shell am start -n gltron.org.gltronmobile/gltron.org.gltronmobile.Activity1`
 
 The APK is produced by .NET in:
 - `GltronMobileGame/bin/Debug/net8.0-android/gltron.org.gltronmobile.apk`
