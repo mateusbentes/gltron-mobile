@@ -10,6 +10,19 @@ obj/
 android-studio/.gradle/
 android-studio/.idea/
 android-studio/**/build/
+android-studio/gradle.properties
+android-studio/gradlew
+android-studio/gradlew.bat
+android-studio/gradle/wrapper/
+android-studio/local.properties
+android-studio/app/src/main/assets/
+
+# IntelliJ / Android Studio project files
+*.iml
+.idea/
+
+# Keystores
+*.keystore
 
 # Xcode
 ios-xcode/DerivedData/
