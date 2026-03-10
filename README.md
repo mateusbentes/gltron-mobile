@@ -2,47 +2,47 @@
 
 GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 
-> **Note**: The Android Studio and Xcode projects in this repository are **best-effort stubs**. They include simple sync hooks for assets/assemblies, but **do not yet embed MonoGame runtimes**. A fully working native Gradle/Xcode build requires bringing in the Mono runtime and MonoGame native libraries.
+> This repository uses the MonoGame projects in the solution as the **source of truth** for Android and iOS builds. The Android Studio and Xcode projects act as **wrappers** to trigger those builds and to help with IDE workflows.
 
 ## Requirements
 
 ### Android (Android Studio / Gradle)
 - Android Studio (latest stable)
-- Android SDK 34+ (compileSdk 34)
+- Android SDK 34+
 - JDK 11
+- .NET SDK installed (same as used by the solution)
+- `adb` available in PATH
 
 ### iOS (Xcode)
 - macOS with Xcode (latest stable)
 - Apple developer signing configured
+- .NET SDK installed (same as used by the solution)
 
-## Android Studio (Gradle) Build (Best-Effort)
-1. Build the Android .NET project first so assets/assemblies exist:
-   - `dotnet build GltronMobileGame/GltronAndroid.csproj -c Debug`
-2. Open **android-studio/** in Android Studio.
-3. Let Gradle sync.
-4. Run the configuration **GltronMobile (Gradle)** (assembleDebug).
+## Android Studio Build (Wrapper)
+1. Open **android-studio/** in Android Studio.
+2. Let Gradle sync.
+3. Run configuration **GltronMobile (Gradle)**.
 
-The Gradle project syncs:
-- XNB content from `GltronMobileGame/Content/bin/Android/Content`
-- Managed assemblies from `GltronMobileGame/bin/Debug/net8.0-android`
+This will:
+- Run `dotnet build GltronMobileGame/GltronAndroid.csproj -c Debug`
+- Sync XNB/assemblies into `android-studio/app/src/main/assets`
+- Install the generated APK via `adb install -r`
 
-> You must still wire the Mono runtime / MonoGame native libs for a runnable APK.
+The APK is produced by .NET in:
+- `GltronMobileGame/bin/Debug/net8.0-android/gltron.org.gltronmobile.apk`
 
-## Xcode Build (Best-Effort)
-1. Build the iOS .NET project first to produce assemblies/content:
-   - `dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net8.0-ios`
-2. Open **ios-xcode/GltronMobileGame.xcodeproj** in Xcode.
-3. Configure signing in Xcode.
-4. Build/Run.
+## Xcode Build (Wrapper)
+Build iOS with the .NET project:
+- `dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net8.0-ios`
 
-> The Xcode project is a minimal shell and does not yet link MonoGame runtime.
+Then open **ios-xcode/GltronMobileGame.xcodeproj** in Xcode for signing/archiving.
+
+> The Xcode project is still a minimal shell; the actual build output comes from the .NET project.
 
 ## Game Code
 The core game logic lives in:
 - `GltronMobileEngine/`
 - `GltronMobileGame/`
-
-These are MonoGame C# projects used in the original build system.
 
 ## License
 See COPYING.

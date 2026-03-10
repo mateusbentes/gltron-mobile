@@ -10,7 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="assembleDebug" />
+          <option value="dotnetBuildAndroid" />
+          <option value="installDotnetApk" />
         </list>
       </option>
       <option name="vmOptions" value="" />

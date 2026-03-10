@@ -48,6 +48,15 @@ tasks.register("syncMonoGameAssets", Copy) {
     into "$projectDir/src/main/assets"
 }
 
+tasks.register("dotnetBuildAndroid", Exec) {
+    commandLine "dotnet", "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug"
+}
+
+tasks.register("installDotnetApk", Exec) {
+    dependsOn("dotnetBuildAndroid")
+    commandLine "adb", "install", "-r", "$rootDir/../GltronMobileGame/bin/Debug/net8.0-android/gltron.org.gltronmobile.apk"
+}
+
 tasks.named("preBuild") {
     dependsOn("syncMonoGameAssets")
 }
