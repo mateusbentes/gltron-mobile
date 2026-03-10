@@ -25,9 +25,9 @@ Add this to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
 
 ```bash
 export DOTNET=/path/to/dotnet
-export PATH="/path/to:$PATH"
 export ANDROID_SDK_ROOT=/path/to/Android/Sdk
 export ANDROID_HOME=/path/to/Android/Sdk
+export PATH="/path/to:$PATH"
 ```
 
 Then reload your shell:
