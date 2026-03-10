@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Default Android SDK path for local builds -->
+    <AndroidSdkDirectory>/home/mateus/Android/Sdk</AndroidSdkDirectory>
+  </PropertyGroup>
+</Project>
