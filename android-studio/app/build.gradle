@@ -49,6 +49,12 @@ tasks.register("syncMonoGameAssets", Copy) {
 }
 
 def dotnetPath = project.hasProperty("dotnetPath") ? project.property("dotnetPath") : System.getenv("DOTNET")
+if (!dotnetPath) {
+    def homeDotnet = System.getenv("HOME") ? "${System.getenv('HOME')}/dotnet/dotnet" : null
+    if (homeDotnet && file(homeDotnet).exists()) {
+        dotnetPath = homeDotnet
+    }
+}
 
 def dotnetCmd = dotnetPath ?: "dotnet"
 
