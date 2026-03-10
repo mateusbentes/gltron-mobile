@@ -118,9 +118,68 @@ tasks.register("installDotnetApk", Exec) {
     commandLine "adb", "install", "-r", apkFile.absolutePath
 }
 
+def keyPropertiesFile = file("$rootDir/key.properties")
+Properties keyProperties = new Properties()
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.withInputStream { keyProperties.load(it) }
+}
+
 tasks.register("launchDotnetApk", Exec) {
     dependsOn("installDotnetApk")
     commandLine "adb", "shell", "am", "start", "-n", "gltron.org.gltronmobile/crc6407c82ebe7ef5f924.Activity1"
+}
+
+tasks.register("publishDotnetAab", Exec) {
+    doFirst {
+        if (!keyPropertiesFile.exists()) {
+            throw new GradleException("key.properties not found. Create android-studio/key.properties with signing info.")
+        }
+        ["storeFile","storePassword","keyAlias","keyPassword"].each { k ->
+            if (!keyProperties.getProperty(k)) {
+                throw new GradleException("Missing ${k} in key.properties")
+            }
+        }
+        if (!androidSdkDir || !file(androidSdkDir).exists()) {
+            throw new GradleException("Android SDK not found. Set ANDROID_SDK_ROOT/ANDROID_HOME or -PandroidSdkDir=/path/to/sdk")
+        }
+        if (!dotnetCmd) {
+            throw new GradleException("dotnet not found. Set DOTNET env or -PdotnetPath=/path/to/dotnet")
+        }
+    }
+    environment "ANDROID_SDK_ROOT", androidSdkDir
+    environment "ANDROID_HOME", androidSdkDir
+    if (dotnetPath) {
+        def dotnetDir = new File(dotnetPath).getParent()
+        if (dotnetDir) {
+            environment "PATH", "${dotnetDir}:${System.getenv('PATH')}"
+        }
+    }
+    workingDir "$rootDir/.."
+    commandLine dotnetCmd,
+        "publish",
+        "$rootDir/../GltronMobileGame/GltronAndroid.csproj",
+        "-c", "Release",
+        "-f", "net8.0-android",
+        "/p:AndroidPackageFormat=aab",
+        "/p:AndroidKeyStore=true",
+        "/p:AndroidSigningKeyStore=${keyProperties.getProperty('storeFile')}",
+        "/p:AndroidSigningStorePass=${keyProperties.getProperty('storePassword')}",
+        "/p:AndroidSigningKeyAlias=${keyProperties.getProperty('keyAlias')}",
+        "/p:AndroidSigningKeyPass=${keyProperties.getProperty('keyPassword')}",
+        "/p:AndroidSdkDirectory=${androidSdkDir}",
+        "/p:AndroidSdkRoot=${androidSdkDir}"
+    standardOutput = new ByteArrayOutputStream()
+    errorOutput = standardOutput
+    ignoreExitValue = true
+    doLast {
+        def outputText = standardOutput ? standardOutput.toString() : ""
+        if (outputText) {
+            println outputText
+        }
+        if (executionResult.get().exitValue != 0) {
+            throw new GradleException("dotnet publish failed (exit ${executionResult.get().exitValue}). Output:\n" + outputText)
+        }
+    }
 }
 
 tasks.named("preBuild") {

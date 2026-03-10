@@ -16,6 +16,7 @@ android-studio/gradlew.bat
 android-studio/gradle/wrapper/
 android-studio/local.properties
 android-studio/app/src/main/assets/
+android-studio/key.properties
 
 # IntelliJ / Android Studio project files
 *.iml
