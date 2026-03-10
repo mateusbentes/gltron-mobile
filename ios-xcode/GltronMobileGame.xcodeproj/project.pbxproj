@@ -67,47 +67,17 @@
 		/* Begin PBXShellScriptBuildPhase section */
 		0000000000000000000000F0 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+		/* Begin PBXShellScriptBuildPhase section */
+		0000000000000000000000F0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "dotnet build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios";
+			shellScript = "dotnet build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$APP_PATH\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile 2>/dev/null || true\nfi";
 		};
 		/* End PBXShellScriptBuildPhase section */
-
-		/* Begin PBXNativeTarget section */
-		000000000000000000000004 /* GltronMobileGame */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 00000000000000000000000A /* Build configuration list for PBXNativeTarget "GltronMobileGame" */;
-			buildPhases = (
-				0000000000000000000000F0 /* ShellScript */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = GltronMobileGame;
-			productName = GltronMobileGame;
-			productReference = 000000000000000000000009 /* GltronMobileGame.app */;
-			productType = "com.apple.product-type.application";
-		};
-		/* End PBXNativeTarget section */
-		000000000000000000000001 = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				00000000000000000000000B,
-				00000000000000000000000C,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		00000000000000000000000A = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				00000000000000000000000D,
-				00000000000000000000000E,
-			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
