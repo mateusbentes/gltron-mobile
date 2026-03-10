@@ -4,6 +4,7 @@
         android:allowBackup="true"
         android:label="GLTron"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -11,6 +12,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+    </application>
     </application>
 
 </manifest>
