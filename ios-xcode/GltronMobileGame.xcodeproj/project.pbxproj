@@ -57,16 +57,9 @@
 		000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		/* Begin PBXFileReference section */
-		000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		000000000000000000000009 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GltronMobileGame.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		/* End PBXFileReference section */
 
-		/* Begin PBXShellScriptBuildPhase section */
-		0000000000000000000000F0 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
 		/* Begin PBXShellScriptBuildPhase section */
 		0000000000000000000000F0 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -78,3 +71,84 @@
 			shellScript = "DOTNET_CMD=\"$DOTNET\"\nif [ -z \"$DOTNET_CMD\" ]; then\n  DOTNET_CMD=$(command -v dotnet)\nfi\nif [ -z \"$DOTNET_CMD\" ]; then\n  echo \"dotnet not found in PATH. Set DOTNET env or install .NET SDK.\"\n  exit 1\nfi\n\"$DOTNET_CMD\" build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$APP_PATH\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile 2>/dev/null || true\nfi";
 		};
 		/* End PBXShellScriptBuildPhase section */
+
+		/* Begin PBXNativeTarget section */
+		000000000000000000000004 /* GltronMobileGame */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000000A /* Build configuration list for PBXNativeTarget "GltronMobileGame" */;
+			buildPhases = (
+				0000000000000000000000F0 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GltronMobileGame;
+			productName = GltronMobileGame;
+			productReference = 000000000000000000000009 /* GltronMobileGame.app */;
+			productType = "com.apple.product-type.application";
+		};
+		/* End PBXNativeTarget section */
+
+		/* Begin XCBuildConfiguration section */
+		00000000000000000000000B = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = GltronMobileGame/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
+				PRODUCT_NAME = GLTron;
+			};
+			name = Debug;
+		};
+		00000000000000000000000C = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = GltronMobileGame/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
+				PRODUCT_NAME = GLTron;
+			};
+			name = Release;
+		};
+		00000000000000000000000D = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = GltronMobileGame/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
+				PRODUCT_NAME = GLTron;
+			};
+			name = Debug;
+		};
+		00000000000000000000000E = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = GltronMobileGame/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
+				PRODUCT_NAME = GLTron;
+			};
+			name = Release;
+		};
+		/* End XCBuildConfiguration section */
+
+		/* Begin XCConfigurationList section */
+		000000000000000000000001 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000B,
+				00000000000000000000000C,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000000A = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000D,
+				00000000000000000000000E,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000000 /* Project object */;
+}
