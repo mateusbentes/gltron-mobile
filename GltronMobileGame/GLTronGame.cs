@@ -363,7 +363,7 @@ namespace GltronMobileGame
                         // CRITICAL FIX: Set safe spawn position
                         SetSafeSpawnPosition(player);
 
-                        Players[player].setSpeed(6.0f); // Slower initial speed for better control
+                        Players[player].setSpeed(5.0f); // Slower initial speed for better control
 
                         // Log player starting position and direction
                         float x = Players[player].getXpos();
@@ -550,11 +550,11 @@ namespace GltronMobileGame
                 {
                     if (x <= (screenWidth / 2))
                     {
-                        inputDirection = Player.TURN_LEFT;
+                        inputDirection = Player.TURN_RIGHT;
                     }
                     else
                     {
-                        inputDirection = Player.TURN_RIGHT;
+                        inputDirection = Player.TURN_LEFT;
                     }
                     boProcessInput = true;
                 }
@@ -674,7 +674,7 @@ namespace GltronMobileGame
                     // CRITICAL FIX: Set safe spawn position
                     SetSafeSpawnPosition(plyr);
                     
-                    Players[plyr].setSpeed(6.0f);
+                    Players[plyr].setSpeed(5.0f);
                 }
                 
                 // Reinitialize AI
