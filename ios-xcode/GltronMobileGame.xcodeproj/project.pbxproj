@@ -1,0 +1,117 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		/* Begin PBXProject section */
+		000000000000000000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = 000000000000000000000001 /* Build configuration list for PBXProject "GltronMobileGame" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			mainGroup = 000000000000000000000002;
+			productRefGroup = 000000000000000000000003;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				000000000000000000000004 /* GltronMobileGame */,
+			);
+		};
+		/* End PBXProject section */
+
+		/* Begin PBXGroup section */
+		000000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000005 /* GltronMobileGame */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000005 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000006 /* AppDelegate.m */,
+				000000000000000000000007 /* Info.plist */,
+				000000000000000000000008 /* LaunchScreen.storyboard */,
+			);
+			path = GltronMobileGame;
+			sourceTree = "<group>";
+		};
+		000000000000000000000003 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000009 /* GltronMobileGame.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		/* End PBXGroup section */
+
+		/* Begin PBXFileReference section */
+		000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		/* Begin PBXFileReference section */
+		000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		000000000000000000000009 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GltronMobileGame.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		/* End PBXFileReference section */
+
+		/* Begin PBXShellScriptBuildPhase section */
+		0000000000000000000000F0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "dotnet build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios";
+		};
+		/* End PBXShellScriptBuildPhase section */
+
+		/* Begin PBXNativeTarget section */
+		000000000000000000000004 /* GltronMobileGame */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000000A /* Build configuration list for PBXNativeTarget "GltronMobileGame" */;
+			buildPhases = (
+				0000000000000000000000F0 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GltronMobileGame;
+			productName = GltronMobileGame;
+			productReference = 000000000000000000000009 /* GltronMobileGame.app */;
+			productType = "com.apple.product-type.application";
+		};
+		/* End PBXNativeTarget section */
+		000000000000000000000001 = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000B,
+				00000000000000000000000C,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000000A = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000D,
+				00000000000000000000000E,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000000 /* Project object */;
+}
