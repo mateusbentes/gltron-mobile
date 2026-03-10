@@ -70,29 +70,3 @@
     <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
   </ItemGroup>
 </Project>
-  
-  <!-- Re-enable MGCB build for Android: build content from Content/Content.mgcb -->
-  <ItemGroup>
-    <MonoGameContentReference Include="Content/Content.mgcb" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
-  </ItemGroup>
-
-  <!-- Package platform-specific XNBs directly from bin output path -->
-  <ItemGroup>
-    <!-- Include all XNBs under Content root (Assets, Fonts, etc.) -->
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.xnb" />
-  </ItemGroup>
-
-  <!-- Also package original compressed music files for MediaPlayer (mp3/m4a) -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.mp3" />
-    <AndroidAsset Include="Content\bin\Android\Content\**\*.m4a" />
-  </ItemGroup>
-
-  <!-- Ensure raw content is packaged only when not using MGCB -->
-  <ItemGroup>
-    <AndroidAsset Include="Content\**\*.*" Condition="'$(UseMonoGamePipeline)' != 'true'" />
-  </ItemGroup>
-</Project>
