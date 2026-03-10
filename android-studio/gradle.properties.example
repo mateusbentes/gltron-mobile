@@ -1,0 +1,3 @@
+# Copy to gradle.properties (local, not committed)
+# Point to a JDK 17+ installation
+org.gradle.java.home=/path/to/jdk17

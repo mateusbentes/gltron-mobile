@@ -9,7 +9,7 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 ### Android (Android Studio / Gradle)
 - Android Studio (latest stable)
 - Android SDK 34+
-- JDK 11
+- **JDK 17+** (Gradle 9 requires Java 17+)
 - .NET SDK installed (same as used by the solution)
 - `dotnet` available in PATH
 - `adb` available in PATH
@@ -19,7 +19,6 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 - macOS with Xcode (latest stable)
 - Apple developer signing configured
 - .NET SDK installed (same as used by the solution)
-
 ## Set SDK paths (Linux)
 Add this to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
 
