@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'gltron.mobile'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
@@ -84,7 +84,17 @@ tasks.register("dotnetBuildAndroid", Exec) {
             throw new GradleException("Android SDK not found. Set ANDROID_SDK_ROOT/ANDROID_HOME or -PandroidSdkDir=/path/to/sdk")
         }
     }
-    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug", "/p:AndroidSdkDirectory=${androidSdkDir}"
+    environment "ANDROID_SDK_ROOT", androidSdkDir
+    environment "ANDROID_HOME", androidSdkDir
+    workingDir "$rootDir/.."
+    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug", "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}"
+    standardOutput = new ByteArrayOutputStream()
+    errorOutput = standardOutput
+    doLast {
+        if (standardOutput) {
+            println standardOutput.toString()
+        }
+    }
 }
 
 tasks.register("installDotnetApk", Exec) {
