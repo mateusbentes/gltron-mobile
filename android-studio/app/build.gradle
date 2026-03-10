@@ -110,7 +110,12 @@ tasks.register("dotnetBuildAndroid", Exec) {
 
 tasks.register("installDotnetApk", Exec) {
     dependsOn("dotnetBuildAndroid")
-    commandLine "adb", "install", "-r", "$rootDir/../GltronMobileGame/bin/Debug/net8.0-android/gltron.org.gltronmobile.apk"
+    def apkDir = file("$rootDir/../GltronMobileGame/bin/Debug/net8.0-android")
+    def apkFile = apkDir.exists() ? apkDir.listFiles().find { it.name.endsWith('.apk') } : null
+    if (apkFile == null) {
+        throw new GradleException("APK not found in ${apkDir}. Ensure dotnet build produced an APK.")
+    }
+    commandLine "adb", "install", "-r", apkFile.absolutePath
 }
 
 tasks.register("launchDotnetApk", Exec) {
