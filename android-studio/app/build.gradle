@@ -48,8 +48,25 @@ tasks.register("syncMonoGameAssets", Copy) {
     into "$projectDir/src/main/assets"
 }
 
+def dotnetPath = project.hasProperty("dotnetPath") ? project.property("dotnetPath") : System.getenv("DOTNET")
+def dotnetCmd = dotnetPath ?: "dotnet"
+
 tasks.register("dotnetBuildAndroid", Exec) {
-    commandLine "dotnet", "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug"
+    doFirst {
+        if (dotnetPath) {
+            def f = file(dotnetPath)
+            if (!f.exists()) {
+                throw new GradleException("DOTNET path not found: ${dotnetPath}. Set DOTNET env or -PdotnetPath=/path/to/dotnet")
+            }
+        } else {
+            def proc = ["sh", "-c", "command -v dotnet"].execute()
+            proc.waitFor()
+            if (proc.exitValue() != 0) {
+                throw new GradleException("dotnet not found in PATH. Install .NET SDK or set DOTNET env or -PdotnetPath=/path/to/dotnet")
+            }
+        }
+    }
+    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug"
 }
 
 tasks.register("installDotnetApk", Exec) {
