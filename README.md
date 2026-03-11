@@ -32,7 +32,7 @@ If you **cannot use Homebrew** or system folders, install .NET locally in your u
 ```bash
 mkdir -p $HOME/dotnet
 curl -L https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
-bash /tmp/dotnet-install.sh --version 8.0.0 --install-dir $HOME/dotnet
+bash /tmp/dotnet-install.sh --channel 8.0 --install-dir $HOME/dotnet
 export DOTNET="$HOME/dotnet/dotnet"
 export PATH="$HOME/dotnet:$PATH"
 ```
@@ -69,6 +69,10 @@ Install MonoGame templates/tools:
 ```bash
 dotnet new install MonoGame.Templates.CSharp
 ```
+
+## Set SDK paths (Linux)
+Add this to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
+
 ```bash
 export DOTNET=/path/to/dotnet
 export PATH="/path/to:$PATH"
@@ -85,9 +89,6 @@ source ~/.bashrc
 1. Open **android-studio/** in Android Studio.
 2. Let Gradle sync.
 3. Run configuration **GltronMobile (Gradle)**.
-
-This will:
-- Run `dotnet build GltronMobileGame/GltronAndroid.csproj -c Debug`
 - Sync XNB/assemblies into `android-studio/app/src/main/assets`
 - Install the generated APK via `adb install -r`
 - Launch the real MonoGame activity via `adb shell am start -n gltron.org.gltronmobile/crc6407c82ebe7ef5f924.Activity1`
