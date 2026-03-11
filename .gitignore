@@ -17,6 +17,10 @@ android-studio/gradle/wrapper/
 android-studio/local.properties
 android-studio/app/src/main/assets/
 android-studio/key.properties
+android-studio/app/release/
+android-studio/app/**/*.aab
+android-studio/app/**/app-release/**
+android-studio/app/**/app-release-*/**
 
 # IntelliJ / Android Studio project files
 *.iml
