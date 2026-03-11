@@ -99,6 +99,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
 				PRODUCT_NAME = GltronMobileGame.iOS;
 				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_PATH = GltronMobileGame.iOS;
 				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -114,6 +115,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
 				PRODUCT_NAME = GltronMobileGame.iOS;
 				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_PATH = GltronMobileGame.iOS;
 				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -129,6 +131,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
 				PRODUCT_NAME = GltronMobileGame.iOS;
 				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_PATH = GltronMobileGame.iOS;
 				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -144,6 +147,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
 				PRODUCT_NAME = GltronMobileGame.iOS;
 				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_PATH = GltronMobileGame.iOS;
 				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
