@@ -68,26 +68,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DOTNET_CMD=\"$DOTNET\"\nif [ -z \"$DOTNET_CMD\" ]; then\n  DOTNET_CMD=$(command -v dotnet)\nfi\nif [ -z \"$DOTNET_CMD\" ]; then\n  echo \"dotnet not found in PATH. Set DOTNET env or install .NET SDK.\"\n  exit 1\nfi\n\"$DOTNET_CMD\" build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$APP_PATH\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile 2>/dev/null || true\nfi";
+			shellScript = "DOTNET_CMD=\"$DOTNET\"\nif [ -z \"$DOTNET_CMD\" ]; then\n  if [ -x \"$HOME/dotnet/dotnet\" ]; then\n    DOTNET_CMD=\"$HOME/dotnet/dotnet\"\n  else\n    DOTNET_CMD=$(command -v dotnet)\n  fi\nfi\nif [ -z \"$DOTNET_CMD\" ]; then\n  echo \"dotnet not found in PATH. Set DOTNET env or install .NET SDK.\"\n  exit 1\nfi\nDOTNET_DIR=$(dirname \"$DOTNET_CMD\")\nexport PATH=\"$DOTNET_DIR:$PATH\"\n\"$DOTNET_CMD\" build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$APP_PATH\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile 2>/dev/null || true\nfi";
 		};
 		/* End PBXShellScriptBuildPhase section */
-
-		/* Begin PBXNativeTarget section */
-		000000000000000000000004 /* GltronMobileGame */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 00000000000000000000000A /* Build configuration list for PBXNativeTarget "GltronMobileGame" */;
-			buildPhases = (
-				0000000000000000000000F0 /* ShellScript */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = GltronMobileGame;
-			productName = GltronMobileGame;
-			productReference = 000000000000000000000009 /* GltronMobileGame.app */;
-			productType = "com.apple.product-type.application";
-		};
 		/* End PBXNativeTarget section */
 
 		/* Begin XCBuildConfiguration section */
