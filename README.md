@@ -80,19 +80,10 @@ Then reload your shell:
 ```bash
 source ~/.bashrc
 ```
-3. Run configuration **GltronMobile (Gradle)**.
-- Sync XNB/assemblies into `android-studio/app/src/main/assets`
-- Install the generated APK via `adb install -r`
-- Launch the real MonoGame activity via `adb shell am start -n gltron.org.gltronmobile/crc6407c82ebe7ef5f924.Activity1`
-
-The APK is produced by .NET in:
-- `GltronMobileGame/bin/Debug/net8.0-android/` (APK name may vary)
-
 ## Xcode Build (Wrapper)
 Build iOS with the .NET project:
 - `dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net8.0-ios`
 
 Then open **ios-xcode/GltronMobileGame.xcodeproj** in Xcode for signing/archiving.
 
-> If Xcode reports a script phase error, ensure `dotnet` is available in PATH or set `DOTNET` in Xcode build environment.
-See COPYING.
+> **iOS builds require an active Apple ID** with valid signing certificates and provisioning profiles.
