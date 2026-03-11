@@ -37,16 +37,10 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "000000000000000000000004"
-            BuildableName = "GltronMobileGame.app"
-            BlueprintName = "GltronMobileGame"
-            ReferencedContainer = "container:GltronMobileGame.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
+      <PathRunnable
+         runnableDebuggingMode = "0"
+         FilePath = "/usr/bin/true">
+      </PathRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
