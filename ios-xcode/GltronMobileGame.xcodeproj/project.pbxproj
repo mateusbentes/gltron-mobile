@@ -97,6 +97,10 @@
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
 				PRODUCT_NAME = GLTron;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ARCHS = "arm64";
 			};
 			name = Debug;
 		};
@@ -106,6 +110,10 @@
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
 				PRODUCT_NAME = GLTron;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ARCHS = "arm64";
 			};
 			name = Release;
 		};
@@ -115,6 +123,10 @@
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
 				PRODUCT_NAME = GLTron;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ARCHS = "arm64";
 			};
 			name = Debug;
 		};
@@ -124,6 +136,10 @@
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
 				PRODUCT_NAME = GLTron;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ARCHS = "arm64";
 			};
 			name = Release;
 		};
@@ -137,57 +153,18 @@
 				00000000000000000000000C,
 			);
 			defaultConfigurationIsVisible = 0;
-		/* Begin XCBuildConfiguration section */
-		00000000000000000000000B = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = GltronMobileGame/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
-				PRODUCT_NAME = GLTron;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				ARCHS = "arm64";
-			};
-			name = Debug;
+			defaultConfigurationName = Release;
 		};
-		00000000000000000000000C = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = GltronMobileGame/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
-				PRODUCT_NAME = GLTron;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				ARCHS = "arm64";
-			};
-			name = Release;
+		00000000000000000000000A = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00000000000000000000000D,
+				00000000000000000000000E,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
-		00000000000000000000000D = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = GltronMobileGame/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
-				PRODUCT_NAME = GLTron;
-				SDKROOT = iphonesimulator;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				ARCHS = "arm64";
-			};
-			name = Debug;
-		};
-		00000000000000000000000E = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = GltronMobileGame/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile;
-				PRODUCT_NAME = GLTron;
-				SDKROOT = iphonesimulator;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				ARCHS = "arm64";
-			};
-			name = Release;
-		};
-		/* End XCBuildConfiguration section */
+		/* End XCConfigurationList section */
+	};
+	rootObject = 000000000000000000000000 /* Project object */;
+}
