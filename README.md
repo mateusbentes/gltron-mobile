@@ -24,20 +24,6 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 
 ### macOS (MacInCloud - user account only)
 If you **cannot use Homebrew** or system folders, install .NET locally in your user home:
-curl -L https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
-bash /tmp/dotnet-install.sh --channel 8.0 --install-dir $HOME/dotnet
-export DOTNET="$HOME/dotnet/dotnet"
-export PATH="$HOME/dotnet:$PATH"
-```
-
-Install MonoGame templates/tools:
-
-```bash
-$DOTNET new install MonoGame.Templates.CSharp
-```
-
-### macOS (Administrator)
-If you have admin privileges, you can install .NET with Homebrew:
 
 ```bash
 brew install --cask dotnet-sdk
@@ -51,26 +37,17 @@ dotnet new install MonoGame.Templates.CSharp
 
 ### Linux (Ubuntu)
 Install .NET 8:
+### macOS (Administrator)
+If you have admin privileges, you can install .NET with Homebrew:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y dotnet-sdk-8.0
+brew install --cask dotnet-sdk
 ```
 
 Install MonoGame templates/tools:
 
 ```bash
 dotnet new install MonoGame.Templates.CSharp
-```
-
-## Set SDK paths (Linux)
-Add this to your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
-
-```bash
-export DOTNET=/path/to/dotnet
-export PATH="/path/to:$PATH"
-export ANDROID_SDK_ROOT=/path/to/Android/Sdk
-export ANDROID_HOME=/path/to/Android/Sdk
 ```
 
 Then reload your shell:
