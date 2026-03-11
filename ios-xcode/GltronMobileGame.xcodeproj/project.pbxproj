@@ -58,7 +58,7 @@
 		000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		000000000000000000000009 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GltronMobileGame.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000009 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = GltronMobileGame.iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		/* End PBXFileReference section */
 
 		/* Begin PBXShellScriptBuildPhase section */
@@ -97,7 +97,9 @@
 			buildSettings = {
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
-				PRODUCT_NAME = GLTron;
+				PRODUCT_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -110,7 +112,9 @@
 			buildSettings = {
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
-				PRODUCT_NAME = GLTron;
+				PRODUCT_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -123,7 +127,9 @@
 			buildSettings = {
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
-				PRODUCT_NAME = GLTron;
+				PRODUCT_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -136,7 +142,9 @@
 			buildSettings = {
 				INFOPLIST_FILE = GltronMobileGame/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = gltron.org.gltronmobile.ios;
-				PRODUCT_NAME = GLTron;
+				PRODUCT_NAME = GltronMobileGame.iOS;
+				EXECUTABLE_NAME = GltronMobileGame.iOS;
+				WRAPPER_NAME = GltronMobileGame.iOS.app;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				TARGETED_DEVICE_FAMILY = "1,2";
