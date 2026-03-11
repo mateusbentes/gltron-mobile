@@ -37,10 +37,10 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
-      <PathRunnable
+      <RemoteRunnable
          runnableDebuggingMode = "0"
-         FilePath = "/usr/bin/true">
-      </PathRunnable>
+         BundleIdentifier = "gltron.org.gltronmobile"
+         RemotePath = "/" />
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
