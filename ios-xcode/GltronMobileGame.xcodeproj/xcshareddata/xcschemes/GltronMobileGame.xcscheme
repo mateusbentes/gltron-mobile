@@ -48,6 +48,18 @@
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "000000000000000000000004"
+            BuildableName = "GltronMobileGame.iOS.app"
             BlueprintName = "GltronMobileGame"
             ReferencedContainer = "container:GltronMobileGame.xcodeproj">
          </BuildableReference>
