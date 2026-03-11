@@ -39,7 +39,7 @@
       allowLocationSimulation = "YES">
       <RemoteRunnable
          runnableDebuggingMode = "0"
-         BundleIdentifier = "gltron.org.gltronmobile"
+         BundleIdentifier = "gltron.org.gltronmobile.ios"
          RemotePath = "/" />
    </LaunchAction>
    <ProfileAction
