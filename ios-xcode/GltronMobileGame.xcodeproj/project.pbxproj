@@ -69,8 +69,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DOTNET_CMD=\"$DOTNET\"\nif [ -z \"$DOTNET_CMD\" ]; then\n  if [ -x \"$HOME/dotnet/dotnet\" ]; then\n    DOTNET_CMD=\"$HOME/dotnet/dotnet\"\n  else\n    DOTNET_CMD=$(command -v dotnet)\n  fi\nfi\nif [ -z \"$DOTNET_CMD\" ]; then\n  echo \"dotnet not found in PATH. Set DOTNET env or install .NET SDK.\"\n  exit 1\nfi\nDOTNET_DIR=$(dirname \"$DOTNET_CMD\")\nexport PATH=\"$DOTNET_DIR:$PATH\"\n\"$DOTNET_CMD\" build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$APP_PATH\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile.ios 2>/dev/null || true\nfi";
+			shellScript = "DOTNET_CMD=\"$DOTNET\"\nif [ -z \"$DOTNET_CMD\" ]; then\n  if [ -x \"$HOME/dotnet/dotnet\" ]; then\n    DOTNET_CMD=\"$HOME/dotnet/dotnet\"\n  else\n    DOTNET_CMD=$(command -v dotnet)\n  fi\nfi\nif [ -z \"$DOTNET_CMD\" ]; then\n  echo \"dotnet not found in PATH. Set DOTNET env or install .NET SDK.\"\n  exit 1\nfi\nDOTNET_DIR=$(dirname \"$DOTNET_CMD\")\nexport PATH=\"$DOTNET_DIR:$PATH\"\n\"$DOTNET_CMD\" build \"$SRCROOT/../GltronMobileGame.iOS/GltronMobileGame.iOS.csproj\" -c Debug -f net8.0-ios\nAPP_PATH=$(find \"$SRCROOT/../GltronMobileGame.iOS/bin/Debug/net8.0-ios\" -name 'GltronMobileGame.iOS.app' -maxdepth 5 | head -n 1)\nif [ -n \"$APP_PATH\" ]; then\n  TARGET_APP=\"$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME\"\n  rm -rf \"$TARGET_APP\"\n  cp -R \"$APP_PATH\" \"$TARGET_APP\"\n  xcrun simctl bootstatus booted -b 2>/dev/null || true\n  xcrun simctl install booted \"$TARGET_APP\" 2>/dev/null || true\n  xcrun simctl launch booted gltron.org.gltronmobile.ios 2>/dev/null || true\nfi";
 		};
+		/* End PBXShellScriptBuildPhase section */
 		/* End PBXShellScriptBuildPhase section */
 		/* End PBXShellScriptBuildPhase section */
 
