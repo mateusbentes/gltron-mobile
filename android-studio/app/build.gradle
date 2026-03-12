@@ -207,5 +207,4 @@ afterEvaluate {
             delete("$buildDir/outputs/apk", "$buildDir/outputs/bundle", "$projectDir/release")
         }
     }
-    }
 }
