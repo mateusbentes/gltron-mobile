@@ -204,7 +204,8 @@ afterEvaluate {
     // Clean Java outputs to avoid confusion
     tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("install") }.configureEach {
         doLast {
-            delete("$buildDir/outputs/apk", "$buildDir/outputs/bundle")
+            delete("$buildDir/outputs/apk", "$buildDir/outputs/bundle", "$projectDir/release")
         }
+    }
     }
 }
