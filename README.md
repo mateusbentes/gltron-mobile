@@ -3,7 +3,8 @@
 GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 
 > This repository uses the MonoGame projects in the solution as the **source of truth** for Android and iOS builds. The Android Studio and Xcode projects act as **wrappers** to trigger those builds and to help with IDE workflows.
-
+>
+> **Android Studio builds:** the Gradle tasks are configured to build and launch the **.NET MonoGame APK/AAB**. Java/Android APK outputs are intentionally removed to avoid confusion.
 ## Requirements
 
 ### Android (Android Studio / Gradle)

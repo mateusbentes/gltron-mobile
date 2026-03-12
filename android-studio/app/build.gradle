@@ -3,15 +3,15 @@ plugins {
 }
 
 android {
-    namespace 'gltron.mobile'
+    namespace 'gltron.org.gltronmobile'
     compileSdk 35
 
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
         targetSdk 35
-        versionCode 7
-        versionName "7.0"
+        versionCode 8
+        versionName "8.0"
 
         // MonoGame native bootstrap placeholder
         ndk {
@@ -184,4 +184,27 @@ tasks.register("publishDotnetAab", Exec) {
 
 tasks.named("preBuild") {
     dependsOn("syncMonoGameAssets")
+}
+
+afterEvaluate {
+    def assembleReleaseTask = tasks.findByName("assembleRelease")
+    if (assembleReleaseTask != null) {
+        assembleReleaseTask.setDependsOn([])
+        assembleReleaseTask.dependsOn("publishDotnetAab")
+        assembleReleaseTask.setActions([])
+    }
+
+    def bundleReleaseTask = tasks.findByName("bundleRelease")
+    if (bundleReleaseTask != null) {
+        bundleReleaseTask.setDependsOn([])
+        bundleReleaseTask.dependsOn("publishDotnetAab")
+        bundleReleaseTask.setActions([])
+    }
+
+    // Clean Java outputs to avoid confusion
+    tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("install") }.configureEach {
+        doLast {
+            delete("$buildDir/outputs/apk", "$buildDir/outputs/bundle")
+        }
+    }
 }
