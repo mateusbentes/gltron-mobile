@@ -46,10 +46,8 @@ public class HUD
         float speed = 0f;
         try { speed = _player?.getSpeed() ?? 0f; } catch { }
 
-        _sb.Begin();
         _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}  Speed: {speed:0.0}", new Vector2(10, 10), Color.White);
-        _sb.End();
-        // Instructions / win/lose - CRITICAL FIX: Remove swipe text per user request
+        // Instructions / win/lose
         // if (_showInstr)
         //     _sb.DrawString(_font, "Swipe left/right to turn", new Vector2(10, 30), Color.Yellow);
         if (_showWin)
@@ -67,6 +65,5 @@ public class HUD
             _sb.DrawString(_font, txt, new Vector2(10, y), Color.LightGray);
             y += 16; lines++;
         }
-        _sb.End();
     }
 }

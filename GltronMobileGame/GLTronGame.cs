@@ -114,6 +114,7 @@ namespace GltronMobileGame
 
         public void SetAllPlayersSpeed(float speed)
         {
+            if (_gameOverState) return; // Do not change speed after game over
             _currentSpeed = speed;
             if (Players == null) return;
             for (int i = 0; i < Players.Length; i++)
@@ -696,25 +697,42 @@ namespace GltronMobileGame
                 for (int player = 0; player < mCurrentPlayers; player++)
                 {
                     if (Players[player] == null) continue;
-                    
+
                     // Move player
                     Players[player].doMovement(TimeDt, TimeCurrent, Walls, Players);
-                    
+
                     // Check win/lose conditions
                     if (player == OWN_PLAYER)
                     {
                         if (Players[player].getSpeed() == 0.0f)
                             ownPlayerActive = false;
+                        else
+                            ownPlayerActive = true;
                     }
                     else
                     {
                         if (Players[player].getSpeed() > 0.0f)
                             otherPlayersActive = true;
                     }
-                    
+
                     checkWinner = true;
                 }
-                
+
+                // If the round is over, freeze game logic until restart
+                if (_gameOverState)
+                {
+                    return;
+                }
+
+                // If own player is exploding or stopped, mark game over immediately
+                if (Players[OWN_PLAYER] != null && (Players[OWN_PLAYER].getExplode() || Players[OWN_PLAYER].getSpeed() == 0.0f))
+                {
+                    _gameOverState = true;
+                    _playerWon = false;
+                    tronHUD?.DisplayLose();
+                    LogInfo("Player lost the round - tap to restart");
+                    return;
+                }
                 // Round robin AI processing (like Java version)
                 if (aiCount < mCurrentPlayers && aiCount > 0) // Skip OWN_PLAYER (index 0)
                 {
@@ -723,14 +741,22 @@ namespace GltronMobileGame
                         GltronMobileEngine.ComputerAI.DoComputer(aiCount, OWN_PLAYER);
                     }
                 }
-                
+
                 aiCount++;
                 if (aiCount >= mCurrentPlayers)
                     aiCount = 1; // Skip OWN_PLAYER
-                
+
                 // Manage sounds (like Java version)
                 ManageSounds();
-                
+
+                // Check win/lose conditions
+                if (checkWinner)
+                {
+                    CheckWinLoseConditions(ownPlayerActive, otherPlayersActive);
+                }
+                // Manage sounds (like Java version)
+                ManageSounds();
+
                 // Check win/lose conditions
                 if (checkWinner)
                 {
@@ -789,6 +815,14 @@ namespace GltronMobileGame
                     _playerWon = false;
                     tronHUD?.DisplayLose();
                     LogInfo("Player lost the round - tap to restart");
+                }
+                else if (!ownPlayerActive && !otherPlayersActive && !_gameOverState)
+                {
+                    // Everyone crashed (treat as loss for player)
+                    _gameOverState = true;
+                    _playerWon = false;
+                    tronHUD?.DisplayLose();
+                    LogInfo("All players lost - tap to restart");
                 }
                 else if (ownPlayerActive && !otherPlayersActive && !_gameOverState)
                 {

@@ -38,7 +38,11 @@ public class HUD
     public void ResetConsole()
     {
         for (int i = 0; i < _console.Length; i++) _console[i] = null;
-        _pos = 0; _offset = 0; _showWin = _showLose = false; _showInstr = true;
+        _pos = 0;
+        _offset = 0;
+        _showWin = false;
+        _showLose = false;
+        _showInstr = true;
     }
 
     public void Draw(GameTime gameTime, int score)
@@ -47,11 +51,8 @@ public class HUD
         float speed = 0f;
         try { if (_player != null) speed = _player.getSpeed(); } catch { }
 
-        _sb.Begin();
         _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}  Speed: {speed:0.0}", new Vector2(10, 10), Color.White);
-        _sb.End();
 
-        // Instructions / win/lose
         if (_showInstr)
             _sb.DrawString(_font, "Tap left/right to turn", new Vector2(10, 30), Color.Yellow);
         if (_showWin)
@@ -59,7 +60,6 @@ public class HUD
         if (_showLose)
             _sb.DrawString(_font, "YOU LOSE", new Vector2(10, 50), Color.Red);
 
-        // Console scaffold (last ~10 lines)
         int lines = 0; int y = 80;
         for (int i = 0; i < _console.Length && lines < 10; i++)
         {
@@ -69,6 +69,5 @@ public class HUD
             _sb.DrawString(_font, txt, new Vector2(10, y), Color.LightGray);
             y += 16; lines++;
         }
-        _sb.End();
     }
 }

@@ -343,8 +343,6 @@ public class Game1 : Game
 
         // CRITICAL FIX: Process swipe gestures instead of simple taps
         ProcessSwipeInput(gameTime);
-        ProcessSwipeInput(gameTime);
-
         // Run game logic with null check
         try
         {
@@ -769,7 +767,6 @@ public class Game1 : Game
                 bool spriteBatchActive = false;
                 _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
                 spriteBatchActive = true;
-
                 // PROPER MENU SYSTEM LIKE ORIGINAL JAVA VERSION
                 if (_font != null)
                 {
@@ -806,8 +803,6 @@ public class Game1 : Game
                     else
                     {
                         // GAME: Show HUD elements like original Java version
-                        // Note: HUD draws its own SpriteBatch, so we need to end ours first
-                        _spriteBatch.End();
                         if (_hud != null)
                         {
                             int score = 0;
@@ -815,10 +810,6 @@ public class Game1 : Game
                             try { _hud.SetPlayer(_glTronGame?.GetOwnPlayer()); } catch { }
                             _hud.Draw(gameTime, score);
                         }
-
-                        // Restart sprite batch for text overlays
-                        _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
-                        spriteBatchActive = true;
 
                         // Camera mode indicator and controls
                         if (_camera != null)
@@ -861,10 +852,14 @@ public class Game1 : Game
                 }
 
                 // CRITICAL FIX: Show game over screen with restart message
-                if (_font != null && _glTronGame != null && _glTronGame.IsGameOver())
+                // CRITICAL FIX: Show game over screen with restart message
+                bool showGameOver = _glTronGame != null && (
+                    _glTronGame.IsGameOver() ||
+                    (_glTronGame.GetOwnPlayer()?.getSpeed() ?? 1f) == 0f ||
+                    (_glTronGame.GetOwnPlayer()?.getExplode() ?? false)
+                );
+                if (_font != null && showGameOver)
                 {
-                    _whitePixel ??= new Texture2D(GraphicsDevice, 1, 1);
-                    if (_whitePixel.IsDisposed || _whitePixel.GraphicsDevice == null)
                     {
                         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
                         _whitePixel.SetData(new[] { Color.White });
@@ -873,6 +868,14 @@ public class Game1 : Game
                     var gameOverViewport = GraphicsDevice.Viewport;
                     string gameOverText = _glTronGame.PlayerWon() ? "YOU WIN!" : "GAME OVER";
                     Color gameOverColor = _glTronGame.PlayerWon() ? Color.Lime : Color.Red;
+
+                    // Ensure the sprite batch is active for the game-over overlay
+                    if (!spriteBatchActive)
+                    {
+                        _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise);
+                        spriteBatchActive = true;
+                    }
+
                     _spriteBatch.Draw(_whitePixel, new Rectangle(0, 0, gameOverViewport.Width, gameOverViewport.Height), Color.Black * 0.7f);
 
                     // Game over text
@@ -933,7 +936,7 @@ public class Game1 : Game
         }
         catch { }
     }
-    
+
     private void ProcessSwipeInput(GameTime gameTime)
     {
         try
@@ -942,18 +945,20 @@ public class Game1 : Game
             var viewport = GraphicsDevice.Viewport;
 
             // Pinch zoom (two-finger) during gameplay only
-            if (_glTronGame?.IsShowingMenu() == false && touchCollection.Count >= 2 && _camera != null)
+            if (_glTronGame?.IsShowingMenu() == false && _glTronGame?.IsGameOver() == false && touchCollection.Count >= 2 && _camera != null)
             {
                 var t0 = touchCollection[0];
                 var t1 = touchCollection[1];
-                var currentDistance = Vector2.Distance(t0.Position, t1.Position);
+                var dist = Vector2.Distance(t0.Position, t1.Position);
+
                 if (_lastPinchDistance > 0f)
                 {
-                    float delta = _lastPinchDistance - currentDistance;
-                    // Scale delta to a comfortable zoom speed
+                    float delta = dist - _lastPinchDistance;
                     _camera.AdjustZoom(delta * 0.02f);
                 }
-                _lastPinchDistance = currentDistance;
+
+                _lastPinchDistance = dist;
+                return;
             }
             else
             {
@@ -977,14 +982,8 @@ public class Game1 : Game
                             {
                                 bool currentState = _glTronGame.DrawRecognizer();
                                 _glTronGame.SetDrawRecognizer(!currentState);
-
-                                try
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"Recognizer toggled to: {!currentState}");
-                                }
-                                catch { }
+                                _swipeInProgress = false; // Cancel swipe for recognizer toggle
                             }
-                            _swipeInProgress = false; // Cancel swipe for recognizer toggle
                         }
 
                         // Handle menu tap (if in menu)
@@ -1022,21 +1021,13 @@ public class Game1 : Game
                     _swipeStartPosition = null;
                     _swipeInProgress = false;
 
-                    try
-                    {
-                        System.Diagnostics.Debug.WriteLine("Swipe timed out");
-                    }
-                    catch { }
+                    try { System.Diagnostics.Debug.WriteLine("Swipe timed out"); } catch { }
                 }
             }
         }
         catch (System.Exception ex)
         {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"ProcessSwipeInput error: {ex}");
-            }
-            catch { }
+            try { System.Diagnostics.Debug.WriteLine($"ProcessSwipeInput error: {ex}"); } catch { }
         }
     }
 
@@ -1045,30 +1036,27 @@ public class Game1 : Game
         try
         {
             if (!_swipeStartPosition.HasValue) return;
-            
+
             Vector2 swipeVector = endPosition - _swipeStartPosition.Value;
             float swipeDistance = swipeVector.Length();
             double swipeTime = gameTime.TotalGameTime.TotalMilliseconds - _swipeStartTime;
-            
-            // Remove excessive debug logging
-            
+
             // Check if swipe is long enough
             if (swipeDistance < MIN_SWIPE_DISTANCE)
             {
                 // Treat as tap if not in menu
                 if (_glTronGame?.IsShowingMenu() == false)
                 {
-                    // For very short swipes, treat as tap to start game if in initial state
-                    var viewport = GraphicsDevice.Viewport;
-                    _glTronGame?.addTouchEvent(_swipeStartPosition.Value.X, _swipeStartPosition.Value.Y, viewport.Width, viewport.Height);
+                    var vp = GraphicsDevice.Viewport;
+                    _glTronGame?.addTouchEvent(_swipeStartPosition.Value.X, _swipeStartPosition.Value.Y, vp.Width, vp.Height);
                 }
                 return;
             }
-            
+
             // Determine swipe direction
             float horizontalComponent = System.Math.Abs(swipeVector.X);
             float verticalComponent = System.Math.Abs(swipeVector.Y);
-            
+
             // Vertical swipe controls speed, horizontal controls turning
             if (verticalComponent > horizontalComponent)
             {
@@ -1085,14 +1073,12 @@ public class Game1 : Game
                 {
                     // Swipe right = turn right
                     ProcessTurnInput(GltronMobileEngine.Player.TURN_RIGHT);
-                    
                     System.Diagnostics.Debug.WriteLine("Swipe RIGHT detected -> TURN_RIGHT");
                 }
                 else
                 {
                     // Swipe left = turn left
                     ProcessTurnInput(GltronMobileEngine.Player.TURN_LEFT);
-
                     System.Diagnostics.Debug.WriteLine("Swipe LEFT detected -> TURN_LEFT");
                 }
             }
@@ -1107,22 +1093,18 @@ public class Game1 : Game
             System.Diagnostics.Debug.WriteLine($"ProcessSwipeGesture error: {ex}");
         }
     }
-    
+
     private void ProcessTurnInput(int turnDirection)
     {
         try
         {
             if (_glTronGame?.IsShowingMenu() == true) return;
-            
-            // Send turn command to game
+
             var viewport = GraphicsDevice.Viewport;
-            
-            // Simulate the touch event that would cause a turn
-            // Use center position and let the game logic handle the turn direction
-            float centerX = turnDirection == GltronMobileEngine.Player.TURN_LEFT ? 
+            float centerX = turnDirection == GltronMobileEngine.Player.TURN_LEFT ?
                            viewport.Width * 0.25f : viewport.Width * 0.75f;
             float centerY = viewport.Height * 0.5f;
-            
+
             _glTronGame?.addTouchEvent(centerX, centerY, viewport.Width, viewport.Height);
         }
         catch (System.Exception ex)
