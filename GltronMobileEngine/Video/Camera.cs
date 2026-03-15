@@ -28,9 +28,7 @@ public class Camera
         
         try
         {
-#if ANDROID
-            Android.Util.Log.Info("GLTRON", $"Camera projection updated: FOV={MathHelper.ToDegrees(fov):F1}°, aspect={aspect:F2}, near={znear}, far={zfar}");
-#endif
+            System.Diagnostics.Debug.WriteLine($"Camera projection updated: FOV={MathHelper.ToDegrees(fov):F1}°, aspect={aspect:F2}, near={znear}, far={zfar}");
         }
         catch { }
     }
@@ -50,15 +48,14 @@ public class Camera
     private const float CAM_COCKPIT_Z = 4.0f;
     private const float CAM_SPEED = 0.001f;
     private const float B_HEIGHT = 0.0f;
-
+    private const float CAM_MIN_DIST = 8.0f;
+    private const float CAM_MAX_DIST = 80.0f;
     private CameraType _cameraType;
     private Vector3 _target;
     private Vector3 _camPos;
     private Vector3 _lastPlayerPos = Vector3.Zero; // For smooth following
     private float[] _movement = new float[4]; // R, CHI, PHI, PHI_OFFSET
     private float _phi;
-
-    // Camera defaults from original (R, CHI, PHI)
     private static readonly float[,] CamDefaults = {
         { CAM_CIRCLE_DIST, MathHelper.Pi / 3.0f, 0.0f }, // circle
         { CAM_FOLLOW_DIST, MathHelper.Pi / 4.0f, MathHelper.Pi / 72.0f }, // follow
@@ -119,6 +116,16 @@ public class Camera
         _movement[2] = CamDefaults[4, 2]; // PHI
         _movement[3] = 0.0f; // PHI_OFFSET
         _phi = 0.0f;
+    }
+
+    public void AdjustZoom(float delta)
+    {
+        _movement[0] = MathHelper.Clamp(_movement[0] + delta, CAM_MIN_DIST, CAM_MAX_DIST);
+    }
+
+    public float GetZoomDistance()
+    {
+        return _movement[0];
     }
 
     public void Update(Vector3 playerPos, GameTime gameTime)
@@ -317,12 +324,10 @@ public class Camera
         // Debug logging
         try
         {
-#if ANDROID
             if (dt > 0) // Only log occasionally
             {
-                Android.Util.Log.Debug("GLTRON", $"Camera: target=({_target.X:F1},{_target.Y:F1},{_target.Z:F1}) cam=({_camPos.X:F1},{_camPos.Y:F1},{_camPos.Z:F1}) phi={phi:F2}");
+                System.Diagnostics.Debug.WriteLine($"Camera: target=({_target.X:F1},{_target.Y:F1},{_target.Z:F1}) cam=({_camPos.X:F1},{_camPos.Y:F1},{_camPos.Z:F1}) phi={phi:F2}");
             }
-#endif
         }
         catch { }
     }
@@ -366,19 +371,15 @@ public class Camera
         try
         {
             View = Matrix.CreateLookAt(_camPos, _target, up);
-            
+
             // Debug logging
-#if ANDROID
             float distance = Vector3.Distance(_camPos, _target);
-            Android.Util.Log.Debug("GLTRON", $"Camera distance: {distance:F2}, View matrix created successfully");
-#endif
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Camera distance: {distance:F2}, View matrix created successfully");
         }
         catch (System.Exception ex)
         {
-#if ANDROID
-            try { Android.Util.Log.Error("GLTRON", $"Failed to create view matrix: {ex.Message}"); } catch {}
-#endif
-            
+            System.Diagnostics.Debug.WriteLine($"GLTRON: Failed to create view matrix: {ex.Message}");
+
             // Fallback view matrix
             View = Matrix.Identity;
         }
@@ -397,9 +398,7 @@ public class Camera
         
         try
         {
-#if ANDROID
-            Android.Util.Log.Info("GLTRON", $"Camera type changed to: {type}");
-#endif
+            System.Diagnostics.Debug.WriteLine($"Camera type changed to: {type}");
         }
         catch { }
     }
@@ -417,9 +416,7 @@ public class Camera
         
         try
         {
-#if ANDROID
-            Android.Util.Log.Info("GLTRON", "Camera reset for new game - will snap to player immediately");
-#endif
+            System.Diagnostics.Debug.WriteLine("GLTRON: Camera reset for new game - will snap to player immediately");
         }
         catch { }
     }

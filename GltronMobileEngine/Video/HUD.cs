@@ -1,6 +1,7 @@
+#nullable enable
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
+using GltronMobileEngine;
 namespace GltronMobileEngine.Video;
 
 public class HUD
@@ -8,6 +9,7 @@ public class HUD
     private readonly SpriteBatch _sb;
     private readonly SpriteFont _font;
     private readonly string?[] _console;
+    private GltronMobileEngine.Player? _player;
     private int _pos;
     private int _offset;
     private bool _showWin;
@@ -26,10 +28,12 @@ public class HUD
         _console[_pos] = line;
         _pos = (_pos + 1) % _console.Length;
     }
-
     public void DisplayWin() => _showWin = true;
     public void DisplayLose() => _showLose = true;
     public void DisplayInstr(bool show) => _showInstr = show;
+
+    public void SetPlayer(GltronMobileEngine.Player? player) => _player = player;
+
     public void ResetConsole()
     {
         for (int i = 0; i < _console.Length; i++) _console[i] = null;
@@ -38,13 +42,13 @@ public class HUD
 
     public void Draw(GameTime gameTime, int score)
     {
-        _sb.Begin();
-        // FPS placeholder
-        double fps = gameTime.ElapsedGameTime.TotalMilliseconds > 0
-            ? 1000.0 / gameTime.ElapsedGameTime.TotalMilliseconds
-            : 0;
-        _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}", new Vector2(10, 10), Color.White);
+        float fps = 1f / (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float speed = 0f;
+        try { speed = _player?.getSpeed() ?? 0f; } catch { }
 
+        _sb.Begin();
+        _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}  Speed: {speed:0.0}", new Vector2(10, 10), Color.White);
+        _sb.End();
         // Instructions / win/lose - CRITICAL FIX: Remove swipe text per user request
         // if (_showInstr)
         //     _sb.DrawString(_font, "Swipe left/right to turn", new Vector2(10, 30), Color.Yellow);

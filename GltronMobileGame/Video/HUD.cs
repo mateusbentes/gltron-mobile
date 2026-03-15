@@ -1,5 +1,7 @@
+#nullable disable
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using GltronMobileEngine;
 
 namespace GltronMobileGame.Video;
 
@@ -8,6 +10,7 @@ public class HUD
     private readonly SpriteBatch _sb;
     private readonly SpriteFont _font;
     private readonly string[] _console;
+    private GltronMobileEngine.Player _player;
     private int _pos;
     private int _offset;
     private bool _showWin;
@@ -30,6 +33,8 @@ public class HUD
     public void DisplayWin() => _showWin = true;
     public void DisplayLose() => _showLose = true;
     public void DisplayInstr(bool show) => _showInstr = show;
+    public void SetPlayer(GltronMobileEngine.Player player) => _player = player;
+
     public void ResetConsole()
     {
         for (int i = 0; i < _console.Length; i++) _console[i] = null;
@@ -38,12 +43,13 @@ public class HUD
 
     public void Draw(GameTime gameTime, int score)
     {
+        float fps = 1f / (float)gameTime.ElapsedGameTime.TotalSeconds;
+        float speed = 0f;
+        try { if (_player != null) speed = _player.getSpeed(); } catch { }
+
         _sb.Begin();
-        // FPS placeholder
-        double fps = gameTime.ElapsedGameTime.TotalMilliseconds > 0
-            ? 1000.0 / gameTime.ElapsedGameTime.TotalMilliseconds
-            : 0;
-        _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}", new Vector2(10, 10), Color.White);
+        _sb.DrawString(_font, $"FPS: {fps:0}  Score: {score}  Speed: {speed:0.0}", new Vector2(10, 10), Color.White);
+        _sb.End();
 
         // Instructions / win/lose
         if (_showInstr)

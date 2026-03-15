@@ -101,7 +101,7 @@ namespace GltronMobileEngine
             // tronHUD = hud; // Removido por enquanto
 
             // Slower default speed for better control
-            Speed = 4.0f;
+            Speed = 5.0f;
             exp_radius = 0.0f;
 
             // Cycle = mesh; // Removido por enquanto
@@ -157,9 +157,7 @@ namespace GltronMobileEngine
                 // Platform-specific logging if available
                 try
                 {
-#if ANDROID
-                    Android.Util.Log.Warn("GLTRON", "Trail array full, resetting player");
-#endif
+                    System.Diagnostics.Debug.WriteLine("Trail array full, resetting player");
                 }
                 catch { /* Ignore platform-specific logging errors */ }
                 
@@ -493,9 +491,6 @@ namespace GltronMobileEngine
             try
             {
                 System.Diagnostics.Debug.WriteLine($"GLTRON: {message}");
-#if ANDROID
-                Android.Util.Log.Error("GLTRON", message);
-#endif
                 // TODO: Add to HUD console when available
             }
             catch { /* Ignore logging errors */ }

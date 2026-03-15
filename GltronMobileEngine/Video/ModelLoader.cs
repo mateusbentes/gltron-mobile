@@ -16,24 +16,16 @@ namespace GltronMobileEngine.Video
                 {
                     var m = content.Load<Model>(name);
                     System.Diagnostics.Debug.WriteLine($"GLTRON: ✅ Loaded {label} as '{name}'");
-#if ANDROID
-                    try { Android.Util.Log.Error("GLTRON", $"✅ Loaded {label} as '{name}'"); } catch {}
-#endif
+                    try { System.Diagnostics.Debug.WriteLine($"✅ Loaded {label} as '{name}'"); } catch {}
                     return m;
                 }
                 catch (ContentLoadException ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ Failed to load {label} as '{name}': {ex.Message}");
-#if ANDROID
-                    try { Android.Util.Log.Error("GLTRON", $"❌ Failed to load {label} as '{name}': {ex.Message}"); } catch {}
-#endif
                 }
                 catch (System.Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"GLTRON: ❌ Unexpected error loading {label} as '{name}': {ex.Message}");
-#if ANDROID
-                    try { Android.Util.Log.Error("GLTRON", $"❌ Unexpected error loading {label} as '{name}': {ex.Message}"); } catch {}
-#endif
                 }
             }
             return null;

@@ -35,12 +35,9 @@ public class GameStateManager
             _previousState = _currentState;
             _currentState = newState;
             _stateTimer = 0f;
-            
+
             // Platform-agnostic logging
             System.Diagnostics.Debug.WriteLine($"GLTRON: State changed: {_previousState} -> {_currentState}");
-#if ANDROID
-            try { Android.Util.Log.Info("GLTRON", $"State changed: {_previousState} -> {_currentState}"); } catch { }
-#endif
         }
     }
 
