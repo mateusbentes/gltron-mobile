@@ -10,8 +10,8 @@ android {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
         targetSdk 35
-        versionCode 8
-        versionName "8.0"
+        versionCode 9
+        versionName "9.0"
 
         // MonoGame native bootstrap placeholder
         ndk {

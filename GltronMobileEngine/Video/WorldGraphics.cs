@@ -508,7 +508,7 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
             }
             Vector3 playerColor = GetPlayerColor(colorIndex);
             
-            const float BIKE_SCALE = 1.0f;
+            const float BIKE_SCALE = 1.2f;
             var world = Matrix.CreateScale(BIKE_SCALE) *
                        Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
                        Matrix.CreateTranslation(x, 0f, y);
@@ -525,7 +525,7 @@ Android.Util.Log.Info("GLTRON", "FBX model loaded via probe: 'lightcyclehigh' or
                 catch { }
                 
                 // CRITICAL FIX: Adjust scale and positioning for FBX models
-                const float FBX_BIKE_SCALE = 0.5f; // FBX models might be larger than expected
+                const float FBX_BIKE_SCALE = 0.75f; // FBX models might be larger than expected
                 var fbxWorld = Matrix.CreateScale(FBX_BIKE_SCALE) *
                               Matrix.CreateRotationY(direction * MathHelper.PiOver2) *
                               Matrix.CreateTranslation(x, 0f, y);

@@ -363,7 +363,7 @@ namespace GltronMobileGame
                         // CRITICAL FIX: Set safe spawn position
                         SetSafeSpawnPosition(player);
 
-                        Players[player].setSpeed(5.0f); // Slower initial speed for better control
+                        Players[player].setSpeed(4.0f); // Slower initial speed for better control
 
                         // Log player starting position and direction
                         float x = Players[player].getXpos();
@@ -673,11 +673,8 @@ namespace GltronMobileGame
                     
                     // CRITICAL FIX: Set safe spawn position
                     SetSafeSpawnPosition(plyr);
-                    
-                    Players[plyr].setSpeed(5.0f);
-                }
-                
-                // Reinitialize AI
+
+                    Players[plyr].setSpeed(4.0f);
                 GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
                 
                 // CRITICAL FIX: Reset recognizer (like Java version)

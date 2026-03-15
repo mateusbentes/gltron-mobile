@@ -16,8 +16,8 @@
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>8</ApplicationVersion>
-    <ApplicationDisplayVersion>8.0</ApplicationDisplayVersion>
+    <ApplicationVersion>9</ApplicationVersion>
+    <ApplicationDisplayVersion>9.0</ApplicationDisplayVersion>
 
     <!-- Disable fast deployment/compression so assemblies are stored uncompressed in APK -->
     <AndroidFastDeployment>false</AndroidFastDeployment>
