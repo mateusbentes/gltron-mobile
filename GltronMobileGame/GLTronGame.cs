@@ -675,8 +675,9 @@ namespace GltronMobileGame
                     SetSafeSpawnPosition(plyr);
 
                     Players[plyr].setSpeed(4.0f);
-                GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
+                }
                 
+                GltronMobileEngine.ComputerAI.InitAI(Walls, Players, mCurrentGridSize);
                 // CRITICAL FIX: Reset recognizer (like Java version)
                 if (mRecognizer != null)
                 {
