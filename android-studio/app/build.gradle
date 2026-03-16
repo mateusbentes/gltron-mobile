@@ -93,11 +93,11 @@ tasks.register("dotnetBuildAndroid", Exec) {
     commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug",
         "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}",
         "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
+    standardOutput = new ByteArrayOutputStream()
     errorOutput = standardOutput
     ignoreExitValue = true
     doLast {
         def outputText = standardOutput ? standardOutput.toString() : ""
-        if (outputText) {
             println outputText
         }
         if (executionResult.get().exitValue != 0) {
