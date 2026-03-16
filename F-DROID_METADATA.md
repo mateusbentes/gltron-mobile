@@ -28,7 +28,7 @@ This document outlines the F-Droid metadata structure and requirements for GLTro
 
 ### App Information:
 - **Package Name**: `gltron.org.gltronmobile`
-Version: 14.0 (versionCode: 14)
+Version: 15.0 (versionCode: 15)
 - **License**: GPL-3.0
 - **Categories**: Games
 - **Min SDK**: 24 (Android 7.0)
