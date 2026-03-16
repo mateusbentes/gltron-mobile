@@ -98,11 +98,13 @@ tasks.register("dotnetBuildAndroid", Exec) {
     ignoreExitValue = true
     doLast {
         def outputText = standardOutput ? standardOutput.toString() : ""
+        if (outputText) {
             println outputText
         }
         if (executionResult.get().exitValue != 0) {
             throw new GradleException("dotnet build failed (exit ${executionResult.get().exitValue}). Output:\n" + outputText)
         }
+    }
     }
 }
 
