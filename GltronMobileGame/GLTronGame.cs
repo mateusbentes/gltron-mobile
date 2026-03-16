@@ -467,7 +467,6 @@ namespace GltronMobileGame
                     System.Diagnostics.Debug.WriteLine("GLTRON: addTouchEvent: Menu tap detected, starting game");
                     boShowMenu = false;
                     _gameOverState = false;
-                    tronHUD?.AddLineToConsole("Game Started!");
                     // Auto-start round immediately (skip initial idle state)
                     boInitialState = false;
                     tronHUD?.DisplayInstr(false);

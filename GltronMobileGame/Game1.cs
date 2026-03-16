@@ -269,18 +269,7 @@ public class Game1 : Game
                 }
                 catch { /* Ignore platform-specific logging errors */ }
 
-                // One-time HUD message indicating model path (FBX vs Procedural)
-                try
-                {
-                    if (_glTronGame?.tronHUD != null && _worldGraphics != null)
-                    {
-                        var fld = typeof(GltronMobileEngine.Video.WorldGraphics)
-                            .GetField("_useFbxModels", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                        bool usingFbx = fld != null && fld.GetValue(_worldGraphics) is bool b && b;
-                        _glTronGame.tronHUD.AddLineToConsole($"Models: {(usingFbx ? "FBX" : "Procedural")}");
-                    }
-                }
-                catch { }
+                // HUD message for model path removed to keep screen clean.
             }
             catch (System.Exception ex)
             {
