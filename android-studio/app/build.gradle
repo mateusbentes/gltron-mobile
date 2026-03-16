@@ -156,6 +156,7 @@ tasks.register("publishDotnetAab", Exec) {
         }
     }
     workingDir "$rootDir/.."
+    commandLine dotnetCmd,
         "publish",
         "$rootDir/../GltronMobileGame/GltronAndroid.csproj",
         "-c", "Release",
