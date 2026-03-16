@@ -7,35 +7,27 @@ Classic light cycle racing game - avoid trails and outmaneuver opponents!
 
 **GLTron Mobile - Classic Light Cycle Racing**
 
-Experience the thrill of futuristic motorcycle racing in this classic light cycle game! Navigate your bike through a digital arena while leaving a deadly trail behind you.
+Ride a light cycle in a digital arena. Leave a trail behind you and avoid walls and opponents.
 
-**🏍️ Game Features:**
-• Fast-paced arcade racing action
-• Multiple AI opponents with different difficulty levels
-• Smooth 3D graphics optimized for mobile devices
-• Intuitive touch controls - tap left or right to turn
-• Classic retro-futuristic visual style
-• Completely offline gameplay - no internet required
+**Features:**
+• Arcade racing with AI opponents
+• Simple tap controls
+• 3D graphics optimized for mobile
+• Offline gameplay
 
-**🎮 How to Play:**
-Race your light cycle around the arena while avoiding walls and trails. Every move you make leaves a permanent trail that can destroy you or your opponents. The last player standing wins!
+**How to Play:**
+Move your light cycle around the arena. Every move leaves a trail that becomes a wall. Avoid collisions and outlast your opponents.
 
-**🛡️ Privacy & Safety:**
-• 100% offline gameplay
-• No data collection or tracking
-• No ads or in-app purchases
-• Safe for all ages
-• Open source project
+**Privacy & Safety:**
+• Offline gameplay
+• No ads
+• No in‑app purchases
+• No data collection Note: Open‑source project. Not affiliated with any franchise.
 
-**🎯 Perfect For:**
-• Fans of classic arcade games
-• Retro gaming enthusiasts
-• Quick gaming sessions
-• All skill levels from beginners to experts
+**About the Game:**
+GLTron Mobile is a classic light cycle racing game that combines arcade gameplay with a retro aesthetic. The game features a simple tap controls, 3D graphics, and offline gameplay. The objective is to avoid walls and outmaneuver opponents. The game is designed to be played offline, with no ads or in-app purchases.
 
-Challenge yourself in this timeless game of strategy, reflexes, and survival. Can you outlast your opponents in the digital arena?
-
-**Note:** This is an independent open-source project, not affiliated with any major studios or franchises.
+**Note:** Open‑source project. Not affiliated with any franchise.
 
 ---
 
