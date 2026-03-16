@@ -10,6 +10,7 @@ android {
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
+        targetSdk 35
         versionCode 14
         versionName "14.0"
         ndk {
@@ -104,7 +105,6 @@ tasks.register("dotnetBuildAndroid", Exec) {
         if (executionResult.get().exitValue != 0) {
             throw new GradleException("dotnet build failed (exit ${executionResult.get().exitValue}). Output:\n" + outputText)
         }
-    }
     }
 }
 
