@@ -151,6 +151,8 @@ tasks.register("publishDotnetAab", Exec) {
         "-f", "net10.0-android",
         "/p:AndroidPackageFormat=aab",
         "/p:AndroidKeyStore=true",
+        "/p:AndroidSigningKeyStore=${keyProperties.getProperty('storeFile')}",
+        "/p:AndroidSigningStorePass=${keyProperties.getProperty('storePassword')}",
         "/p:AndroidSigningKeyAlias=${keyProperties.getProperty('keyAlias')}",
         "/p:AndroidSigningKeyPass=${keyProperties.getProperty('keyPassword')}",
         "/p:AndroidSdkDirectory=${androidSdkDir}",
