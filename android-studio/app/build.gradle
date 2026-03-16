@@ -10,9 +10,8 @@ android {
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
-        targetSdk 35
-        versionCode 13
-        versionName "13.0"
+        versionCode 14
+        versionName "14.0"
         ndk {
             abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
         }
@@ -91,9 +90,9 @@ tasks.register("dotnetBuildAndroid", Exec) {
             environment "PATH", "${dotnetDir}:${System.getenv('PATH')}"
         }
     }
-    workingDir "$rootDir/.."
-    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug", "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}"
-    standardOutput = new ByteArrayOutputStream()
+    commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug",
+        "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}",
+        "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
     errorOutput = standardOutput
     ignoreExitValue = true
     doLast {
@@ -166,7 +165,8 @@ tasks.register("publishDotnetAab", Exec) {
         "/p:AndroidSigningKeyAlias=${keyProperties.getProperty('keyAlias')}",
         "/p:AndroidSigningKeyPass=${keyProperties.getProperty('keyPassword')}",
         "/p:AndroidSdkDirectory=${androidSdkDir}",
-        "/p:AndroidSdkRoot=${androidSdkDir}"
+        "/p:AndroidSdkRoot=${androidSdkDir}",
+        "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
     standardOutput = new ByteArrayOutputStream()
     errorOutput = standardOutput
     ignoreExitValue = true
