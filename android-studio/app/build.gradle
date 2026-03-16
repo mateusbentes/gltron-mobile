@@ -1,16 +1,13 @@
 plugins {
     id 'com.android.application'
 }
-
 android {
-    ndkVersion "29.0.14206865"
-    compileSdk 35
+    compileSdk 36
     namespace "gltron.org.gltronmobile"
-
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode 17
         versionName "17.0"
         ndk {
@@ -41,7 +38,7 @@ dependencies {
 
 tasks.register("syncMonoGameAssets", Copy) {
     def srcXnb = file("$rootDir/../GltronMobileGame/Content/bin/Android/Content")
-    def srcBins = file("$rootDir/../GltronMobileGame/bin/Debug/net8.0-android")
+    def srcBins = file("$rootDir/../GltronMobileGame/bin/Debug/net10.0-android")
     from(srcXnb) { into "Content" }
     from(srcBins) { include "*.dll" }
     into "$projectDir/src/main/assets"
@@ -92,31 +89,22 @@ tasks.register("dotnetBuildAndroid", Exec) {
         }
     }
     commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug",
-        "-f", "net9.0-android",
-        "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}",
-        "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
-    standardOutput = new ByteArrayOutputStream()
-    errorOutput = standardOutput
-    ignoreExitValue = true
-    doLast {
-        def outputText = standardOutput ? standardOutput.toString() : ""
-        if (outputText) {
-            println outputText
-        }
-        if (executionResult.get().exitValue != 0) {
-            throw new GradleException("dotnet build failed (exit ${executionResult.get().exitValue}). Output:\n" + outputText)
-        }
-    }
+        "-f", "net10.0-android",
+        "/p:AndroidPackageFormat=apk",
+        "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}"
+    ignoreExitValue = false
 }
 
 tasks.register("installDotnetApk", Exec) {
     dependsOn("dotnetBuildAndroid")
-    def apkDir = file("$rootDir/../GltronMobileGame/bin/Debug/net8.0-android")
-    def apkFile = apkDir.exists() ? apkDir.listFiles().find { it.name.endsWith('.apk') } : null
-    if (apkFile == null) {
-        throw new GradleException("APK not found in ${apkDir}. Ensure dotnet build produced an APK.")
+    doFirst {
+        def apkDir = file("$rootDir/../GltronMobileGame/bin/Debug/net10.0-android")
+        def apkFile = apkDir.exists() ? apkDir.listFiles().find { it.name.endsWith('.apk') } : null
+        if (apkFile == null) {
+            throw new GradleException("APK not found in ${apkDir}. Ensure dotnet build produced an APK.")
+        }
+        commandLine "adb", "install", "-r", apkFile.absolutePath
     }
-    commandLine "adb", "install", "-r", apkFile.absolutePath
 }
 
 def keyPropertiesFile = file("$rootDir/key.properties")
@@ -160,16 +148,13 @@ tasks.register("publishDotnetAab", Exec) {
         "publish",
         "$rootDir/../GltronMobileGame/GltronAndroid.csproj",
         "-c", "Release",
-        "-f", "net9.0-android",
+        "-f", "net10.0-android",
         "/p:AndroidPackageFormat=aab",
         "/p:AndroidKeyStore=true",
-        "/p:AndroidSigningKeyStore=${keyProperties.getProperty('storeFile')}",
-        "/p:AndroidSigningStorePass=${keyProperties.getProperty('storePassword')}",
         "/p:AndroidSigningKeyAlias=${keyProperties.getProperty('keyAlias')}",
         "/p:AndroidSigningKeyPass=${keyProperties.getProperty('keyPassword')}",
         "/p:AndroidSdkDirectory=${androidSdkDir}",
-        "/p:AndroidSdkRoot=${androidSdkDir}",
-        "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
+        "/p:AndroidSdkRoot=${androidSdkDir}"
     standardOutput = new ByteArrayOutputStream()
     errorOutput = standardOutput
     ignoreExitValue = true
