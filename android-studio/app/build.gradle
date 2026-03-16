@@ -92,6 +92,7 @@ tasks.register("dotnetBuildAndroid", Exec) {
         }
     }
     commandLine dotnetCmd, "build", "$rootDir/../GltronMobileGame/GltronAndroid.csproj", "-c", "Debug",
+        "-f", "net9.0-android",
         "/p:AndroidSdkDirectory=${androidSdkDir}", "/p:AndroidSdkRoot=${androidSdkDir}",
         "/p:AndroidNdkDirectory=${androidSdkDir}/ndk/29.0.14206865"
     standardOutput = new ByteArrayOutputStream()
@@ -155,11 +156,10 @@ tasks.register("publishDotnetAab", Exec) {
         }
     }
     workingDir "$rootDir/.."
-    commandLine dotnetCmd,
         "publish",
         "$rootDir/../GltronMobileGame/GltronAndroid.csproj",
         "-c", "Release",
-        "-f", "net8.0-android",
+        "-f", "net9.0-android",
         "/p:AndroidPackageFormat=aab",
         "/p:AndroidKeyStore=true",
         "/p:AndroidSigningKeyStore=${keyProperties.getProperty('storeFile')}",
