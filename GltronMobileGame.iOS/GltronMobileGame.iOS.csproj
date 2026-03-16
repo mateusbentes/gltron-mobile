@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-ios</TargetFramework>
+    <TargetFramework>net9.0-ios</TargetFramework>
     <OutputType>Exe</OutputType>
 
     <RootNamespace>GltronMobileGame</RootNamespace>
@@ -10,8 +10,8 @@
     <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
     <ApplicationId>gltron.org.gltronmobile.ios</ApplicationId>
-    <ApplicationDisplayVersion>15.0</ApplicationDisplayVersion>
-    <ApplicationVersion>15</ApplicationVersion>
+    <ApplicationDisplayVersion>16.0</ApplicationDisplayVersion>
+    <ApplicationVersion>16</ApplicationVersion>
 
     <!-- MonoGame -->
     <MonoGamePlatform>iOS</MonoGamePlatform>

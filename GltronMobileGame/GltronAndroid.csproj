@@ -4,7 +4,7 @@
     <AssemblyName>GltronMobileGame</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>net8.0-android</TargetFramework>
+    <TargetFramework>net9.0-android</TargetFramework>
     <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
     <TargetAndroidVersion>35</TargetAndroidVersion>
     <AndroidMinSdkVersion>24</AndroidMinSdkVersion>
@@ -16,8 +16,8 @@
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>15</ApplicationVersion>
-    <ApplicationDisplayVersion>15.0</ApplicationDisplayVersion>
+    <ApplicationVersion>16</ApplicationVersion>
+    <ApplicationDisplayVersion>16.0</ApplicationDisplayVersion>
 
     <!-- Disable fast deployment/compression so assemblies are stored uncompressed in APK -->
     <AndroidFastDeployment>false</AndroidFastDeployment>

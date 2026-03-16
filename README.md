@@ -11,7 +11,7 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 - Android Studio (latest stable)
 - Android SDK 34+
 - **JDK 17+** (Gradle 9 requires Java 17+)
-- **.NET SDK 8** (required for MonoGame projects)
+- **.NET SDK 9** (required for MonoGame projects)
 - `dotnet` available in PATH
 - `adb` available in PATH
 - Android SDK path set via `ANDROID_SDK_ROOT` or `ANDROID_HOME`
@@ -19,9 +19,9 @@ GLTron Mobile is a cross-platform lightcycle game built with MonoGame in C#.
 ### iOS (Xcode)
 - macOS with Xcode (latest stable)
 - Apple developer signing configured
-- **.NET SDK 8** (required for MonoGame projects)
+- **.NET SDK 9** (required for MonoGame projects)
 
-## Install .NET 8 + MonoGame
+## Install .NET 9 + MonoGame
 
 ### macOS (MacInCloud - user account only)
 If you **cannot use Homebrew** or system folders, install .NET locally in your user home:
@@ -29,9 +29,10 @@ If you **cannot use Homebrew** or system folders, install .NET locally in your u
 ```bash
 mkdir -p $HOME/dotnet
 curl -L https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
-bash /tmp/dotnet-install.sh --channel 8.0 --install-dir $HOME/dotnet
+bash /tmp/dotnet-install.sh --channel 9.0 --install-dir $HOME/dotnet
 export DOTNET="$HOME/dotnet/dotnet"
 export PATH="$HOME/dotnet:$PATH"
+```
 ```
 
 Install MonoGame templates/tools:
@@ -54,11 +55,11 @@ dotnet new install MonoGame.Templates.CSharp
 ```
 
 ### Linux (Ubuntu)
-Install .NET 8:
+Install .NET 9:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y dotnet-sdk-8.0
+sudo apt-get install -y dotnet-sdk-9.0
 ```
 
 Install MonoGame templates/tools:
@@ -83,7 +84,7 @@ source ~/.bashrc
 ```
 ## Xcode Build (Wrapper)
 Build iOS with the .NET project:
-- `dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net8.0-ios`
+- `dotnet build GltronMobileGame.iOS/GltronMobileGame.iOS.csproj -c Debug -f net9.0-ios`
 
 Then open **ios-xcode/GltronMobileGame.xcodeproj** in Xcode for signing/archiving.
 
