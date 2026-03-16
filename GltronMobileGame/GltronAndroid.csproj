@@ -16,8 +16,8 @@
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>16</ApplicationVersion>
-    <ApplicationDisplayVersion>16.0</ApplicationDisplayVersion>
+    <ApplicationVersion>17</ApplicationVersion>
+    <ApplicationDisplayVersion>17.0</ApplicationDisplayVersion>
 
     <!-- Disable fast deployment/compression so assemblies are stored uncompressed in APK -->
     <AndroidFastDeployment>false</AndroidFastDeployment>
@@ -30,9 +30,11 @@
     <AndroidLinkMode>None</AndroidLinkMode>
     <UseMonoGamePipeline>true</UseMonoGamePipeline>
 
-    <!-- Android SDK resolution -->
     <AndroidSdkDirectory Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkDirectory>
     <AndroidSdkDirectory Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkDirectory>
+    <AndroidSdkRoot Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkRoot>
+    <AndroidSdkRoot Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkRoot>
+    <AndroidSupportedAbis>armeabi-v7a;arm64-v8a</AndroidSupportedAbis>
     <AndroidSdkRoot Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkRoot>
     <AndroidSdkRoot Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkRoot>
   </PropertyGroup>
