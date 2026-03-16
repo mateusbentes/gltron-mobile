@@ -1,18 +1,18 @@
+plugins {
+    id 'com.android.application'
+}
+
 android {
     ndkVersion "29.0.14206865"
-    compileSdkVersion 35
-    namespace "gltron.org.gltronmobile"
-    namespace 'gltron.org.gltronmobile'
     compileSdk 35
+    namespace "gltron.org.gltronmobile"
 
     defaultConfig {
         applicationId "gltron.org.gltronmobile"
         minSdk 24
         targetSdk 35
-    versionCode 12
-    versionName "12.0"
-    versionCode 13
-    versionName "13.0"
+        versionCode 13
+        versionName "13.0"
         ndk {
             abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
         }
