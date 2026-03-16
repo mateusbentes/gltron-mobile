@@ -13,7 +13,6 @@ namespace gltron.org.gltronmobile
         MainLauncher = true,
         AlwaysRetainTaskState = true,
         LaunchMode = LaunchMode.SingleInstance,
-        ScreenOrientation = ScreenOrientation.SensorLandscape,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize | ConfigChanges.ScreenLayout,
         Theme = "@android:style/Theme.NoTitleBar.Fullscreen"
     )]
@@ -29,7 +28,11 @@ namespace gltron.org.gltronmobile
                 System.Diagnostics.Debug.WriteLine("Activity.OnCreate starting...");
                 
                 base.OnCreate(bundle);
+                base.OnCreate(bundle);
                 System.Diagnostics.Debug.WriteLine("Activity.OnCreate completed");
+
+                // Force landscape after startup to satisfy Play Console guidance
+                RequestedOrientation = ScreenOrientation.SensorLandscape;
 
                 System.Diagnostics.Debug.WriteLine("Step 1: Creating Game1 instance...");
                 
