@@ -16,18 +16,24 @@
     <UseAndroidX>true</UseAndroidX>
     <OutputType>Exe</OutputType>
     <ApplicationId>gltron.org.gltronmobile</ApplicationId>
-    <ApplicationVersion>18</ApplicationVersion>
-    <ApplicationDisplayVersion>18.0</ApplicationDisplayVersion>
+    <ApplicationVersion>19</ApplicationVersion>
+    <ApplicationDisplayVersion>19.0</ApplicationDisplayVersion>
 
-    <!-- Disable fast deployment/compression so assemblies are stored uncompressed in APK -->
+    <!-- Release crash workaround: reduce linker/optimizer differences vs Debug -->
     <AndroidFastDeployment>false</AndroidFastDeployment>
+    <AndroidUseFastDeployment>false</AndroidUseFastDeployment>
     <AndroidEnableCompressedAssembly>false</AndroidEnableCompressedAssembly>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
-
-    <!-- MonoGame Content Pipeline Configuration -->
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <AndroidUseAot>false</AndroidUseAot>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidEnableLLVM>false</AndroidEnableLLVM>
+    <AndroidUseInterpreter>true</AndroidUseInterpreter>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <PublishTrimmed>false</PublishTrimmed>
+    <TrimMode>copyused</TrimMode>
     <MonoGamePlatform>Android</MonoGamePlatform>
     <MonoGameContentBuilderExe>mgcb</MonoGameContentBuilderExe>
-    <AndroidLinkMode>None</AndroidLinkMode>
     <UseMonoGamePipeline>true</UseMonoGamePipeline>
 
     <AndroidSdkDirectory Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkDirectory>
@@ -35,19 +41,26 @@
     <AndroidSdkRoot Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkRoot>
     <AndroidSdkRoot Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkRoot>
     <RuntimeIdentifiers>android-arm;android-arm64</RuntimeIdentifiers>
-    <AndroidSdkRoot Condition="'$(ANDROID_SDK_ROOT)' != ''">$(ANDROID_SDK_ROOT)</AndroidSdkRoot>
-    <AndroidSdkRoot Condition="'$(ANDROID_HOME)' != ''">$(ANDROID_HOME)</AndroidSdkRoot>
   </PropertyGroup>
+
   <PropertyGroup>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
-    <!-- Use latest Android SDK version 34 -->
+    <!-- Use latest Android SDK version 36 -->
     <AndroidSdkBuildToolsVersion>36.0.0</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
-  
-  <!-- Re-enable MGCB build for Android: build content from Content/Content.mgcb -->
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Make Release behave closer to Debug to avoid Mono runtime assert -->
+    <Optimize>false</Optimize>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <AotAssemblies>false</AotAssemblies>
+  </PropertyGroup>
+
   <ItemGroup>
-    <MonoGameContentReference Include="Content/Content.mgcb" />
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GltronMobileEngine\GltronMobileEngine.csproj" />
