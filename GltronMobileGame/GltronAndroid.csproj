@@ -51,14 +51,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <!-- Make Release behave closer to Debug to avoid Mono runtime assert -->
+    <!-- Make Release behave closer to Debug to avoid Mono runtime assert (still non-debuggable for Play) -->
     <Optimize>false</Optimize>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
+    <AndroidDebuggable>false</AndroidDebuggable>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
     <RunAOTCompilation>false</RunAOTCompilation>
     <AotAssemblies>false</AotAssemblies>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.Android" Version="3.8.2.1105" />
   </ItemGroup>
